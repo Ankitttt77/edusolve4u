@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
@@ -16,8 +16,6 @@ import {
   addDoc,
   deleteDoc,
   collection,
-  query,
-  orderBy,
   serverTimestamp,
 } from "firebase/firestore";
 
