@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
@@ -16,6 +16,8 @@ import {
   addDoc,
   deleteDoc,
   collection,
+  query,
+  orderBy,
   serverTimestamp,
 } from "firebase/firestore";
 
@@ -177,22 +179,26 @@ export default function App() {
   const handleAIQuestion = async (subject, chapter, difficulty) => {
     showToast("AI generating question… ✨");
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 400,
-          messages: [{ role: "user", content: `Generate one MCQ for class 10 ${subject} - ${chapter} at ${difficulty} difficulty. Return ONLY valid JSON, no markdown:\n{"text":"...","options":["A","B","C","D"],"answer":0,"explanation":"..."}` }],
-        }),
-      });
+      const GEMINI_KEY = "AIzaSyAJCBF4nkhqzTi6uON8NVUAHDJr0k8MFUs";
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `Generate one MCQ for class 10 ${subject} - ${chapter} at ${difficulty} difficulty. Return ONLY a raw JSON object, no markdown, no backticks, no explanation. Format: {"text":"question","options":["A","B","C","D"],"answer":0,"explanation":"why"}` }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 400 },
+          }),
+        }
+      );
       const data = await res.json();
-      const text = data.content?.map(i => i.text || "").join("") || "";
-      const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+      const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const clean = raw.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(clean);
       await fsAdd("questions", { subject, chapter, class: "10", type: "mcq", difficulty, source: "ai", ...parsed });
       showToast("AI question generated & saved! 🤖");
-    } catch {
-      showToast("AI generation failed. Try again.", "error");
+    } catch (e) {
+      showToast("AI generation failed: " + e.message, "error");
     }
   };
 
@@ -236,7 +242,7 @@ function Toast({ msg, type }) {
 function Nav({ userProfile, navigate, handleLogout }) {
   return (
     <nav style={{ position:"fixed", top:0, left:0, right:0, zIndex:100, padding:"0 5%", height:68, display:"flex", alignItems:"center", justifyContent:"space-between", background:"rgba(10,10,15,0.9)", backdropFilter:"blur(20px)", borderBottom:"1px solid #2a2a3e" }}>
-      <div onClick={() => navigate("home")} style={{ cursor:"pointer", fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1.4rem", background:"linear-gradient(135deg,#6c63ff,#ff6584)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>
+      <div onClick={() => navigate("home")} style={{ cursor:"pointer", fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:"1.4rem", background:"linear-gradient(135deg,#6c63ff,#ff6584)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>
         EduSolve<span style={{ WebkitTextFillColor:"#43e97b" }}>4U</span>
       </div>
       <div style={{ display:"flex", gap:10, alignItems:"center" }}>
@@ -269,7 +275,7 @@ function HomePage({ navigate, userProfile, handleLogout }) {
         <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse 60% 50% at 50% 0%,rgba(108,99,255,0.2) 0%,transparent 70%),radial-gradient(ellipse 40% 40% at 80% 60%,rgba(255,101,132,0.12) 0%,transparent 60%)" }} />
         <div style={{ position:"relative", zIndex:1, maxWidth:820 }}>
           <div className="badge-pill">✦ Smart Test Platform for Indian Students</div>
-          <h1 style={{ fontFamily:"'Syne',sans-serif", fontSize:"clamp(2.6rem,6vw,4.8rem)", fontWeight:800, lineHeight:1.05, letterSpacing:"-2px", margin:"1.5rem 0" }}>
+          <h1 style={{ fontFamily:"'Space Grotesk',sans-serif", fontSize:"clamp(2.6rem,6vw,4.8rem)", fontWeight:800, lineHeight:1.05, letterSpacing:"-2px", margin:"1.5rem 0" }}>
             Ace Every Exam with<br /><span style={{ background:"linear-gradient(135deg,#6c63ff,#ff6584,#f7971e)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>EduSolve4U</span>
           </h1>
           <p style={{ fontSize:"1.1rem", color:"#7878a0", maxWidth:540, margin:"0 auto 2.5rem", lineHeight:1.7 }}>Practice exams, instant solutions, real-time leaderboards. Class 6–12, all boards, all subjects.</p>
@@ -280,7 +286,7 @@ function HomePage({ navigate, userProfile, handleLogout }) {
           <div style={{ display:"flex", gap:40, justifyContent:"center", marginTop:48, flexWrap:"wrap" }}>
             {[["10,000+","Students"],["50,000+","Questions"],["15+","Subjects"],["100%","Free"]].map(([n,l]) => (
               <div key={l} style={{ textAlign:"center" }}>
-                <div style={{ fontFamily:"'Syne',sans-serif", fontSize:"2rem", fontWeight:800, background:"linear-gradient(135deg,#6c63ff,#ff6584)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>{n}</div>
+                <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontSize:"2rem", fontWeight:800, background:"linear-gradient(135deg,#6c63ff,#ff6584)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>{n}</div>
                 <div style={{ fontSize:13, color:"#7878a0" }}>{l}</div>
               </div>
             ))}
@@ -296,7 +302,7 @@ function HomePage({ navigate, userProfile, handleLogout }) {
           {[["🎯","Custom Test Builder","Pick subject, chapter, difficulty and question count.","rgba(108,99,255,0.1)"],["⚡","Instant Solutions","Detailed solutions for every question after submission.","rgba(247,151,30,0.1)"],["🏆","Live Leaderboard","Ranked by score + speed. Compete with real students.","rgba(255,215,0,0.1)"],["🤖","AI Questions","Fresh curriculum-aligned questions generated by AI.","rgba(67,233,123,0.1)"],["📊","Analytics","Track performance by subject and chapter.","rgba(255,101,132,0.1)"],["👩‍🏫","Teacher Upload","Teachers add questions for CBSE, ICSE, State boards.","rgba(79,172,254,0.1)"]].map(([icon,title,desc,bg]) => (
             <div key={title} className="feature-card" style={{ background:bg }}>
               <div style={{ fontSize:"2rem", marginBottom:12 }}>{icon}</div>
-              <h3 style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, marginBottom:8 }}>{title}</h3>
+              <h3 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:700, marginBottom:8 }}>{title}</h3>
               <p style={{ color:"#7878a0", fontSize:14, lineHeight:1.6 }}>{desc}</p>
             </div>
           ))}
@@ -308,7 +314,7 @@ function HomePage({ navigate, userProfile, handleLogout }) {
         <button onClick={() => navigate(userProfile?"dashboard":"register")} className="btn-primary" style={{ fontSize:"1.05rem", padding:"14px 32px" }}>Get Started — It's Free 🚀</button>
       </section>
       <footer style={{ borderTop:"1px solid #2a2a3e", padding:"2rem 5%", textAlign:"center", color:"#7878a0", fontSize:13 }}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1.2rem", marginBottom:8, background:"linear-gradient(135deg,#6c63ff,#ff6584)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", display:"inline-block" }}>EduSolve4U</div>
+        <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:"1.2rem", marginBottom:8, background:"linear-gradient(135deg,#6c63ff,#ff6584)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", display:"inline-block" }}>EduSolve4U</div>
         <p>Made with ❤️ for every student in India · Class 6–12 · All Boards</p>
       </footer>
     </div>
@@ -323,7 +329,7 @@ function LoginPage({ navigate, handleLogin, userProfile, handleLogout }) {
       <Nav userProfile={userProfile} navigate={navigate} handleLogout={handleLogout} />
       <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", padding:"6rem 1rem" }}>
         <div style={{ background:"#12121a", border:"1px solid #2a2a3e", borderRadius:24, padding:"2.5rem", width:"100%", maxWidth:420 }}>
-          <h2 style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1.8rem", marginBottom:6 }}>Welcome Back</h2>
+          <h2 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:"1.8rem", marginBottom:6 }}>Welcome Back</h2>
           <p style={{ color:"#7878a0", fontSize:14, marginBottom:28 }}>Login to continue your journey</p>
           <label className="form-label">Email</label>
           <input className="form-input" type="email" placeholder="you@email.com" value={email} onChange={e=>setEmail(e.target.value)} style={{ marginBottom:14 }} />
@@ -346,7 +352,7 @@ function RegisterPage({ navigate, handleRegister, userProfile, handleLogout }) {
       <Nav userProfile={userProfile} navigate={navigate} handleLogout={handleLogout} />
       <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", padding:"6rem 1rem" }}>
         <div style={{ background:"#12121a", border:"1px solid #2a2a3e", borderRadius:24, padding:"2.5rem", width:"100%", maxWidth:420 }}>
-          <h2 style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1.8rem", marginBottom:6 }}>Create Account</h2>
+          <h2 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:"1.8rem", marginBottom:6 }}>Create Account</h2>
           <p style={{ color:"#7878a0", fontSize:14, marginBottom:28 }}>Free forever for students</p>
           {[["Full Name","name","text","Aarav Sharma"],["Email","email","email","you@email.com"],["Password","password","password","Min 6 characters"]].map(([lbl,key,type,ph])=>(
             <div key={key}>
@@ -403,21 +409,21 @@ function DashboardPage({ userProfile, navigate, handleLogout }) {
       <Nav userProfile={userProfile} navigate={navigate} handleLogout={handleLogout} />
       <div style={{ padding:"6rem 5% 3rem", maxWidth:1200, margin:"0 auto" }}>
         <div style={{ marginBottom:28 }}>
-          <h1 style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"2rem" }}>Hey, {userProfile?.name?.split(" ")[0]} 👋</h1>
+          <h1 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:"2rem" }}>Hey, {userProfile?.name?.split(" ")[0]} 👋</h1>
           <p style={{ color:"#7878a0" }}>Class {userProfile?.class} · {userProfile?.role}</p>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))", gap:12, marginBottom:28 }}>
           {[["📝","Tests Taken",myResults.length],["📊","Avg Score",`${avgScore}%`],["🏆","Best Score",`${bestScore}%`]].map(([icon,label,val])=>(
             <div key={label} style={{ background:"#12121a", border:"1px solid #2a2a3e", borderRadius:16, padding:"1.25rem", textAlign:"center" }}>
               <div style={{ fontSize:"1.5rem", marginBottom:6 }}>{icon}</div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1.5rem", color:"#6c63ff" }}>{val}</div>
+              <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:"1.5rem", color:"#6c63ff" }}>{val}</div>
               <div style={{ fontSize:12, color:"#7878a0" }}>{label}</div>
             </div>
           ))}
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:24, alignItems:"start" }}>
           <div style={{ background:"#12121a", border:"1px solid #2a2a3e", borderRadius:20, padding:"1.75rem" }}>
-            <h3 style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, marginBottom:20 }}>⚡ Build a Test</h3>
+            <h3 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:700, marginBottom:20 }}>⚡ Build a Test</h3>
             <label className="form-label">Subject</label>
             <select className="form-input" value={subject} onChange={e=>{setSubject(e.target.value);setChapter(CHAPTERS[e.target.value][0]);}} style={{ marginBottom:12 }}>
               {SUBJECTS.map(s=><option key={s} value={s}>{s}</option>)}
@@ -447,7 +453,7 @@ function DashboardPage({ userProfile, navigate, handleLogout }) {
             <button className="btn-primary" style={{ width:"100%", marginTop:8 }} onClick={startExam}>🎯 Generate & Start Test</button>
           </div>
           <div style={{ background:"#12121a", border:"1px solid #2a2a3e", borderRadius:20, padding:"1.75rem" }}>
-            <h3 style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, marginBottom:20 }}>📈 Recent Tests</h3>
+            <h3 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:700, marginBottom:20 }}>📈 Recent Tests</h3>
             {loading ? <div style={{ color:"#7878a0", textAlign:"center", padding:"1rem" }}>Loading…</div> :
              myResults.length===0 ? <p style={{ color:"#7878a0", textAlign:"center", padding:"2rem 0" }}>No tests yet. Start one! →</p> : (
               <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
@@ -457,7 +463,7 @@ function DashboardPage({ userProfile, navigate, handleLogout }) {
                       <div style={{ fontWeight:600, fontSize:14 }}>{r.examTitle}</div>
                       <div style={{ fontSize:12, color:"#7878a0" }}>{r.correct}/{r.totalQ} correct · {Math.round(r.timeTaken/60)}m {r.timeTaken%60}s</div>
                     </div>
-                    <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1.2rem", color:r.score>=80?"#43e97b":r.score>=60?"#f7971e":"#ff6584" }}>{r.score}%</div>
+                    <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:"1.2rem", color:r.score>=80?"#43e97b":r.score>=60?"#f7971e":"#ff6584" }}>{r.score}%</div>
                   </div>
                 ))}
               </div>
@@ -499,7 +505,7 @@ function ExamPage({ examConfig, handleExamFinish, userProfile, navigate, handleL
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
           <div>
             <div style={{ fontSize:12, color:"#7878a0", marginBottom:2 }}>{examTitle}</div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700 }}>Q{current+1} of {questions.length}</div>
+            <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:700 }}>Q{current+1} of {questions.length}</div>
           </div>
           <div style={{ display:"flex", gap:16, alignItems:"center" }}>
             <div style={{ background:"#12121a", border:"1px solid #2a2a3e", borderRadius:10, padding:"6px 14px", fontSize:14, fontWeight:600 }}>⏱ {Math.floor(timeElapsed/60)}:{String(timeElapsed%60).padStart(2,"0")}</div>
@@ -558,14 +564,14 @@ function ResultPage({ examResult, examConfig, userProfile, navigate, handleLogou
       <div style={{ padding:"6rem 5% 3rem", maxWidth:800, margin:"0 auto" }}>
         <div style={{ background:"#12121a", border:"1px solid #2a2a3e", borderRadius:24, padding:"2.5rem", textAlign:"center", marginBottom:24 }}>
           <div style={{ fontSize:"3rem", marginBottom:12 }}>{grade[0]}</div>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"4rem", color:grade[2], lineHeight:1 }}>{score}%</div>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:"1.4rem", marginTop:8 }}>{grade[1]}</div>
+          <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:"4rem", color:grade[2], lineHeight:1 }}>{score}%</div>
+          <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:700, fontSize:"1.4rem", marginTop:8 }}>{grade[1]}</div>
           <div style={{ color:"#7878a0", marginTop:6 }}>{examResult.examTitle}</div>
           <div style={{ display:"flex", gap:24, justifyContent:"center", marginTop:24, flexWrap:"wrap" }}>
             {[["✅","Correct",`${correct}/${totalQ}`],["⏱","Time",`${Math.floor(timeTaken/60)}m ${timeTaken%60}s`],["⚡","Points",`+${points}`]].map(([icon,lbl,val])=>(
               <div key={lbl} style={{ background:"#1a1a26", borderRadius:14, padding:"14px 24px" }}>
                 <div style={{ fontSize:"1.3rem" }}>{icon}</div>
-                <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1.3rem", color:"#6c63ff" }}>{val}</div>
+                <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:"1.3rem", color:"#6c63ff" }}>{val}</div>
                 <div style={{ fontSize:12, color:"#7878a0" }}>{lbl}</div>
               </div>
             ))}
@@ -635,7 +641,7 @@ function LeaderboardPage({ userProfile, navigate, handleLogout }) {
       <div style={{ padding:"6rem 5% 3rem", maxWidth:900, margin:"0 auto" }}>
         <div style={{ textAlign:"center", marginBottom:32 }}>
           <div className="section-label">Live Rankings</div>
-          <h1 style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"2.5rem" }}>🏆 Leaderboard</h1>
+          <h1 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:"2.5rem" }}>🏆 Leaderboard</h1>
           <p style={{ color:"#7878a0", marginTop:8 }}>Ranked by score + speed. Answer correctly and quickly to earn more points.</p>
           {userProfile && myRank>0 && <div style={{ display:"inline-block", marginTop:12, background:"rgba(108,99,255,0.2)", border:"1px solid rgba(108,99,255,0.4)", borderRadius:20, padding:"6px 18px", fontSize:14, color:"#a89cff" }}>Your rank: #{myRank}</div>}
         </div>
@@ -658,7 +664,7 @@ function LeaderboardPage({ userProfile, navigate, handleLogout }) {
                       <div style={{ fontSize:13, fontWeight:700, marginBottom:4 }}>{entry.user?.name}</div>
                       <div style={{ fontSize:12, color:"#7878a0", marginBottom:6 }}>{entry.points} pts</div>
                       <div style={{ height:heights[i], background:`linear-gradient(to top,${colors[i]}40,${colors[i]}20)`, border:`1px solid ${colors[i]}60`, borderRadius:"10px 10px 0 0", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                        <span style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1.8rem", color:colors[i] }}>#{podiumRank}</span>
+                        <span style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:"1.8rem", color:colors[i] }}>#{podiumRank}</span>
                       </div>
                     </div>
                   );
@@ -675,7 +681,7 @@ function LeaderboardPage({ userProfile, navigate, handleLogout }) {
                 const isMe=(userProfile?.uid||userProfile?.id)===entry.uid;
                 return (
                   <div key={entry.uid} style={{ display:"grid", gridTemplateColumns:"60px 1fr 80px 80px 80px 80px", padding:"14px 20px", borderBottom:"1px solid #2a2a3e", alignItems:"center", background:isMe?"rgba(108,99,255,0.08)":"transparent" }}>
-                    <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1.1rem", color:rankColors[rank]||"#7878a0" }}>{rank<=3?["🥇","🥈","🥉"][rank-1]:`#${rank}`}</div>
+                    <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:"1.1rem", color:rankColors[rank]||"#7878a0" }}>{rank<=3?["🥇","🥈","🥉"][rank-1]:`#${rank}`}</div>
                     <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                       <div style={{ width:36, height:36, borderRadius:"50%", background:avatarColor(entry.uid), display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700, color:"#fff", fontSize:12, flexShrink:0 }}>{entry.user?.avatar}</div>
                       <div>
@@ -686,7 +692,7 @@ function LeaderboardPage({ userProfile, navigate, handleLogout }) {
                     <div style={{ textAlign:"center", fontWeight:700, color:entry.avgScore>=80?"#43e97b":entry.avgScore>=60?"#f7971e":"#ff6584" }}>{entry.avgScore}%</div>
                     <div style={{ textAlign:"center", fontSize:13, color:"#7878a0" }}>{Math.floor(entry.avgTime/60)}m {entry.avgTime%60}s</div>
                     <div style={{ textAlign:"center", fontSize:13, color:"#7878a0" }}>{entry.count}</div>
-                    <div style={{ textAlign:"right", fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1rem", color:"#6c63ff" }}>{entry.points}</div>
+                    <div style={{ textAlign:"right", fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:"1rem", color:"#6c63ff" }}>{entry.points}</div>
                   </div>
                 );
               })}
@@ -735,13 +741,13 @@ function AdminPage({ userProfile, navigate, handleLogout, handleDeleteQuestion, 
       <Nav userProfile={userProfile} navigate={navigate} handleLogout={handleLogout} />
       <div style={{ padding:"6rem 5% 3rem", maxWidth:1200, margin:"0 auto" }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28 }}>
-          <div><div className="section-label">Management Panel</div><h1 style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"2rem" }}>⚙️ Admin Dashboard</h1></div>
+          <div><div className="section-label">Management Panel</div><h1 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:"2rem" }}>⚙️ Admin Dashboard</h1></div>
           <button className="btn-primary" onClick={()=>navigate("addQuestion")}>+ Add Question</button>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))", gap:12, marginBottom:28 }}>
           {[["Questions",questions.length,"#6c63ff"],["Students",users.filter(u=>u.role==="student").length,"#43e97b"],["Exams Taken",results.length,"#f7971e"],["Teachers",users.filter(u=>u.role==="teacher").length,"#ff6584"]].map(([l,v,c])=>(
             <div key={l} style={{ background:"#12121a", border:"1px solid #2a2a3e", borderRadius:14, padding:"1.25rem", textAlign:"center" }}>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1.8rem", color:c }}>{v}</div>
+              <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:"1.8rem", color:c }}>{v}</div>
               <div style={{ fontSize:12, color:"#7878a0" }}>{l}</div>
             </div>
           ))}
@@ -779,7 +785,7 @@ function AdminPage({ userProfile, navigate, handleLogout, handleDeleteQuestion, 
 
         {tab==="ai" && (
           <div style={{ background:"#12121a", border:"1px solid #2a2a3e", borderRadius:20, padding:"2rem", maxWidth:520 }}>
-            <h3 style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, marginBottom:6 }}>🤖 AI Question Generator</h3>
+            <h3 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:700, marginBottom:6 }}>🤖 AI Question Generator</h3>
             <p style={{ color:"#7878a0", fontSize:14, marginBottom:20 }}>Generate curriculum-aligned MCQs using AI. Saved automatically to your question bank.</p>
             <label className="form-label">Subject</label>
             <select className="form-input" value={aiSubject} onChange={e=>{setAiSubject(e.target.value);setAiChapter(CHAPTERS[e.target.value]?.[0]||"");}} style={{ marginBottom:12 }}>
@@ -831,7 +837,7 @@ function AdminPage({ userProfile, navigate, handleLogout, handleDeleteQuestion, 
                     <div style={{ fontWeight:600, fontSize:14 }}>{user?.name||"Unknown"} — {r.examTitle}</div>
                     <div style={{ fontSize:12, color:"#7878a0" }}>{r.correct}/{r.totalQ} correct · {Math.round(r.timeTaken/60)}m {r.timeTaken%60}s</div>
                   </div>
-                  <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1.2rem", color:r.score>=80?"#43e97b":r.score>=60?"#f7971e":"#ff6584" }}>{r.score}%</div>
+                  <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:"1.2rem", color:r.score>=80?"#43e97b":r.score>=60?"#f7971e":"#ff6584" }}>{r.score}%</div>
                 </div>
               );
             })}
@@ -856,7 +862,7 @@ function AddQuestionPage({ userProfile, navigate, handleLogout, handleAddQuestio
       <Nav userProfile={userProfile} navigate={navigate} handleLogout={handleLogout} />
       <div style={{ padding:"6rem 5% 3rem", maxWidth:640, margin:"0 auto" }}>
         <button onClick={()=>navigate("admin")} style={{ background:"none", border:"none", color:"#7878a0", cursor:"pointer", fontSize:14, padding:0, marginBottom:12 }}>← Back to Admin</button>
-        <h1 style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"2rem", marginBottom:24 }}>Add Question</h1>
+        <h1 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:"2rem", marginBottom:24 }}>Add Question</h1>
         <div style={{ background:"#12121a", border:"1px solid #2a2a3e", borderRadius:20, padding:"2rem" }}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:12 }}>
             <div>
@@ -910,11 +916,12 @@ const Tag = ({ label, color }) => <span style={{ background:`${color}22`, color,
 
 // ─── GLOBAL CSS ───────────────────────────────────────────────────────────────
 const GLOBAL_CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;}
 .badge-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(108,99,255,0.15);border:1px solid rgba(108,99,255,0.3);color:#a89cff;padding:6px 16px;border-radius:50px;font-size:12px;font-weight:600;letter-spacing:.05em;}
 .section-label{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#6c63ff;margin-bottom:8px;}
-.section-title{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;line-height:1.1;letter-spacing:-1px;margin-bottom:12px;}
+.section-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;line-height:1.1;letter-spacing:-1px;margin-bottom:12px;}
 .feature-card{border:1px solid #2a2a3e;border-radius:20px;padding:1.75rem;transition:transform .25s,border-color .25s,box-shadow .25s;}
 .feature-card:hover{transform:translateY(-4px);border-color:#6c63ff;box-shadow:0 12px 40px rgba(108,99,255,.15);}
 .btn-primary{background:linear-gradient(135deg,#6c63ff,#8b7fff);color:white;border:none;padding:11px 24px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(108,99,255,.4);font-family:'DM Sans',sans-serif;}
@@ -933,3 +940,4 @@ textarea.form-input{display:block;}
 .spin{animation:spin .8s linear infinite;}
 @keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 `;
+
