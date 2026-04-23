@@ -179,7 +179,7 @@ export default function App() {
   const handleAIQuestion = async (subject, chapter, difficulty) => {
     showToast("AI generating question… ✨");
     try {
-      const GEMINI_KEY = "AIzaSyAJCBF4nkhqzTi6uON8NVUAHDJr0k8MFUs";
+      const GEMINI_KEY = "AIzaSyBteVbYjY1kne20C5FvVm8HZmw4fCkO2QM";
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`,
         {
