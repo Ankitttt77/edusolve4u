@@ -193,12 +193,18 @@ export default function App() {
       );
       const data = await res.json();
       const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      const clean = raw.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
+      if (!raw) { showToast("Gemini returned empty response", "error"); return; }
+      const clean = raw.replace(/```json|```|`/g, "").trim();
+      const jsonMatch = clean.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) { showToast("Could not find JSON in response", "error"); return; }
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (!parsed.text || !parsed.options || parsed.answer === undefined) {
+        showToast("Invalid question format from AI", "error"); return;
+      }
       await fsAdd("questions", { subject, chapter, class: "10", type: "mcq", difficulty, source: "ai", ...parsed });
       showToast("AI question generated & saved! 🤖");
     } catch (e) {
-      showToast("AI generation failed: " + e.message, "error");
+      showToast("Error: " + e.message, "error");
     }
   };
 
