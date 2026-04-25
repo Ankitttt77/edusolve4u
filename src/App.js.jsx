@@ -221,7 +221,7 @@ export default function App() {
 
   const handleDeleteQuestion = async (id) => { await fsDel("questions",id); showToast("Question deleted"); };
 
-  const handleAIQuestion = async (subject,chapter,difficulty) => {
+  const handleAIQuestion = async (subject,chapter,difficulty,aiType="mcq") => {
     showToast("AI generating question… ✨");
     try {
       const GEMINI_KEY = process.env.REACT_APP_GEMINI_KEY;
@@ -634,6 +634,9 @@ function SearchPage({userProfile,navigate,handleLogout}) {
                       {q.exam&&<Tag label={q.exam.toUpperCase()} color="#f7971e"/>}
                       {q.year&&<Tag label={q.year} color="#7878a0"/>}
                       <Tag label={q.difficulty} color={q.difficulty==="hard"?"#ff6584":q.difficulty==="medium"?"#f7971e":"#43e97b"}/>
+                      {q.marks&&<Tag label={`${q.marks} Mark${q.marks>1?"s":""}`} color="#4facfe"/>}
+                      {q.type&&q.type!=="mcq"&&<Tag label={q.type==="short"?"Short Answer":q.type==="long"?"Long Answer":q.type==="case"?"Case Study":q.type} color="#c471f5"/>}
+                      {q.hotspot&&<span style={{background:"rgba(255,215,0,0.2)",color:"#ffd700",border:"1px solid rgba(255,215,0,0.4)",borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:700}}>🔥 Hot Topic</span>}
                     </div>
                     <p style={{fontWeight:500,lineHeight:1.55,marginBottom:12}}>{i+1}. {q.text}</p>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
@@ -925,8 +928,25 @@ function ExamPage({examConfig,handleExamFinish,userProfile,navigate,handleLogout
             <Tag label={q.subject} color="#6c63ff"/>
             <Tag label={q.chapter} color="#7878a0"/>
             <Tag label={q.difficulty} color={q.difficulty==="hard"?"#ff6584":q.difficulty==="medium"?"#f7971e":"#43e97b"}/>
+            {q.marks&&<Tag label={`${q.marks} Mark${q.marks>1?"s":""}`} color="#4facfe"/>}
+            {q.type&&q.type!=="mcq"&&<Tag label={q.type==="short"?"Short Answer":q.type==="long"?"Long Answer":q.type==="case"?"Case Study":q.type} color="#c471f5"/>}
+            {q.hotspot&&<span style={{background:"rgba(255,215,0,0.2)",color:"#ffd700",border:"1px solid rgba(255,215,0,0.4)",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:700}}>🔥 Hot Topic</span>}
           </div>
           <p style={{fontSize:"1.05rem",lineHeight:1.65,marginBottom:24,fontWeight:500}}>{q.text}</p>
+          {q.type==="short"||q.type==="long"||q.type==="case" ? (
+            <div>
+              <div style={{background:"rgba(108,99,255,0.08)",border:"1px solid rgba(108,99,255,0.2)",borderRadius:12,padding:"12px 16px",marginBottom:12,fontSize:13,color:"#a89cff"}}>
+                📝 This is a <strong>{q.type==="short"?"Short Answer":q.type==="long"?"Long Answer":"Case Study"}</strong> question worth <strong>{q.marks||3} marks</strong>. Write your answer below.
+              </div>
+              <textarea
+                placeholder="Write your answer here..."
+                value={answers[q.id]||""}
+                onChange={e=>setAnswers(a=>({...a,[q.id]:e.target.value}))}
+                rows={6}
+                style={{width:"100%",background:"#1a1a26",border:"1px solid #2a2a3e",borderRadius:12,padding:"12px 16px",color:"#e8e8f0",fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",resize:"vertical"}}
+              />
+            </div>
+          ) : (
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {q.options?.map((opt,i)=>{
               const sel=answers[q.id]===i;
@@ -938,6 +958,7 @@ function ExamPage({examConfig,handleExamFinish,userProfile,navigate,handleLogout
               );
             })}
           </div>
+          )}
         </div>
         <div style={{display:"flex",gap:10,justifyContent:"space-between"}}>
           <button className="btn-secondary" onClick={()=>setCurrent(c=>Math.max(0,c-1))} disabled={current===0}>← Prev</button>
@@ -1120,6 +1141,7 @@ function AdminPage({userProfile,navigate,handleLogout,handleDeleteQuestion,handl
   const [aiChapter,setAiChapter]=useState("Real Numbers");
   const [aiDiff,setAiDiff]=useState("medium");
   const [aiLoading,setAiLoading]=useState(false);
+  const [aiType,setAiType]=useState("mcq");
 
   useEffect(()=>{
     (async()=>{
@@ -1131,7 +1153,7 @@ function AdminPage({userProfile,navigate,handleLogout,handleDeleteQuestion,handl
   if(!userProfile||(userProfile.role!=="admin"&&userProfile.role!=="teacher")) return <div style={{padding:"8rem 5%",textAlign:"center",color:"#7878a0"}}>Access denied.</div>;
 
   const filtered=questions.filter(q=>q.text?.toLowerCase().includes(search.toLowerCase())||q.subject?.toLowerCase().includes(search.toLowerCase()));
-  const aiGen=async()=>{setAiLoading(true);await handleAIQuestion(aiSubject,aiChapter,aiDiff);const q=await fsGetAll("questions");setQuestions(q);setAiLoading(false);};
+  const aiGen=async()=>{setAiLoading(true);await handleAIQuestion(aiSubject,aiChapter,aiDiff,aiType);const q=await fsGetAll("questions");setQuestions(q);setAiLoading(false);};
   const delQ=async(id)=>{await handleDeleteQuestion(id);setQuestions(q=>q.filter(x=>x.id!==id));};
 
   return (
@@ -1172,6 +1194,9 @@ function AdminPage({userProfile,navigate,handleLogout,handleDeleteQuestion,handl
                       <Tag label={q.difficulty} color={q.difficulty==="hard"?"#ff6584":q.difficulty==="medium"?"#f7971e":"#43e97b"}/>
                       {q.exam&&<Tag label={q.exam.toUpperCase()} color="#f7971e"/>}
                       {q.year&&<Tag label={q.year} color="#7878a0"/>}
+                      {q.marks&&<Tag label={`${q.marks}M`} color="#4facfe"/>}
+                      {q.type&&q.type!=="mcq"&&<Tag label={q.type==="short"?"Short":q.type==="long"?"Long":q.type==="case"?"Case Study":q.type} color="#c471f5"/>}
+                      {q.hotspot&&<span style={{fontSize:12}}>🔥</span>}
                     </div>
                   </div>
                   <button onClick={()=>delQ(q.id)} style={{background:"rgba(255,101,132,0.15)",border:"1px solid rgba(255,101,132,0.3)",borderRadius:8,padding:"6px 12px",color:"#ff6584",cursor:"pointer",fontSize:13,fontWeight:600}}>Delete</button>
@@ -1184,7 +1209,13 @@ function AdminPage({userProfile,navigate,handleLogout,handleDeleteQuestion,handl
         {tab==="ai"&&(
           <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"2rem",maxWidth:520}}>
             <h3 style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:6}}>🤖 AI Question Generator</h3>
-            <p style={{color:"#7878a0",fontSize:14,marginBottom:20}}>Generate curriculum-aligned MCQs using Gemini AI.</p>
+            <p style={{color:"#7878a0",fontSize:14,marginBottom:20}}>Generate any type of exam question using Gemini AI.</p>
+            <label className="form-label">Question Type</label>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>
+              {[["mcq","MCQ","#6c63ff"],["short2","2 Mark","#43e97b"],["short3","3 Mark","#4facfe"],["long4","4 Mark","#f7971e"],["long5","5 Mark","#ff6584"],["case","Case Study","#c471f5"],["hotspot","🔥 Hot Topic","#ffd700"]].map(([val,label,color])=>(
+                <button key={val} onClick={()=>setAiType(val)} style={{padding:"6px 14px",borderRadius:20,border:`1.5px solid ${aiType===val?color:"#2a2a3e"}`,background:aiType===val?`${color}22`:"transparent",color:aiType===val?color:"#7878a0",cursor:"pointer",fontWeight:600,fontSize:12,fontFamily:"'DM Sans',sans-serif"}}>{label}</button>
+              ))}
+            </div>
             <label className="form-label">Subject</label>
             <select className="form-input" value={aiSubject} onChange={e=>{setAiSubject(e.target.value);setAiChapter(CHAPTERS[e.target.value]?.[0]||"");}} style={{marginBottom:12}}>
               {SUBJECTS.map(s=><option key={s.name} value={s.name}>{s.name}</option>)}
@@ -1198,7 +1229,7 @@ function AdminPage({userProfile,navigate,handleLogout,handleDeleteQuestion,handl
               <option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option>
             </select>
             <button className="btn-primary" style={{width:"100%",opacity:aiLoading?0.7:1}} onClick={aiGen} disabled={aiLoading}>
-              {aiLoading?"⏳ Generating...":"🤖 Generate with AI"}
+              {aiLoading?"⏳ Generating...":"🤖 Generate Question"}
             </button>
           </div>
         )}
