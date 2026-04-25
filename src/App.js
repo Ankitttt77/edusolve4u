@@ -405,8 +405,7 @@ const fsDel = async (col,id) => deleteDoc(doc(db,col,id));
 const fsGet = async (col,id) => { const d=await getDoc(doc(db,col,id)); return d.exists()?{id:d.id,...d.data()}:null; };
 
 const seedIfEmpty = async () => {
-  const snap = await getDocs(collection(db,"questions"));
-  if(snap.empty) for(const q of SEED_QUESTIONS) await fsAdd("questions",q);
+  for(const q of SEED_QUESTIONS) await fsAdd("questions",q);
 };
 
 // ════════════════════════════════════════════════════════════════════════════
