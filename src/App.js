@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc, getDocs, addDoc, deleteDoc, collection, serverTimestamp } from "firebase/firestore";
@@ -108,293 +108,6 @@ const SEED_QUESTIONS = [
   { subject: "History", chapter: "Modern India", class: "12", type: "mcq", difficulty: "medium", text: "Salt March was in which year?", options: ["1928","1930","1932","1935"], answer: 1, source: "admin", exam: "upsc", year: "2020", explanation: "Dandi March was in 1930." },
 ];
 
-// BULK QUESTIONS — Real Numbers (Mathematics)
-// Copy these into your SEED_QUESTIONS array in App.js
-// OR paste each one manually in Firebase Console
- 
-const BULK_QUESTIONS = [
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "easy",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "What is the HCF of 12 and 18?",
-    options: ["2", "3", "6", "9"],
-    answer: 2,
-    explanation: "Factors of 12: 1,2,3,4,6,12. Factors of 18: 1,2,3,6,9,18. HCF = 6"
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "easy",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "What is the LCM of 4 and 6?",
-    options: ["12", "24", "6", "18"],
-    answer: 0,
-    explanation: "LCM of 4 and 6 = 12. 4×6 / HCF(4,6) = 24/2 = 12"
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "easy",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "Which of the following is a prime number?",
-    options: ["21", "29", "39", "51"],
-    answer: 1,
-    explanation: "29 is divisible only by 1 and 29. 21=3×7, 39=3×13, 51=3×17"
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "medium",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "Fundamental Theorem of Arithmetic states that every composite number can be expressed as:",
-    options: ["Sum of primes", "Product of primes", "Difference of primes", "Division of primes"],
-    answer: 1,
-    explanation: "Every composite number can be uniquely expressed as a product of prime numbers."
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "easy",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "What is the HCF of two co-prime numbers?",
-    options: ["0", "1", "Same number", "Cannot be determined"],
-    answer: 1,
-    explanation: "Co-prime numbers have no common factor other than 1, so their HCF is always 1."
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "easy",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "What is the decimal expansion of 1/4?",
-    options: ["Terminating", "Non-terminating repeating", "Non-terminating non-repeating", "Irrational"],
-    answer: 0,
-    explanation: "1/4 = 0.25 which terminates. Denominator 4 = 2² has only factor 2."
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "easy",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "Which of the following is an irrational number?",
-    options: ["1/2", "√2", "0.25", "3/4"],
-    answer: 1,
-    explanation: "√2 = 1.41421... is non-terminating and non-repeating, hence irrational."
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "medium",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "If a number has prime factors only 2 and 5, its decimal expansion is:",
-    options: ["Non-terminating", "Terminating", "Irrational", "Whole number"],
-    answer: 1,
-    explanation: "A fraction p/q is terminating if q has only 2 and 5 as prime factors."
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "easy",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "What is the HCF of 15 and 25?",
-    options: ["5", "10", "15", "25"],
-    answer: 0,
-    explanation: "15 = 3×5, 25 = 5². Common factor = 5. HCF = 5"
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "easy",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "Which of the following is a composite number?",
-    options: ["2", "3", "5", "9"],
-    answer: 3,
-    explanation: "9 = 3×3 has factors other than 1 and itself, so it is composite."
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "easy",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "What is the LCM of 3 and 5?",
-    options: ["15", "10", "8", "20"],
-    answer: 0,
-    explanation: "3 and 5 are co-prime, so LCM = 3×5 = 15"
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "medium",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "Euclid's Division Lemma is used to find:",
-    options: ["LCM", "HCF", "Prime numbers", "Squares"],
-    answer: 1,
-    explanation: "Euclid's Division Lemma (a = bq + r) is the basis of the algorithm to find HCF."
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "easy",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "Which number is not rational?",
-    options: ["0.5", "2/3", "√3", "-1/4"],
-    answer: 2,
-    explanation: "√3 = 1.732... is non-terminating non-repeating, hence irrational."
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "easy",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "What is the HCF of 8 and 12?",
-    options: ["2", "3", "4", "6"],
-    answer: 2,
-    explanation: "8 = 2³, 12 = 2²×3. HCF = 2² = 4"
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "medium",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "The LCM of two numbers is always:",
-    options: ["Less than both", "Greater than or equal to both", "Equal to HCF", "Prime"],
-    answer: 1,
-    explanation: "LCM is always the smallest number divisible by both, so it is always ≥ both numbers."
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "medium",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "Which of the following fractions has a terminating decimal?",
-    options: ["1/3", "2/7", "5/8", "7/9"],
-    answer: 2,
-    explanation: "5/8 = 5/2³. Denominator has only 2 as prime factor, so decimal terminates. 5/8 = 0.625"
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "medium",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "The decimal expansion of 2/11 is:",
-    options: ["Terminating", "Non-terminating repeating", "Irrational", "Whole number"],
-    answer: 1,
-    explanation: "11 is not of the form 2ⁿ×5ᵐ, so 2/11 = 0.181818... is non-terminating repeating."
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "medium",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "Product of two co-prime numbers is equal to:",
-    options: ["HCF", "LCM", "Sum", "Difference"],
-    answer: 1,
-    explanation: "For co-prime numbers, HCF = 1, so LCM = (a×b)/HCF = a×b = Product."
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "medium",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "What is the HCF of 17 and 19?",
-    options: ["1", "17", "19", "2"],
-    answer: 0,
-    explanation: "17 and 19 are both prime numbers. Two distinct primes are always co-prime, so HCF = 1."
-  },
-  {
-    subject: "Mathematics",
-    chapter: "Real Numbers",
-    class: "10",
-    type: "mcq",
-    difficulty: "easy",
-    exam: "boards",
-    year: "2024",
-    source: "admin",
-    text: "Which of the following is a rational number?",
-    options: ["√5", "π", "0.75", "√7"],
-    answer: 2,
-    explanation: "0.75 = 3/4 which can be expressed as p/q form, so it is rational."
-  },
-];
-
 const calcPoints = (score, timeTaken, totalQ) => Math.round((score/100)*totalQ*10 + Math.max(0,100-Math.floor(timeTaken/10))*0.3);
 const AVATAR_COLORS = ["#6c63ff","#ff6584","#43e97b","#f7971e","#4facfe","#c471f5","#38f9d7"];
 const avatarColor = (id) => { let h=0; for(let c of (id||"x")) h+=c.charCodeAt(0); return AVATAR_COLORS[h%AVATAR_COLORS.length]; };
@@ -405,7 +118,8 @@ const fsDel = async (col,id) => deleteDoc(doc(db,col,id));
 const fsGet = async (col,id) => { const d=await getDoc(doc(db,col,id)); return d.exists()?{id:d.id,...d.data()}:null; };
 
 const seedIfEmpty = async () => {
-  for(const q of SEED_QUESTIONS) await fsAdd("questions",q);
+  const snap = await getDocs(collection(db,"questions"));
+  if(snap.empty) for(const q of SEED_QUESTIONS) await fsAdd("questions",q);
 };
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -509,6 +223,7 @@ export default function App() {
       {page==="exam"&&<ExamPage {...props}/>}
       {page==="result"&&<ResultPage {...props}/>}
       {page==="leaderboard"&&<LeaderboardPage {...props}/>}
+      {currentUser&&<StudyChatBot userProfile={userProfile}/>}
       {page==="admin"&&<AdminPage {...props}/>}
       {page==="addQuestion"&&<AddQuestionPage {...props}/>}
       {page==="search"&&<SearchPage {...props}/>}
@@ -629,6 +344,8 @@ function HomePage({navigate,userProfile,handleLogout}) {
         </div>
       </section>
 
+      <HomeChatSection userProfile={userProfile}/>
+      <StudyChatBot userProfile={userProfile}/>
       <footer style={{borderTop:"1px solid #2a2a3e",padding:"2rem 5%",textAlign:"center",color:"#7878a0",fontSize:13}}>
         <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.3rem",marginBottom:8,display:"inline-block"}}>
           <span style={{background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>EduSolve</span><span style={{color:"#43e97b"}}>4U</span>
@@ -1552,6 +1269,338 @@ function BooksPage({userProfile,navigate,handleLogout}) {
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 const Tag=({label,color})=><span style={{background:`${color}22`,color,border:`1px solid ${color}44`,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{label}</span>;
+
+
+// ─── STUDY CHATBOT COMPONENT ──────────────────────────────────────────────────
+function StudyChatBot({ userProfile }) {
+  const [messages, setMessages] = useState([
+    { role: "ai", text: "Hi! I'm your AI study assistant 🎓 Ask me anything about your subjects — Maths, Physics, Chemistry, Biology, History and more!" }
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const messagesEndRef = React.useRef(null);
+
+  const SUGGESTIONS = [
+    "Explain Pythagoras theorem",
+    "What is Newton's second law?",
+    "How do acids and bases differ?",
+    "What is photosynthesis?",
+    "Solve x² - 5x + 6 = 0",
+    "Explain the French Revolution",
+  ];
+
+  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  useEffect(() => { scrollToBottom(); }, [messages]);
+
+  const sendMessage = async (text) => {
+    const msg = text || input.trim();
+    if (!msg) return;
+    setInput("");
+    setMessages(m => [...m, { role: "user", text: msg }]);
+    setLoading(true);
+
+    try {
+      const GEMINI_KEY = process.env.REACT_APP_GEMINI_KEY;
+      if (!GEMINI_KEY) {
+        setMessages(m => [...m, { role: "ai", text: "⚠️ Gemini API key not configured. Add REACT_APP_GEMINI_KEY in Vercel settings." }]);
+        setLoading(false);
+        return;
+      }
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: `You are EduBot, a friendly and expert study assistant for Indian students (Class 6-12, JEE, NEET, UPSC). 
+Student${userProfile ? " " + userProfile.name : ""} asks: ${msg}
+Give a clear, concise answer with examples where helpful. Use simple language. If it's a math problem, show step-by-step solution. Keep response under 200 words.`
+              }]
+            }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 500 },
+          }),
+        }
+      );
+      const data = await res.json();
+      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't get an answer. Please try again!";
+      setMessages(m => [...m, { role: "ai", text: reply }]);
+    } catch (e) {
+      setMessages(m => [...m, { role: "ai", text: "Something went wrong. Please try again!" }]);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <>
+      {/* Floating bubble */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          position: "fixed", bottom: 24, right: 24, zIndex: 999,
+          width: 56, height: 56, borderRadius: "50%",
+          background: "linear-gradient(135deg,#6c63ff,#ff6584)",
+          border: "none", cursor: "pointer", fontSize: "1.5rem",
+          boxShadow: "0 4px 24px rgba(108,99,255,0.5)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          transition: "transform 0.2s",
+        }}
+        onMouseEnter={e => e.currentTarget.style.transform = "scale(1.1)"}
+        onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+      >
+        {isOpen ? "✕" : "🎓"}
+      </button>
+
+      {/* Chat window */}
+      {isOpen && (
+        <div style={{
+          position: "fixed", bottom: 90, right: 24, zIndex: 998,
+          width: 360, height: 520, background: "#12121a",
+          border: "1px solid #2a2a3e", borderRadius: 20,
+          display: "flex", flexDirection: "column",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+          animation: "slideUp 0.3s ease",
+        }}>
+          {/* Header */}
+          <div style={{
+            padding: "14px 18px", borderBottom: "1px solid #2a2a3e",
+            display: "flex", alignItems: "center", gap: 10,
+          }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: "50%",
+              background: "linear-gradient(135deg,#6c63ff,#ff6584)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "1.1rem",
+            }}>🎓</div>
+            <div>
+              <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 14 }}>EduBot</div>
+              <div style={{ fontSize: 11, color: "#43e97b" }}>● Online — AI Study Assistant</div>
+            </div>
+          </div>
+
+          {/* Messages */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "14px", display: "flex", flexDirection: "column", gap: 10 }}>
+            {messages.map((msg, i) => (
+              <div key={i} style={{
+                display: "flex",
+                justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
+              }}>
+                <div style={{
+                  maxWidth: "80%",
+                  background: msg.role === "user"
+                    ? "linear-gradient(135deg,#6c63ff,#8b7fff)"
+                    : "#1a1a26",
+                  border: msg.role === "ai" ? "1px solid #2a2a3e" : "none",
+                  borderRadius: msg.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                  padding: "10px 14px",
+                  fontSize: 13,
+                  lineHeight: 1.6,
+                  color: "#e8e8f0",
+                  whiteSpace: "pre-wrap",
+                }}>
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div style={{ display: "flex", justifyContent: "flex-start" }}>
+                <div style={{ background: "#1a1a26", border: "1px solid #2a2a3e", borderRadius: "16px 16px 16px 4px", padding: "10px 14px", fontSize: 13, color: "#7878a0" }}>
+                  EduBot is thinking<span className="dots">...</span>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Quick suggestions */}
+          {messages.length <= 1 && (
+            <div style={{ padding: "0 14px 8px", display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {SUGGESTIONS.slice(0, 3).map(s => (
+                <button key={s} onClick={() => sendMessage(s)} style={{
+                  background: "rgba(108,99,255,0.15)", border: "1px solid rgba(108,99,255,0.3)",
+                  borderRadius: 20, padding: "4px 10px", color: "#a89cff",
+                  fontSize: 11, cursor: "pointer", fontWeight: 600,
+                }}>{s}</button>
+              ))}
+            </div>
+          )}
+
+          {/* Input */}
+          <div style={{ padding: "10px 14px", borderTop: "1px solid #2a2a3e", display: "flex", gap: 8 }}>
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && !loading && sendMessage()}
+              placeholder="Ask any doubt..."
+              style={{
+                flex: 1, background: "#1a1a26", border: "1px solid #2a2a3e",
+                borderRadius: 10, padding: "8px 12px", color: "#e8e8f0",
+                fontSize: 13, outline: "none", fontFamily: "'DM Sans',sans-serif",
+              }}
+            />
+            <button
+              onClick={() => sendMessage()}
+              disabled={loading || !input.trim()}
+              style={{
+                background: "linear-gradient(135deg,#6c63ff,#8b7fff)",
+                border: "none", borderRadius: 10, padding: "8px 14px",
+                color: "#fff", cursor: "pointer", fontSize: 14,
+                opacity: loading || !input.trim() ? 0.5 : 1,
+              }}
+            >→</button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── HOME CHATBOT SECTION ────────────────────────────────────────────────────
+function HomeChatSection({ userProfile }) {
+  const [input, setInput] = useState("");
+  const [response, setResponse] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [asked, setAsked] = useState(false);
+
+  const SUGGESTIONS = [
+    "📐 Explain Pythagoras theorem",
+    "⚛️ What is Newton's second law?",
+    "🧪 How do acids and bases differ?",
+    "🧬 What is photosynthesis?",
+    "📊 Solve x² - 5x + 6 = 0",
+    "🏛️ Explain the French Revolution",
+  ];
+
+  const ask = async (text) => {
+    const msg = text || input.trim();
+    if (!msg) return;
+    setInput(msg);
+    setLoading(true);
+    setAsked(true);
+    setResponse("");
+
+    try {
+      const GEMINI_KEY = process.env.REACT_APP_GEMINI_KEY;
+      if (!GEMINI_KEY) { setResponse("⚠️ API key not configured."); setLoading(false); return; }
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: `You are EduBot, a friendly expert study assistant for Indian students (Class 6-12, JEE, NEET, UPSC).
+Student asks: ${msg}
+Give a clear, helpful answer with examples. If math, show steps. Keep it under 150 words.`
+              }]
+            }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 400 },
+          }),
+        }
+      );
+      const data = await res.json();
+      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, couldn't get an answer!";
+      setResponse(reply);
+    } catch { setResponse("Something went wrong. Please try again!"); }
+    setLoading(false);
+  };
+
+  return (
+    <section style={{ padding: "5rem 5%", background: "#0a0a0f" }}>
+      <div style={{ maxWidth: 800, margin: "0 auto", textAlign: "center" }}>
+        <div className="section-label">AI Study Assistant</div>
+        <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 800, fontSize: "clamp(2rem,4vw,3rem)", letterSpacing: "-1.5px", marginBottom: 8 }}>
+          Hi {userProfile ? userProfile.name.split(" ")[0] : "there"} 👋<br />
+          <span style={{ background: "linear-gradient(135deg,#6c63ff,#ff6584)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Where should we start?</span>
+        </h2>
+        <p style={{ color: "#7878a0", marginBottom: 32, fontSize: "1rem" }}>Ask any doubt — Maths, Science, History, anything!</p>
+
+        {/* Input box */}
+        <div style={{
+          background: "#12121a", border: "1px solid #2a2a3e", borderRadius: 20,
+          padding: "18px 20px", marginBottom: 20, textAlign: "left",
+          boxShadow: "0 8px 40px rgba(108,99,255,0.1)",
+        }}>
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && !loading && ask()}
+            placeholder="Ask EduBot anything..."
+            style={{
+              width: "100%", background: "transparent", border: "none",
+              color: "#e8e8f0", fontSize: "1rem", outline: "none",
+              fontFamily: "'DM Sans',sans-serif", marginBottom: 14,
+            }}
+          />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ fontSize: 12, color: "#7878a0" }}>Powered by Gemini AI</div>
+            <button
+              onClick={() => ask()}
+              disabled={loading || !input.trim()}
+              style={{
+                background: "linear-gradient(135deg,#6c63ff,#8b7fff)",
+                border: "none", borderRadius: 12, padding: "8px 20px",
+                color: "#fff", cursor: "pointer", fontWeight: 600, fontSize: 14,
+                opacity: loading || !input.trim() ? 0.5 : 1,
+                fontFamily: "'DM Sans',sans-serif",
+              }}
+            >{loading ? "Thinking..." : "Ask →"}</button>
+          </div>
+        </div>
+
+        {/* Response */}
+        {asked && (
+          <div style={{
+            background: "#12121a", border: "1px solid #2a2a3e", borderRadius: 20,
+            padding: "18px 20px", marginBottom: 20, textAlign: "left",
+            animation: "fadeIn 0.3s ease",
+          }}>
+            <div style={{ display: "flex", gap: 10, marginBottom: 10, alignItems: "center" }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: "50%",
+                background: "linear-gradient(135deg,#6c63ff,#ff6584)",
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.8rem",
+              }}>🎓</div>
+              <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 14, color: "#6c63ff" }}>EduBot</span>
+            </div>
+            {loading
+              ? <div style={{ color: "#7878a0", fontSize: 14 }}>EduBot is thinking...</div>
+              : <div style={{ fontSize: 14, lineHeight: 1.7, color: "#e8e8f0", whiteSpace: "pre-wrap" }}>{response}</div>
+            }
+          </div>
+        )}
+
+        {/* Suggestion pills */}
+        {!asked && (
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+            {SUGGESTIONS.map(s => (
+              <button key={s} onClick={() => ask(s.slice(2))} style={{
+                background: "#12121a", border: "1px solid #2a2a3e",
+                borderRadius: 50, padding: "8px 18px", color: "#7878a0",
+                cursor: "pointer", fontSize: 13, fontWeight: 500,
+                transition: "all 0.2s", fontFamily: "'DM Sans',sans-serif",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor="#6c63ff"; e.currentTarget.style.color="#e8e8f0"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor="#2a2a3e"; e.currentTarget.style.color="#7878a0"; }}
+              >{s}</button>
+            ))}
+          </div>
+        )}
+
+        {asked && (
+          <button onClick={() => { setAsked(false); setInput(""); setResponse(""); }} style={{
+            background: "transparent", border: "1px solid #2a2a3e", borderRadius: 20,
+            padding: "8px 20px", color: "#7878a0", cursor: "pointer",
+            fontSize: 13, marginTop: 8, fontFamily: "'DM Sans',sans-serif",
+          }}>Ask another question</button>
+        )}
+      </div>
+    </section>
+  );
+}
 
 // ─── GLOBAL CSS ───────────────────────────────────────────────────────────────
 const GLOBAL_CSS=`
