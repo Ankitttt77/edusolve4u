@@ -1632,3 +1632,4 @@ textarea.form-input{display:block;}
 .spin{animation:spin .8s linear infinite;}
 @keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 `;
+
