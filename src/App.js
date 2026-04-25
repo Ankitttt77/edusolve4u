@@ -305,6 +305,8 @@ function HomePage({navigate,userProfile,handleLogout}) {
         </div>
       </section>
 
+      <HomeChatSection userProfile={userProfile}/>
+
       {/* Exam Hubs Preview */}
       <section style={{padding:"5rem 5%",background:"#0d0d14"}}>
         <div style={{textAlign:"center",marginBottom:"2.5rem"}}>
@@ -344,7 +346,6 @@ function HomePage({navigate,userProfile,handleLogout}) {
         </div>
       </section>
 
-      <HomeChatSection userProfile={userProfile}/>
       <StudyChatBot userProfile={userProfile}/>
       <footer style={{borderTop:"1px solid #2a2a3e",padding:"2rem 5%",textAlign:"center",color:"#7878a0",fontSize:13}}>
         <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.3rem",marginBottom:8,display:"inline-block"}}>
