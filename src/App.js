@@ -237,9 +237,28 @@ export default function App() {
       const data = await res.json();
       const raw = data.candidates?.[0]?.content?.parts?.[0]?.text||"";
       if(!raw) { showToast("AI returned empty response","error"); return; }
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      if(!jsonMatch) { showToast("Could not parse AI response","error"); return; }
-      const parsed = JSON.parse(jsonMatch[0]);
+      // Try multiple ways to extract JSON
+      let parsed = null;
+      try {
+        // Try direct parse first
+        parsed = JSON.parse(raw.trim());
+      } catch {
+        try {
+          // Try extracting JSON from response
+          const jsonMatch = raw.match(/\{[\s\S]*?"answer"[\s\S]*?\}/);
+          if(jsonMatch) parsed = JSON.parse(jsonMatch[0]);
+        } catch {
+          try {
+            // Try cleaning backticks
+            const clean = raw.replace(/```json|```/g,"").trim();
+            parsed = JSON.parse(clean);
+          } catch {
+            showToast("Could not parse AI response. Try again.","error");
+            return;
+          }
+        }
+      }
+      if(!parsed||!parsed.text||!parsed.options) { showToast("Invalid question format. Try again.","error"); return; }
       await fsAdd("questions",{subject,chapter,class:"10",type:"mcq",difficulty,source:"ai",exam:"boards",year:new Date().getFullYear().toString(),...parsed});
       showToast("AI question generated & saved! 🤖");
     } catch(e) { showToast("Error: "+e.message,"error"); }
@@ -1698,4 +1717,3 @@ textarea.form-input{display:block;}
 .spin{animation:spin .8s linear infinite;}
 @keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 `;
-
