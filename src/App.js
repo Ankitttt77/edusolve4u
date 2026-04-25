@@ -1318,10 +1318,10 @@ function StudyChatBot({ userProfile }) {
               parts: [{
                 text: `You are EduBot, a friendly and expert study assistant for Indian students (Class 6-12, JEE, NEET, UPSC). 
 Student${userProfile ? " " + userProfile.name : ""} asks: ${msg}
-Give a clear, concise answer with examples where helpful. Use simple language. If it's a math problem, show step-by-step solution. Keep response under 200 words.`
+Give a clear, concise answer with examples where helpful. Use simple language. If it's a math problem, show step-by-step solution. Give a complete, detailed answer in 3-5 sentences with examples. Never cut off mid-sentence.`
               }]
             }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 500 },
+            generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
           }),
         }
       );
@@ -1484,7 +1484,7 @@ function HomeChatSection({ userProfile }) {
 
     try {
       const GEMINI_KEY = process.env.REACT_APP_GEMINI_KEY;
-      if (!GEMINI_KEY) { setResponse("⚠️ Key missing: " + typeof GEMINI_KEY); setLoading(false); return; }
+      if (!GEMINI_KEY) { setResponse("⚠️ API key not configured."); setLoading(false); return; }
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
         {
@@ -1495,10 +1495,10 @@ function HomeChatSection({ userProfile }) {
               parts: [{
                 text: `You are EduBot, a friendly expert study assistant for Indian students (Class 6-12, JEE, NEET, UPSC).
 Student asks: ${msg}
-Give a clear, helpful answer with examples. If math, show steps. Keep it under 150 words.`
+Give a clear, helpful answer with examples. If math, show steps. Give a complete answer in 3-5 sentences. Never leave the answer incomplete.`
               }]
             }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 400 },
+            generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
           }),
         }
       );
@@ -1632,3 +1632,4 @@ textarea.form-input{display:block;}
 .spin{animation:spin .8s linear infinite;}
 @keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 `;
+
