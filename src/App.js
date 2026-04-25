@@ -58,6 +58,16 @@ const EXAM_HUBS = [
       { title: "NCERT Chemistry Class 12", subject: "Chemistry", url: "https://ncert.nic.in/textbook.php?lech1=0-16" },
       { title: "RD Sharma Mathematics", subject: "Mathematics", url: "https://archive.org/search?query=RD+Sharma+Mathematics" },
       { title: "Arihant 40 Years JEE Papers", subject: "Mixed", url: "https://archive.org/search?query=JEE+previous+papers" },
+    ],
+    papers: [
+      { title: "JEE Main 2024 — January Session", type: "pyq", year: "2024", url: "https://jeemain.nta.ac.in/webinfo2024/Page/Page?PageId=1&LangId=P" },
+      { title: "JEE Main 2023 — All Shifts", type: "pyq", year: "2023", url: "https://jeemain.nta.ac.in/webinfo2023/Page/Page?PageId=1&LangId=P" },
+      { title: "JEE Main 2022 Question Paper", type: "pyq", year: "2022", url: "https://jeemain.nta.ac.in/webinfo2022/Page/Page?PageId=1&LangId=P" },
+      { title: "JEE Advanced 2024 Paper 1 & 2", type: "pyq", year: "2024", url: "https://jeeadv.ac.in/past_qps.html" },
+      { title: "JEE Advanced 2023 Paper 1 & 2", type: "pyq", year: "2023", url: "https://jeeadv.ac.in/past_qps.html" },
+      { title: "JEE Main Sample Paper — Physics", type: "sample", year: "2024", url: "https://jeemain.nta.ac.in/webinfo2024/Page/Page?PageId=1&LangId=P" },
+      { title: "JEE Main Sample Paper — Chemistry", type: "sample", year: "2024", url: "https://jeemain.nta.ac.in/webinfo2024/Page/Page?PageId=1&LangId=P" },
+      { title: "JEE Main Sample Paper — Maths", type: "sample", year: "2024", url: "https://jeemain.nta.ac.in/webinfo2024/Page/Page?PageId=1&LangId=P" },
     ]
   },
   {
@@ -70,6 +80,15 @@ const EXAM_HUBS = [
       { title: "DC Pandey Physics for NEET", subject: "Physics", url: "https://archive.org/search?query=DC+Pandey+Physics+NEET" },
       { title: "MS Chauhan Organic Chemistry", subject: "Chemistry", url: "https://archive.org/search?query=MS+Chauhan+Organic+Chemistry" },
       { title: "MTG 33 Years NEET Papers", subject: "Mixed", url: "https://archive.org/search?query=NEET+previous+papers" },
+    ],
+    papers: [
+      { title: "NEET 2024 Official Question Paper", type: "pyq", year: "2024", url: "https://neet.nta.nic.in/" },
+      { title: "NEET 2023 Question Paper with Solutions", type: "pyq", year: "2023", url: "https://neet.nta.nic.in/" },
+      { title: "NEET 2022 Question Paper", type: "pyq", year: "2022", url: "https://neet.nta.nic.in/" },
+      { title: "NEET 2021 Question Paper", type: "pyq", year: "2021", url: "https://neet.nta.nic.in/" },
+      { title: "NEET Sample Paper — Biology", type: "sample", year: "2024", url: "https://neet.nta.nic.in/" },
+      { title: "NEET Sample Paper — Physics & Chemistry", type: "sample", year: "2024", url: "https://neet.nta.nic.in/" },
+      { title: "NEET Mock Test — Full Syllabus", type: "sample", year: "2024", url: "https://neet.nta.nic.in/" },
     ]
   },
   {
@@ -82,6 +101,15 @@ const EXAM_HUBS = [
       { title: "Indian Economy - Ramesh Singh", subject: "Economics", url: "https://archive.org/search?query=Ramesh+Singh+Indian+Economy" },
       { title: "Certificate Physical Geography - GC Leong", subject: "Geography", url: "https://archive.org/search?query=GC+Leong+Geography" },
       { title: "UPSC Previous Year Papers", subject: "Mixed", url: "https://upsc.gov.in/examinations/previous-question-papers" },
+    ],
+    papers: [
+      { title: "UPSC Civil Services Prelims 2024 — GS Paper 1", type: "pyq", year: "2024", url: "https://upsc.gov.in/examinations/previous-question-papers" },
+      { title: "UPSC Civil Services Prelims 2023 — GS Paper 1", type: "pyq", year: "2023", url: "https://upsc.gov.in/examinations/previous-question-papers" },
+      { title: "UPSC Civil Services Prelims 2022", type: "pyq", year: "2022", url: "https://upsc.gov.in/examinations/previous-question-papers" },
+      { title: "UPSC Mains 2024 — GS Papers 1-4", type: "pyq", year: "2024", url: "https://upsc.gov.in/examinations/previous-question-papers" },
+      { title: "UPSC Mains 2023 — GS Papers 1-4", type: "pyq", year: "2023", url: "https://upsc.gov.in/examinations/previous-question-papers" },
+      { title: "UPSC CSAT Sample Paper 2024", type: "sample", year: "2024", url: "https://upsc.gov.in/examinations/previous-question-papers" },
+      { title: "UPSC Mock Test — Indian History & Polity", type: "sample", year: "2024", url: "https://upsc.gov.in/examinations/previous-question-papers" },
     ]
   },
   {
@@ -94,6 +122,16 @@ const EXAM_HUBS = [
       { title: "NCERT Mathematics Class 12", subject: "Mathematics", url: "https://ncert.nic.in/textbook.php?lemh1=0-13" },
       { title: "NCERT Physics Class 12", subject: "Physics", url: "https://ncert.nic.in/textbook.php?leph1=0-15" },
       { title: "Together With Science Class 10", subject: "Science", url: "https://archive.org/search?query=Together+With+Science+Class+10" },
+    ],
+    papers: [
+      { title: "CBSE Class 10 Maths Board Paper 2024", type: "pyq", year: "2024", url: "https://cbseacademic.nic.in/SQP_CLASSX_2023-24.html" },
+      { title: "CBSE Class 10 Science Board Paper 2024", type: "pyq", year: "2024", url: "https://cbseacademic.nic.in/SQP_CLASSX_2023-24.html" },
+      { title: "CBSE Class 12 Physics Board Paper 2024", type: "pyq", year: "2024", url: "https://cbseacademic.nic.in/SQP_CLASSXII_2023-24.html" },
+      { title: "CBSE Class 12 Chemistry Board Paper 2024", type: "pyq", year: "2024", url: "https://cbseacademic.nic.in/SQP_CLASSXII_2023-24.html" },
+      { title: "CBSE Class 12 Maths Board Paper 2024", type: "pyq", year: "2024", url: "https://cbseacademic.nic.in/SQP_CLASSXII_2023-24.html" },
+      { title: "CBSE Class 10 Sample Paper 2024-25", type: "sample", year: "2025", url: "https://cbseacademic.nic.in/SQP_CLASSX_2024-25.html" },
+      { title: "CBSE Class 12 Sample Paper 2024-25", type: "sample", year: "2025", url: "https://cbseacademic.nic.in/SQP_CLASSXII_2024-25.html" },
+      { title: "CBSE Class 10 Science Sample Paper 2025", type: "sample", year: "2025", url: "https://cbseacademic.nic.in/SQP_CLASSX_2024-25.html" },
     ]
   },
 ];
@@ -409,9 +447,9 @@ function ExamHubPage({userProfile,navigate,handleLogout,examHub,showToast}) {
 
         {/* Tabs */}
         <div style={{display:"flex",gap:4,marginBottom:24,background:"#12121a",border:"1px solid #2a2a3e",borderRadius:14,padding:4,width:"fit-content"}}>
-          {["practice","books"].map(t=>(
-            <button key={t} onClick={()=>setTab(t)} style={{padding:"8px 20px",borderRadius:10,border:"none",cursor:"pointer",background:tab===t?"#6c63ff":"transparent",color:tab===t?"#fff":"#7878a0",fontWeight:600,fontSize:13,fontFamily:"'DM Sans',sans-serif",textTransform:"capitalize"}}>
-              {t==="practice"?"🎯 Practice":"📚 Books"}
+          {["practice","books","papers"].map(t=>(
+            <button key={t} onClick={()=>setTab(t)} style={{padding:"8px 20px",borderRadius:10,border:"none",cursor:"pointer",background:tab===t?"#6c63ff":"transparent",color:tab===t?"#fff":"#7878a0",fontWeight:600,fontSize:13,fontFamily:"'DM Sans',sans-serif"}}>
+              {t==="practice"?"🎯 Practice":t==="books"?"📚 Books":"📝 Papers & PYQs"}
             </button>
           ))}
         </div>
@@ -446,6 +484,34 @@ function ExamHubPage({userProfile,navigate,handleLogout,examHub,showToast}) {
                   <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:14,lineHeight:1.4}}>{book.title}</div>
                   <div style={{fontSize:12,color:"#7878a0"}}>{book.subject}</div>
                   <a href={book.url} target="_blank" rel="noreferrer" style={{marginTop:"auto",background:"linear-gradient(135deg,#6c63ff,#8b7fff)",color:"#fff",border:"none",borderRadius:10,padding:"8px 16px",textAlign:"center",textDecoration:"none",fontSize:13,fontWeight:600,display:"block"}}>📥 Download / View</a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab==="papers" && (
+          <div>
+            <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
+              <div style={{background:"rgba(108,99,255,0.15)",border:"1px solid rgba(108,99,255,0.3)",borderRadius:20,padding:"4px 14px",fontSize:12,color:"#a89cff",fontWeight:600}}>📝 Sample Papers</div>
+              <div style={{background:"rgba(247,151,30,0.15)",border:"1px solid rgba(247,151,30,0.3)",borderRadius:20,padding:"4px 14px",fontSize:12,color:"#f7971e",fontWeight:600}}>🏆 Previous Year Questions</div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:12}}>
+              {(activeHub.papers||[]).map((paper,i)=>(
+                <div key={i} style={{background:"#12121a",border:`1px solid ${paper.type==="pyq"?"rgba(247,151,30,0.3)":"rgba(108,99,255,0.3)"}`,borderRadius:18,padding:"1.5rem",display:"flex",flexDirection:"column",gap:10}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <span style={{fontSize:"1.8rem"}}>{paper.type==="pyq"?"🏆":"📝"}</span>
+                    <div style={{display:"flex",gap:6}}>
+                      <span style={{background:paper.type==="pyq"?"rgba(247,151,30,0.2)":"rgba(108,99,255,0.2)",color:paper.type==="pyq"?"#f7971e":"#a89cff",border:`1px solid ${paper.type==="pyq"?"rgba(247,151,30,0.4)":"rgba(108,99,255,0.4)"}`,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:700}}>
+                        {paper.type==="pyq"?"PYQ":"Sample"}
+                      </span>
+                      <span style={{background:"rgba(67,233,123,0.15)",color:"#43e97b",border:"1px solid rgba(67,233,123,0.3)",borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:700}}>{paper.year}</span>
+                    </div>
+                  </div>
+                  <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:14,lineHeight:1.4}}>{paper.title}</div>
+                  <a href={paper.url} target="_blank" rel="noreferrer" style={{marginTop:"auto",background:paper.type==="pyq"?"linear-gradient(135deg,#f7971e,#ffd700)":"linear-gradient(135deg,#6c63ff,#8b7fff)",color:paper.type==="pyq"?"#0a0a0f":"#fff",border:"none",borderRadius:10,padding:"8px 16px",textAlign:"center",textDecoration:"none",fontSize:13,fontWeight:600,display:"block"}}>
+                    {paper.type==="pyq"?"📥 Download PYQ":"📥 Download Sample Paper"}
+                  </a>
                 </div>
               ))}
             </div>
