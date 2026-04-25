@@ -1484,7 +1484,7 @@ function HomeChatSection({ userProfile }) {
 
     try {
       const GEMINI_KEY = process.env.REACT_APP_GEMINI_KEY;
-      if (!GEMINI_KEY) { setResponse("⚠️ API key not configured."); setLoading(false); return; }
+      if (!GEMINI_KEY) { setResponse("⚠️ Key missing: " + typeof GEMINI_KEY); setLoading(false); return; }
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
         {
