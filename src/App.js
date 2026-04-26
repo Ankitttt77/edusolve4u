@@ -226,41 +226,56 @@ export default function App() {
     try {
       const GEMINI_KEY = process.env.REACT_APP_GEMINI_KEY;
       if(!GEMINI_KEY) { showToast("Add REACT_APP_GEMINI_KEY in Vercel settings","error"); return; }
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          contents:[{parts:[{text:`You are a teacher. Create one MCQ for class 10 ${subject} - ${chapter} at ${difficulty} difficulty. Respond with ONLY this JSON, nothing else: {"text":"question","options":["A","B","C","D"],"answer":0,"explanation":"reason"} where answer is 0,1,2 or 3.`}]}],
-          generationConfig:{temperature:0.7,maxOutputTokens:400},
-        }),
-      });
-      const data = await res.json();
-      const raw = data.candidates?.[0]?.content?.parts?.[0]?.text||"";
-      if(!raw) { showToast("AI returned empty response","error"); return; }
-      // Try multiple ways to extract JSON
-      let parsed = null;
-      try {
-        // Try direct parse first
-        parsed = JSON.parse(raw.trim());
-      } catch {
-        try {
-          // Try extracting JSON from response
-          const jsonMatch = raw.match(/\{[\s\S]*?"answer"[\s\S]*?\}/);
-          if(jsonMatch) parsed = JSON.parse(jsonMatch[0]);
-        } catch {
-          try {
-            // Try cleaning backticks
-            const clean = raw.replace(/```json|```/g,"").trim();
-            parsed = JSON.parse(clean);
-          } catch {
-            showToast("Could not parse AI response. Try again.","error");
-            return;
-          }
+      
+      const prompt = getAIPrompt(subject, chapter, difficulty, aiType);
+      
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
+        {
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({
+            contents:[{parts:[{text: prompt}]}],
+            generationConfig:{temperature:0.3, maxOutputTokens:1024},
+          }),
         }
+      );
+      
+      const data = await res.json();
+      
+      // Check for API errors
+      if(data.error) { showToast("API Error: "+data.error.message,"error"); return; }
+      
+      const raw = data.candidates?.[0]?.content?.parts?.[0]?.text||"";
+      if(!raw) { showToast("AI returned empty. Check your API key in Vercel settings.","error"); return; }
+      
+      // Extract JSON from response
+      let parsed = null;
+      const cleaned = raw.replace(/```json|```/g,"").trim();
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+      if(jsonMatch) {
+        try { parsed = JSON.parse(jsonMatch[0]); } 
+        catch { showToast("Could not parse response. Try again.","error"); return; }
+      } else {
+        showToast("No JSON found in response. Try again.","error"); return;
       }
-      if(!parsed||!parsed.text||!parsed.options) { showToast("Invalid question format. Try again.","error"); return; }
-      await fsAdd("questions",{subject,chapter,class:"10",type:"mcq",difficulty,source:"ai",exam:"boards",year:new Date().getFullYear().toString(),...parsed});
-      showToast("AI question generated & saved! 🤖");
+      
+      if(!parsed||!parsed.text) { showToast("Invalid format. Try again.","error"); return; }
+      
+      // Save with correct type info
+      const isSubjective = aiType==="short2"||aiType==="short3"||aiType==="long4"||aiType==="long5"||aiType==="case";
+      const qType = aiType==="short2"||aiType==="short3"?"short":aiType==="long4"||aiType==="long5"?"long":aiType==="case"?"case":"mcq";
+      const marks = aiType==="short2"?2:aiType==="short3"?3:aiType==="long4"?4:aiType==="long5"?5:aiType==="case"?4:1;
+      
+      await fsAdd("questions",{
+        subject, chapter, class:"10", difficulty, source:"ai",
+        exam:"boards", year:new Date().getFullYear().toString(),
+        type: qType, marks, hotspot: aiType==="hotspot",
+        ...parsed,
+        // For subjective questions, store answer as explanation if needed
+        options: isSubjective ? [] : (parsed.options||[]),
+      });
+      showToast("Question generated & saved! 🤖");
     } catch(e) { showToast("Error: "+e.message,"error"); }
   };
 
