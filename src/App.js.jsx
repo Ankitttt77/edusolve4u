@@ -161,6 +161,19 @@ const seedIfEmpty = async () => {
 };
 
 // ════════════════════════════════════════════════════════════════════════════
+// ─── AI PROMPT GENERATOR ─────────────────────────────────────────────────────
+function getAIPrompt(subject, chapter, difficulty, type) {
+  const base = "class 10 " + subject + " topic: " + chapter + ", difficulty: " + difficulty;
+  if (type === "mcq") return "Create one MCQ for " + base + ". Respond with ONLY this JSON, no extra text, no markdown: {"text":"question?","options":["A","B","C","D"],"answer":1,"explanation":"reason","type":"mcq","marks":1,"hotspot":false}";
+  if (type === "short2") return "Create one 2-mark short answer question for " + base + ". Respond with ONLY this JSON: {"text":"question?","answer":"model answer in 2-3 lines","explanation":"key points","type":"short","marks":2,"hotspot":false}";
+  if (type === "short3") return "Create one 3-mark short answer question for " + base + ". Respond with ONLY this JSON: {"text":"question?","answer":"model answer in 3-4 lines","explanation":"examiner tips","type":"short","marks":3,"hotspot":false}";
+  if (type === "long4") return "Create one 4-mark long answer question for " + base + ". Respond with ONLY this JSON: {"text":"question?","answer":"detailed model answer with all key points","explanation":"marks breakdown","type":"long","marks":4,"hotspot":false}";
+  if (type === "long5") return "Create one 5-mark long answer question for " + base + ". Respond with ONLY this JSON: {"text":"question?","answer":"comprehensive model answer with introduction, main points and conclusion","explanation":"full marks tips","type":"long","marks":5,"hotspot":false}";
+  if (type === "case") return "Create one case study based question for " + base + ". Respond with ONLY this JSON: {"text":"[Short paragraph scenario]. Based on the above: (i) First sub-question (ii) Second sub-question","answer":"(i) Answer one (ii) Answer two","explanation":"concepts tested","type":"case","marks":4,"hotspot":false}";
+  if (type === "hotspot") return "Create one HIGH PROBABILITY exam question for " + base + " that is very likely to appear in CBSE board exams. Respond with ONLY this JSON: {"text":"question?","options":["A","B","C","D"],"answer":1,"explanation":"reason + why frequently asked","type":"mcq","marks":1,"hotspot":true}";
+  return "Create one MCQ for " + base + ". Respond with ONLY this JSON: {"text":"question?","options":["A","B","C","D"],"answer":1,"explanation":"reason","type":"mcq","marks":1,"hotspot":false}";
+}
+
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
@@ -227,7 +240,16 @@ export default function App() {
       const GEMINI_KEY = process.env.REACT_APP_GEMINI_KEY;
       if(!GEMINI_KEY) { showToast("Add REACT_APP_GEMINI_KEY in Vercel settings","error"); return; }
       
-      const prompt = getAIPrompt(subject, chapter, difficulty, aiType);
+      const promptMap = {
+        mcq: `Create one MCQ for class 10 ${subject} - ${chapter} at ${difficulty} difficulty. Respond with ONLY this JSON: {"text":"question?","options":["A","B","C","D"],"answer":1,"explanation":"reason","type":"mcq","marks":1,"hotspot":false}`,
+        short2: `Create one 2-mark short answer question for class 10 ${subject} - ${chapter} at ${difficulty} difficulty. Respond with ONLY this JSON: {"text":"question?","answer":"model answer in 2-3 lines","explanation":"key points","type":"short","marks":2,"hotspot":false}`,
+        short3: `Create one 3-mark short answer question for class 10 ${subject} - ${chapter} at ${difficulty} difficulty. Respond with ONLY this JSON: {"text":"question?","answer":"model answer in 3-4 lines","explanation":"key points","type":"short","marks":3,"hotspot":false}`,
+        long4: `Create one 4-mark long answer question for class 10 ${subject} - ${chapter} at ${difficulty} difficulty. Respond with ONLY this JSON: {"text":"question?","answer":"detailed model answer","explanation":"marks breakdown","type":"long","marks":4,"hotspot":false}`,
+        long5: `Create one 5-mark long answer question for class 10 ${subject} - ${chapter} at ${difficulty} difficulty. Respond with ONLY this JSON: {"text":"question?","answer":"comprehensive model answer","explanation":"full marks tips","type":"long","marks":5,"hotspot":false}`,
+        case: `Create one case study question for class 10 ${subject} - ${chapter}. Respond with ONLY this JSON: {"text":"[Short scenario]. Based on the above: (i) sub-question1 (ii) sub-question2 (iii) sub-question3","answer":"(i) answer1 (ii) answer2 (iii) answer3","explanation":"concepts tested","type":"case","marks":4,"hotspot":false}`,
+        hotspot: `Create one HIGH PROBABILITY CBSE board exam MCQ for class 10 ${subject} - ${chapter}. Respond with ONLY this JSON: {"text":"question?","options":["A","B","C","D"],"answer":1,"explanation":"reason + why frequently asked","type":"mcq","marks":1,"hotspot":true}`,
+      };
+      const prompt = promptMap[aiType] || promptMap.mcq;
       
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
