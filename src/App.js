@@ -1777,14 +1777,193 @@ Give a clear, helpful answer with examples. If math, show steps. Give a complete
 
 
 // ─── PAPER GENERATOR PAGE ────────────────────────────────────────────────────
+// ─── ALL EXAM FORMAT TEMPLATES ───────────────────────────────────────────────
+const EXAM_FORMATS = {
+  cbse10: {
+    name: "CBSE Class X Board",
+    board: "Central Board of Secondary Education",
+    totalMarks: 80,
+    time: "3 Hours",
+    subjects: ["Mathematics","Science","Social Science","English"],
+    instructions: [
+      "This question paper contains 5 sections — A, B, C, D and E.",
+      "Section A has 20 MCQs carrying 1 mark each.",
+      "Section B has 6 questions carrying 2 marks each.",
+      "Section C has 7 questions carrying 3 marks each.",
+      "Section D has 3 questions carrying 5 marks each.",
+      "Section E has 3 case study questions carrying 4 marks each.",
+      "All questions are compulsory. However, internal choices are provided.",
+      "Draw neat, labelled diagrams wherever necessary.",
+    ],
+    sections: [
+      { name:"A", type:"mcq",   count:20, marksEach:1, note:"Multiple Choice Questions — 1 mark each. Choose the most appropriate option." },
+      { name:"B", type:"short", count:6,  marksEach:2, note:"Very Short Answer Questions — 2 marks each. Answer in 30-50 words." },
+      { name:"C", type:"short", count:7,  marksEach:3, note:"Short Answer Questions — 3 marks each. Answer in 50-80 words." },
+      { name:"D", type:"long",  count:3,  marksEach:5, note:"Long Answer Questions — 5 marks each. Answer in 80-120 words." },
+      { name:"E", type:"case",  count:3,  marksEach:4, note:"Case Study Based Questions — 4 marks each. Read passage carefully." },
+    ],
+  },
+  cbse12: {
+    name: "CBSE Class XII Board",
+    board: "Central Board of Secondary Education",
+    totalMarks: 80,
+    time: "3 Hours",
+    subjects: ["Physics","Chemistry","Mathematics","Biology","English","History","Geography","Economics"],
+    instructions: [
+      "This question paper contains 5 sections — A, B, C, D and E.",
+      "Section A: 16 MCQs + 4 Assertion-Reason = 20 questions × 1 mark.",
+      "Section B: 5 Very Short Answer questions × 2 marks.",
+      "Section C: 7 Short Answer questions × 3 marks.",
+      "Section D: 2 Long Answer questions × 5 marks.",
+      "Section E: 3 Case Study/Source Based questions × 4 marks.",
+      "Internal choices are given in some questions.",
+      "Use of calculators is NOT permitted.",
+    ],
+    sections: [
+      { name:"A", type:"mcq",   count:20, marksEach:1, note:"MCQs and Assertion-Reason questions — 1 mark each." },
+      { name:"B", type:"short", count:5,  marksEach:2, note:"Very Short Answer — 2 marks each. Answer in 30-50 words." },
+      { name:"C", type:"short", count:7,  marksEach:3, note:"Short Answer — 3 marks each. Answer in 50-80 words." },
+      { name:"D", type:"long",  count:2,  marksEach:5, note:"Long Answer — 5 marks each. Detailed answer required." },
+      { name:"E", type:"case",  count:3,  marksEach:4, note:"Case Study/Source Based — 4 marks each." },
+    ],
+  },
+  jee_main: {
+    name: "JEE Main",
+    board: "National Testing Agency (NTA)",
+    totalMarks: 300,
+    time: "3 Hours",
+    subjects: ["Physics","Chemistry","Mathematics"],
+    instructions: [
+      "This paper has 3 subjects — Physics, Chemistry and Mathematics.",
+      "Each subject has 30 questions: 20 MCQs + 10 Numerical Value questions.",
+      "MCQs: +4 marks for correct, -1 mark for wrong answer.",
+      "Numerical Value Questions: +4 for correct, NO negative marking.",
+      "Only one option is correct in MCQ section.",
+      "Use of electronic devices is strictly prohibited.",
+      "Rough work should be done in the space provided.",
+    ],
+    sections: [
+      { name:"Physics MCQ",     type:"mcq",   count:20, marksEach:4,  note:"Physics — Multiple Choice. +4 correct, -1 wrong. Only ONE correct option." },
+      { name:"Physics Numeric", type:"short", count:10, marksEach:4,  note:"Physics — Numerical Value. Enter integer/decimal answer. No negative marking." },
+      { name:"Chemistry MCQ",   type:"mcq",   count:20, marksEach:4,  note:"Chemistry — Multiple Choice. +4 correct, -1 wrong." },
+      { name:"Chemistry Num",   type:"short", count:10, marksEach:4,  note:"Chemistry — Numerical Value. No negative marking." },
+      { name:"Maths MCQ",       type:"mcq",   count:20, marksEach:4,  note:"Mathematics — Multiple Choice. +4 correct, -1 wrong." },
+      { name:"Maths Numeric",   type:"short", count:10, marksEach:4,  note:"Mathematics — Numerical Value. No negative marking." },
+    ],
+  },
+  jee_advanced: {
+    name: "JEE Advanced — Paper 1",
+    board: "IIT Joint Admission Board",
+    totalMarks: 180,
+    time: "3 Hours",
+    subjects: ["Physics","Chemistry","Mathematics"],
+    instructions: [
+      "This paper consists of 3 sections — Physics, Chemistry, Mathematics.",
+      "Section 1: MCQ with ONE correct option (+3, -1).",
+      "Section 2: MCQ with ONE OR MORE correct options (+4, partial +1, -2).",
+      "Section 3: Numerical Answer Type — no negative marking (+4).",
+      "Answers must be filled in the OMR sheet carefully.",
+      "Calculators and electronic devices are NOT allowed.",
+    ],
+    sections: [
+      { name:"Physics S1",    type:"mcq",   count:6,  marksEach:3, note:"Single Correct MCQ — Physics. +3 correct, -1 wrong." },
+      { name:"Physics S2",    type:"mcq",   count:6,  marksEach:4, note:"One or More Correct MCQ — Physics. +4 all correct, partial marks, -2 wrong." },
+      { name:"Physics S3",    type:"short", count:6,  marksEach:4, note:"Numerical Answer Type — Physics. No negative marking." },
+      { name:"Chemistry S1",  type:"mcq",   count:6,  marksEach:3, note:"Single Correct MCQ — Chemistry." },
+      { name:"Chemistry S2",  type:"mcq",   count:6,  marksEach:4, note:"One or More Correct — Chemistry." },
+      { name:"Chemistry S3",  type:"short", count:6,  marksEach:4, note:"Numerical Answer Type — Chemistry." },
+      { name:"Maths S1",      type:"mcq",   count:6,  marksEach:3, note:"Single Correct MCQ — Mathematics." },
+      { name:"Maths S2",      type:"mcq",   count:6,  marksEach:4, note:"One or More Correct — Mathematics." },
+      { name:"Maths S3",      type:"short", count:6,  marksEach:4, note:"Numerical Answer Type — Mathematics." },
+    ],
+  },
+  neet: {
+    name: "NEET-UG",
+    board: "National Testing Agency (NTA)",
+    totalMarks: 720,
+    time: "3 Hours 20 Minutes",
+    subjects: ["Physics","Chemistry","Biology"],
+    instructions: [
+      "This paper has 4 sections — Physics, Chemistry, Botany and Zoology.",
+      "Each section has 50 questions: Section A (35 MCQs) + Section B (15 MCQs, attempt any 10).",
+      "Correct answer: +4 marks. Wrong answer: -1 mark.",
+      "Only ONE option is correct for each question.",
+      "Use Black/Blue ballpoint pen to darken the circle in OMR sheet.",
+      "Do not use pencil or whitener on OMR sheet.",
+      "Rough work must be done only in the space provided in this booklet.",
+    ],
+    sections: [
+      { name:"Physics A",   type:"mcq", count:35, marksEach:4, note:"Physics Section A — All 35 questions compulsory. +4 correct, -1 wrong." },
+      { name:"Physics B",   type:"mcq", count:15, marksEach:4, note:"Physics Section B — Attempt any 10 out of 15. +4 correct, -1 wrong." },
+      { name:"Chemistry A", type:"mcq", count:35, marksEach:4, note:"Chemistry Section A — All 35 questions compulsory." },
+      { name:"Chemistry B", type:"mcq", count:15, marksEach:4, note:"Chemistry Section B — Attempt any 10 out of 15." },
+      { name:"Botany A",    type:"mcq", count:35, marksEach:4, note:"Botany Section A — All 35 questions compulsory." },
+      { name:"Botany B",    type:"mcq", count:15, marksEach:4, note:"Botany Section B — Attempt any 10 out of 15." },
+      { name:"Zoology A",   type:"mcq", count:35, marksEach:4, note:"Zoology Section A — All 35 questions compulsory." },
+      { name:"Zoology B",   type:"mcq", count:15, marksEach:4, note:"Zoology Section B — Attempt any 10 out of 15." },
+    ],
+  },
+  upsc_prelims: {
+    name: "UPSC Civil Services Prelims — GS Paper I",
+    board: "Union Public Service Commission",
+    totalMarks: 200,
+    time: "2 Hours",
+    subjects: ["History","Geography","Economics","Social Science"],
+    instructions: [
+      "This paper consists of 100 questions of 2 marks each.",
+      "Correct answer: +2 marks. Wrong answer: -0.66 marks (1/3 negative marking).",
+      "All questions are compulsory.",
+      "Questions are in both English and Hindi.",
+      "Use Black Ball Point Pen only to darken the circle in OMR.",
+      "Do not make any stray marks on the OMR Answer Sheet.",
+      "Rough work may be done in the Test Booklet only.",
+    ],
+    sections: [
+      { name:"GS Paper I", type:"mcq", count:100, marksEach:2, note:"General Studies Paper I — 100 MCQs. +2 correct, -0.66 wrong. All questions compulsory." },
+    ],
+  },
+  upsc_mains: {
+    name: "UPSC Mains — General Studies Paper I",
+    board: "Union Public Service Commission",
+    totalMarks: 250,
+    time: "3 Hours",
+    subjects: ["History","Geography","Social Science"],
+    instructions: [
+      "This paper consists of 20 questions of 10 marks each and 10 questions of 15 marks each.",
+      "Answers must be written in the medium authorized in the Admission Certificate.",
+      "Word limit as specified in questions must be adhered to strictly.",
+      "Attempts of questions shall be counted in chronological order.",
+      "Questions relating to maps and diagrams must be answered with clear sketches.",
+    ],
+    sections: [
+      { name:"Section A", type:"short", count:10, marksEach:10, note:"Short Essay Questions — 10 marks each. Answer in approximately 150 words." },
+      { name:"Section B", type:"long",  count:10, marksEach:15, note:"Essay Questions — 15 marks each. Answer in approximately 250 words." },
+    ],
+  },
+  half_yearly: {
+    name: "Half Yearly Examination",
+    board: "School Internal Examination",
+    totalMarks: 40,
+    time: "1½ Hours",
+    subjects: ["Mathematics","Science","Social Science","English","Physics","Chemistry","Biology"],
+    instructions: [
+      "All questions are compulsory.",
+      "Section A: MCQs — 1 mark each.",
+      "Section B: Short Answer — 2 marks each.",
+      "Section C: Long Answer — 3-4 marks each.",
+      "Write answers neatly and clearly.",
+    ],
+    sections: [
+      { name:"A", type:"mcq",   count:10, marksEach:1, note:"MCQ — 1 mark each. Choose the correct option." },
+      { name:"B", type:"short", count:5,  marksEach:2, note:"Short Answer — 2 marks each. Answer in 2-3 sentences." },
+      { name:"C", type:"long",  count:4,  marksEach:3, note:"Long Answer — 3 marks each. Answer in detail." },
+      { name:"D", type:"case",  count:2,  marksEach:4, note:"Case Study — 4 marks each." },
+    ],
+  },
+};
+
 const CBSE_SECTIONS_MAP = {
-  80: [
-    { name:"A", type:"mcq",   count:20, marksEach:1, note:"Each question carries 1 mark. Choose the correct option." },
-    { name:"B", type:"short", count:6,  marksEach:2, note:"Each question carries 2 marks. Answer in 30-50 words." },
-    { name:"C", type:"short", count:7,  marksEach:3, note:"Each question carries 3 marks. Answer in 50-80 words." },
-    { name:"D", type:"long",  count:3,  marksEach:5, note:"Each question carries 5 marks. Answer in 80-120 words." },
-    { name:"E", type:"case",  count:3,  marksEach:4, note:"Case study questions carry 4 marks each." },
-  ],
+  80: EXAM_FORMATS.cbse10.sections,
   100: [
     { name:"A", type:"mcq",   count:20, marksEach:1, note:"Each question carries 1 mark." },
     { name:"B", type:"short", count:10, marksEach:2, note:"Each question carries 2 marks." },
@@ -1792,17 +1971,13 @@ const CBSE_SECTIONS_MAP = {
     { name:"D", type:"long",  count:4,  marksEach:5, note:"Each question carries 5 marks." },
     { name:"E", type:"case",  count:4,  marksEach:4, note:"Each question carries 4 marks." },
   ],
-  40: [
-    { name:"A", type:"mcq",   count:10, marksEach:1, note:"Each question carries 1 mark." },
-    { name:"B", type:"short", count:5,  marksEach:2, note:"Each question carries 2 marks." },
-    { name:"C", type:"long",  count:4,  marksEach:3, note:"Each question carries 3 marks." },
-    { name:"D", type:"long",  count:2,  marksEach:4, note:"Each question carries 4 marks." },
-  ],
+  40: EXAM_FORMATS.half_yearly.sections,
 };
 
 function PaperGeneratorPage({userProfile, navigate, handleLogout, showToast}) {
   const [step, setStep] = useState("config"); // config | preview
   const [paperType, setPaperType] = useState("cbse");
+  const [examFormat, setExamFormat] = useState("cbse10");
   const [schoolName, setSchoolName] = useState("EduSolve4U Learning Centre");
   const [examTitle, setExamTitle] = useState("Annual Examination 2024-25");
   const [cls, setCls] = useState("10");
@@ -1908,7 +2083,7 @@ function PaperGeneratorPage({userProfile, navigate, handleLogout, showToast}) {
           <div ref={paperRef} className="exam-paper" id="examPaper">
             {/* Header */}
             <div className="ep-header">
-              <div className="ep-board">Central Board of Secondary Education</div>
+              <div className="ep-board">{EXAM_FORMATS[examFormat]?.board||"Central Board of Secondary Education"}</div>
               <div className="ep-exam">{examTitle}</div>
               <div className="ep-subject">{subject} — Class {cls==="10"?"X":cls==="12"?"XII":cls==="9"?"IX":"XI"}</div>
               <div className="ep-school">{schoolName}</div>
@@ -1930,15 +2105,12 @@ function PaperGeneratorPage({userProfile, navigate, handleLogout, showToast}) {
             <div className="ep-instructions">
               <div className="ep-instr-title">General Instructions:</div>
               <ol>
-                <li>This question paper contains <b>{generatedPaper.reduce((a,s)=>a+s.count,0)} questions</b> divided into {generatedPaper.length} sections.</li>
-                <li>All questions are compulsory unless internal choice is given.</li>
-                <li><b>Section A</b> — Multiple Choice Questions (1 mark each)</li>
-                <li><b>Section B</b> — Very Short Answer Questions (2 marks each)</li>
-                <li><b>Section C</b> — Short Answer Questions (3 marks each)</li>
-                <li><b>Section D</b> — Long Answer Questions (5 marks each)</li>
-                <li><b>Section E</b> — Case Study Based Questions (4 marks each)</li>
+                {(EXAM_FORMATS[examFormat]?.instructions||[
+                  "This question paper contains "+generatedPaper.reduce((a,s)=>a+s.count,0)+" questions.",
+                  "All questions are compulsory unless internal choice is given.",
+                  "Draw neat, labelled diagrams wherever necessary.",
+                ]).map((instr,i)=><li key={i}>{instr}</li>)}
                 {specialInstructions&&<li>{specialInstructions}</li>}
-                <li>Draw neat, labelled diagrams wherever necessary.</li>
               </ol>
             </div>
 
@@ -2017,16 +2189,32 @@ function PaperGeneratorPage({userProfile, navigate, handleLogout, showToast}) {
         <div className="section-label">Paper Generator</div>
         <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"2.2rem",marginBottom:24}}>🏛️ CBSE Exam Paper Generator</h1>
 
-        {/* Paper Type */}
+        {/* Exam Format Selector */}
         <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"1.5rem",marginBottom:16}}>
-          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:14}}>📄 Paper Type</div>
-          <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-            {[["cbse","🏛️ Real CBSE Format","Official section structure exactly as per CBSE guidelines","#6c63ff"],["practice","📝 Custom Practice","Fully customizable question distribution","#43e97b"]].map(([val,label,desc,color])=>(
-              <div key={val} onClick={()=>setPaperType(val)} style={{flex:1,minWidth:200,background:paperType===val?`${color}15`:"#1a1a26",border:`2px solid ${paperType===val?color:"#2a2a3e"}`,borderRadius:14,padding:"1rem",cursor:"pointer",transition:"all 0.2s"}}>
-                <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,color:paperType===val?color:"#e8e8f0",marginBottom:4}}>{label}</div>
-                <div style={{fontSize:13,color:"#7878a0"}}>{desc}</div>
-              </div>
-            ))}
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:14}}>🎯 Select Exam Format</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:10}}>
+            {Object.entries(EXAM_FORMATS).map(([key,fmt])=>{
+              const icons = {cbse10:"📚",cbse12:"🎓",jee_main:"⚡",jee_advanced:"🔬",neet:"🧬",upsc_prelims:"🏛️",upsc_mains:"📜",half_yearly:"📝"};
+              const colors = {cbse10:"#6c63ff",cbse12:"#4facfe",jee_main:"#f7971e",jee_advanced:"#ff6584",neet:"#43e97b",upsc_prelims:"#ffd700",upsc_mains:"#c471f5",half_yearly:"#38f9d7"};
+              const color = colors[key]||"#6c63ff";
+              const isSelected = examFormat===key;
+              return (
+                <div key={key} onClick={()=>{
+                  setExamFormat(key);
+                  setSections(fmt.sections);
+                  const counts={};
+                  fmt.sections.forEach((s,i)=>{counts[i]=s.count;});
+                  setSectionCounts(counts);
+                  setTotalMarks(fmt.totalMarks);
+                  setTimeAllowed(fmt.time.split(" ")[0]);
+                }} style={{background:isSelected?`${color}18`:"#1a1a26",border:`2px solid ${isSelected?color:"#2a2a3e"}`,borderRadius:14,padding:"1rem",cursor:"pointer",transition:"all 0.2s"}}>
+                  <div style={{fontSize:"1.5rem",marginBottom:6}}>{icons[key]}</div>
+                  <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:13,color:isSelected?color:"#e8e8f0",marginBottom:2}}>{fmt.name}</div>
+                  <div style={{fontSize:11,color:"#7878a0"}}>{fmt.totalMarks} Marks · {fmt.time}</div>
+                  {isSelected&&<div style={{marginTop:6,fontSize:11,color,fontWeight:700}}>● Selected</div>}
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -2228,4 +2416,3 @@ textarea.form-input{display:block;}
 .spin{animation:spin .8s linear infinite;}
 @keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 `;
-
