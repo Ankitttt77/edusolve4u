@@ -320,7 +320,7 @@ export default function App() {
       {page==="leaderboard"&&<LeaderboardPage {...props}/>}
       {currentUser&&<StudyChatBot userProfile={userProfile}/>}
       {page==="admin"&&<AdminPage {...props}/>}
-      {page===="addQuestion"&&<AddQuestionPage {...props}/>}
+      {page==="addQuestion"&&<AddQuestionPage {...props}/>}
       {page==="papergen"&&<PaperGeneratorPage {...props}/>}
       {page==="search"&&<SearchPage {...props}/>}
       {page==="examhub"&&<ExamHubPage {...props}/>}
@@ -2228,3 +2228,4 @@ textarea.form-input{display:block;}
 .spin{animation:spin .8s linear infinite;}
 @keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 `;
+
