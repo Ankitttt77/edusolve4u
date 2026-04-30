@@ -252,7 +252,7 @@ export default function App() {
       const prompt = promptMap[aiType] || promptMap.mcq;
       
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_KEY}`,
         {
           method:"POST",
           headers:{"Content-Type":"application/json"},
@@ -319,7 +319,8 @@ export default function App() {
       {page==="leaderboard"&&<LeaderboardPage {...props}/>}
       {currentUser&&<StudyChatBot userProfile={userProfile}/>}
       {page==="admin"&&<AdminPage {...props}/>}
-      {page==="addQuestion"&&<AddQuestionPage {...props}/>}
+      {page===="addQuestion"&&<AddQuestionPage {...props}/>}
+      {page==="papergen"&&<PaperGeneratorPage {...props}/>}
       {page==="search"&&<SearchPage {...props}/>}
       {page==="examhub"&&<ExamHubPage {...props}/>}
       {page==="books"&&<BooksPage {...props}/>}
@@ -813,6 +814,7 @@ function DashboardPage({userProfile,navigate,handleLogout}) {
 
 // ─── BUILD TEST PAGE (Card UI) ────────────────────────────────────────────────
 function BuildTestPage({userProfile,navigate,handleLogout,showToast}) {
+  const [mode,setMode]=useState("practice"); // practice | paper
   const [step,setStep]=useState(1);
   const [selectedSubject,setSelectedSubject]=useState(null);
   const [selectedChapter,setSelectedChapter]=useState(null);
@@ -838,6 +840,22 @@ function BuildTestPage({userProfile,navigate,handleLogout,showToast}) {
         <div style={{marginBottom:28}}>
           <div className="section-label">Test Builder</div>
           <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"2.2rem"}}>⚡ Build Your Test</h1>
+        </div>
+
+        {/* Mode Toggle */}
+        <div style={{display:"flex",gap:12,marginBottom:28,flexWrap:"wrap"}}>
+          <div onClick={()=>setMode("practice")} style={{flex:1,minWidth:220,background:mode==="practice"?"rgba(108,99,255,0.15)":"#12121a",border:`2px solid ${mode==="practice"?"#6c63ff":"#2a2a3e"}`,borderRadius:18,padding:"1.25rem",cursor:"pointer",transition:"all 0.2s"}}>
+            <div style={{fontSize:"1.8rem",marginBottom:8}}>📝</div>
+            <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,color:mode==="practice"?"#a89cff":"#e8e8f0",marginBottom:4}}>Practice Test</div>
+            <div style={{fontSize:13,color:"#7878a0",lineHeight:1.5}}>Custom MCQ, short & long answer tests. Pick subject, chapter and difficulty.</div>
+            {mode==="practice"&&<div style={{marginTop:8,fontSize:12,color:"#6c63ff",fontWeight:600}}>● Selected</div>}
+          </div>
+          <div onClick={()=>navigate("papergen")} style={{flex:1,minWidth:220,background:"#12121a",border:"2px solid #2a2a3e",borderRadius:18,padding:"1.25rem",cursor:"pointer",transition:"all 0.2s"}} className="hub-card">
+            <div style={{fontSize:"1.8rem",marginBottom:8}}>🏛️</div>
+            <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,color:"#e8e8f0",marginBottom:4}}>CBSE Exam Paper</div>
+            <div style={{fontSize:13,color:"#7878a0",lineHeight:1.5}}>Generate real CBSE-format papers with Section A/B/C/D/E. Print or download as PDF.</div>
+            <div style={{marginTop:8,fontSize:12,color:"#f7971e",fontWeight:600}}>→ Open Paper Generator</div>
+          </div>
         </div>
 
         {/* Step Indicator */}
@@ -1462,7 +1480,7 @@ function StudyChatBot({ userProfile }) {
         return;
       }
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1639,7 +1657,7 @@ function HomeChatSection({ userProfile }) {
       const GEMINI_KEY = process.env.REACT_APP_GEMINI_KEY;
       if (!GEMINI_KEY) { setResponse("⚠️ API key not configured."); setLoading(false); return; }
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1755,6 +1773,430 @@ Give a clear, helpful answer with examples. If math, show steps. Give a complete
     </section>
   );
 }
+
+
+// ─── PAPER GENERATOR PAGE ────────────────────────────────────────────────────
+const CBSE_SECTIONS_MAP = {
+  80: [
+    { name:"A", type:"mcq",   count:20, marksEach:1, note:"Each question carries 1 mark. Choose the correct option." },
+    { name:"B", type:"short", count:6,  marksEach:2, note:"Each question carries 2 marks. Answer in 30-50 words." },
+    { name:"C", type:"short", count:7,  marksEach:3, note:"Each question carries 3 marks. Answer in 50-80 words." },
+    { name:"D", type:"long",  count:3,  marksEach:5, note:"Each question carries 5 marks. Answer in 80-120 words." },
+    { name:"E", type:"case",  count:3,  marksEach:4, note:"Case study questions carry 4 marks each." },
+  ],
+  100: [
+    { name:"A", type:"mcq",   count:20, marksEach:1, note:"Each question carries 1 mark." },
+    { name:"B", type:"short", count:10, marksEach:2, note:"Each question carries 2 marks." },
+    { name:"C", type:"short", count:8,  marksEach:3, note:"Each question carries 3 marks." },
+    { name:"D", type:"long",  count:4,  marksEach:5, note:"Each question carries 5 marks." },
+    { name:"E", type:"case",  count:4,  marksEach:4, note:"Each question carries 4 marks." },
+  ],
+  40: [
+    { name:"A", type:"mcq",   count:10, marksEach:1, note:"Each question carries 1 mark." },
+    { name:"B", type:"short", count:5,  marksEach:2, note:"Each question carries 2 marks." },
+    { name:"C", type:"long",  count:4,  marksEach:3, note:"Each question carries 3 marks." },
+    { name:"D", type:"long",  count:2,  marksEach:4, note:"Each question carries 4 marks." },
+  ],
+};
+
+function PaperGeneratorPage({userProfile, navigate, handleLogout, showToast}) {
+  const [step, setStep] = useState("config"); // config | preview
+  const [paperType, setPaperType] = useState("cbse");
+  const [schoolName, setSchoolName] = useState("EduSolve4U Learning Centre");
+  const [examTitle, setExamTitle] = useState("Annual Examination 2024-25");
+  const [cls, setCls] = useState("10");
+  const [subject, setSubject] = useState("Mathematics");
+  const [totalMarks, setTotalMarks] = useState(80);
+  const [timeAllowed, setTimeAllowed] = useState("3");
+  const [includeAnswers, setIncludeAnswers] = useState(false);
+  const [markHotspot, setMarkHotspot] = useState(false);
+  const [specialInstructions, setSpecialInstructions] = useState("");
+  const [sections, setSections] = useState(CBSE_SECTIONS_MAP[80]);
+  const [sectionCounts, setSectionCounts] = useState({});
+  const [selectedChapters, setSelectedChapters] = useState([]);
+  const [generatedPaper, setGeneratedPaper] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const paperRef = React.useRef(null);
+
+  const subjectsByClass = {
+    "10": ["Mathematics","Science","Social Science","English"],
+    "12": ["Physics","Chemistry","Mathematics","Biology","English","History","Geography","Economics"],
+    "9": ["Mathematics","Science","Social Science","English"],
+    "11": ["Physics","Chemistry","Mathematics","Biology","English"],
+  };
+
+  useEffect(() => {
+    const newSections = CBSE_SECTIONS_MAP[totalMarks] || CBSE_SECTIONS_MAP[80];
+    setSections(newSections);
+    const counts = {};
+    newSections.forEach((s,i) => { counts[i] = s.count; });
+    setSectionCounts(counts);
+  }, [totalMarks]);
+
+  useEffect(() => {
+    const chapters = CHAPTERS[subject] || [];
+    setSelectedChapters(chapters);
+  }, [subject]);
+
+  useEffect(() => {
+    const subjects = subjectsByClass[cls] || [];
+    if (!subjects.includes(subject)) setSubject(subjects[0]);
+  }, [cls]);
+
+  const totalCalc = sections.reduce((a,s,i) => a + (sectionCounts[i]||s.count) * s.marksEach, 0);
+
+  const toggleChapter = (ch) => {
+    setSelectedChapters(prev => prev.includes(ch) ? prev.filter(c=>c!==ch) : [...prev, ch]);
+  };
+
+  const pickQ = (allQ, type, count, marksEach) => {
+    const typeFilter = {
+      mcq: q => (q.type||"mcq")==="mcq",
+      short: q => q.type==="short" || (!q.type && marksEach<=3),
+      long: q => q.type==="long" || (!q.type && marksEach>=4),
+      case: q => q.type==="case",
+    };
+    let pool = allQ.filter(q =>
+      q.subject===subject &&
+      (selectedChapters.length===0 || selectedChapters.includes(q.chapter)) &&
+      (typeFilter[type] ? typeFilter[type](q) : true)
+    );
+    if(pool.length < count) {
+      pool = allQ.filter(q => q.subject===subject && (selectedChapters.length===0||selectedChapters.includes(q.chapter)));
+    }
+    return pool.sort(()=>Math.random()-0.5).slice(0, count);
+  };
+
+  const generatePaper = async () => {
+    setLoading(true);
+    try {
+      const allQ = await fsGetAll("questions");
+      const paperSections = sections.map((s,i) => ({
+        ...s,
+        count: sectionCounts[i] || s.count,
+        questions: pickQ(allQ, s.type, sectionCounts[i]||s.count, s.marksEach),
+      }));
+      setGeneratedPaper(paperSections);
+      setStep("preview");
+    } catch(e) { showToast("Error generating paper: "+e.message, "error"); }
+    setLoading(false);
+  };
+
+  const handlePrint = () => window.print();
+
+  const handleDownloadPDF = () => {
+    showToast("Opening print dialog — select 'Save as PDF' to download 📄");
+    setTimeout(() => window.print(), 500);
+  };
+
+  if (step === "preview" && generatedPaper) {
+    return (
+      <div>
+        {/* Action Bar */}
+        <div className="no-print" style={{position:"fixed",top:0,left:0,right:0,zIndex:200,background:"rgba(10,10,15,0.97)",backdropFilter:"blur(20px)",borderBottom:"1px solid #2a2a3e",padding:"12px 5%",display:"flex",gap:10,alignItems:"center"}}>
+          <button onClick={()=>setStep("config")} style={{background:"none",border:"1px solid #2a2a3e",color:"#7878a0",cursor:"pointer",padding:"7px 14px",borderRadius:8,fontSize:13,fontFamily:"'DM Sans',sans-serif"}}>← Back</button>
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:"1rem",marginRight:"auto"}}>📄 Question Paper Preview</div>
+          <button onClick={handlePrint} style={{background:"transparent",border:"1px solid #2a2a3e",color:"#e8e8f0",cursor:"pointer",padding:"8px 18px",borderRadius:10,fontSize:13,fontWeight:600,fontFamily:"'DM Sans',sans-serif"}}>🖨️ Print</button>
+          <button onClick={handleDownloadPDF} className="btn-primary" style={{padding:"8px 18px",fontSize:13}}>📥 Save as PDF</button>
+          <button onClick={generatePaper} style={{background:"transparent",border:"1px solid #2a2a3e",color:"#e8e8f0",cursor:"pointer",padding:"8px 18px",borderRadius:10,fontSize:13,fontWeight:600,fontFamily:"'DM Sans',sans-serif"}}>🔄 Regenerate</button>
+        </div>
+
+        {/* Paper */}
+        <div style={{background:"#e8e8e0",minHeight:"100vh",paddingTop:80,paddingBottom:40}} className="paper-bg">
+          <style>{PAPER_CSS}</style>
+          <div ref={paperRef} className="exam-paper" id="examPaper">
+            {/* Header */}
+            <div className="ep-header">
+              <div className="ep-board">Central Board of Secondary Education</div>
+              <div className="ep-exam">{examTitle}</div>
+              <div className="ep-subject">{subject} — Class {cls==="10"?"X":cls==="12"?"XII":cls==="9"?"IX":"XI"}</div>
+              <div className="ep-school">{schoolName}</div>
+            </div>
+
+            {/* Meta */}
+            <div className="ep-meta">
+              <div>
+                <div><b>Time Allowed:</b> {timeAllowed} {parseFloat(timeAllowed)===1?"Hour":"Hours"}</div>
+                <div style={{marginTop:6}}><b>Roll No.:</b> ___________________</div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div><b>Maximum Marks:</b> {totalCalc}</div>
+                <div style={{marginTop:6}}><b>Date:</b> ___________________</div>
+              </div>
+            </div>
+
+            {/* Instructions */}
+            <div className="ep-instructions">
+              <div className="ep-instr-title">General Instructions:</div>
+              <ol>
+                <li>This question paper contains <b>{generatedPaper.reduce((a,s)=>a+s.count,0)} questions</b> divided into {generatedPaper.length} sections.</li>
+                <li>All questions are compulsory unless internal choice is given.</li>
+                <li><b>Section A</b> — Multiple Choice Questions (1 mark each)</li>
+                <li><b>Section B</b> — Very Short Answer Questions (2 marks each)</li>
+                <li><b>Section C</b> — Short Answer Questions (3 marks each)</li>
+                <li><b>Section D</b> — Long Answer Questions (5 marks each)</li>
+                <li><b>Section E</b> — Case Study Based Questions (4 marks each)</li>
+                {specialInstructions&&<li>{specialInstructions}</li>}
+                <li>Draw neat, labelled diagrams wherever necessary.</li>
+              </ol>
+            </div>
+
+            {/* Sections */}
+            {(() => {
+              let qNum = 1;
+              return generatedPaper.map((section, si) => (
+                <div key={si}>
+                  <div className="ep-section-header">
+                    Section {section.name} [{section.count} × {section.marksEach} = {section.count*section.marksEach} Marks]
+                  </div>
+                  <div className="ep-section-note">{section.note}</div>
+                  {Array.from({length: section.count}).map((_,qi) => {
+                    const q = section.questions[qi];
+                    const num = qNum++;
+                    return (
+                      <div key={qi} className="ep-question">
+                        <div className="ep-q-row">
+                          <span className="ep-q-num">{num}.</span>
+                          <div className="ep-q-body">
+                            {markHotspot && q?.hotspot && <span className="ep-hotspot">★ Frequently Asked &nbsp;</span>}
+                            <span>{q?.text || `[${section.type.toUpperCase()} question — add more ${section.type} questions to your bank]`}</span>
+                            {section.type==="mcq" && q?.options?.length>0 && (
+                              <div className="ep-options">
+                                {q.options.map((opt,oi)=>(
+                                  <div key={oi} className="ep-option">
+                                    <span className="ep-opt-label">({["a","b","c","d"][oi]})</span> {opt}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {includeAnswers && q && (
+                              <div className="ep-answer">
+                                ✓ {section.type==="mcq"
+                                  ? `Answer: (${["a","b","c","d"][q.answer]}) ${q.options?.[q.answer]||""}`
+                                  : `Model Answer: ${q.answer||q.explanation||""}`}
+                              </div>
+                            )}
+                            {!includeAnswers && section.type!=="mcq" && (
+                              <div className="ep-lines">
+                                {Array.from({length: section.marksEach<=2?3:section.marksEach<=3?5:8}).map((_,li)=>(
+                                  <div key={li} className="ep-line"/>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <span className="ep-marks">[{section.marksEach} {section.marksEach===1?"mark":"marks"}]</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ));
+            })()}
+
+            {/* Footer */}
+            <div className="ep-footer">
+              <div className="ep-sign-row">
+                <div className="ep-sign-box"><div className="ep-sign-line"/><div>Examiner's Signature</div></div>
+                <div className="ep-sign-box"><div className="ep-sign-line"/><div>Checked By</div></div>
+                <div className="ep-sign-box"><div className="ep-sign-line"/><div>Head of Department</div></div>
+              </div>
+              <div className="ep-end">--- End of Question Paper --- | Generated by EduSolve4U</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <Nav userProfile={userProfile} navigate={navigate} handleLogout={handleLogout}/>
+      <div style={{padding:"6rem 5% 3rem",maxWidth:900,margin:"0 auto"}}>
+        <button onClick={()=>navigate("buildtest")} style={{background:"none",border:"none",color:"#7878a0",cursor:"pointer",fontSize:14,padding:0,marginBottom:16}}>← Back to Test Builder</button>
+        <div className="section-label">Paper Generator</div>
+        <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"2.2rem",marginBottom:24}}>🏛️ CBSE Exam Paper Generator</h1>
+
+        {/* Paper Type */}
+        <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"1.5rem",marginBottom:16}}>
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:14}}>📄 Paper Type</div>
+          <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+            {[["cbse","🏛️ Real CBSE Format","Official section structure exactly as per CBSE guidelines","#6c63ff"],["practice","📝 Custom Practice","Fully customizable question distribution","#43e97b"]].map(([val,label,desc,color])=>(
+              <div key={val} onClick={()=>setPaperType(val)} style={{flex:1,minWidth:200,background:paperType===val?`${color}15`:"#1a1a26",border:`2px solid ${paperType===val?color:"#2a2a3e"}`,borderRadius:14,padding:"1rem",cursor:"pointer",transition:"all 0.2s"}}>
+                <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,color:paperType===val?color:"#e8e8f0",marginBottom:4}}>{label}</div>
+                <div style={{fontSize:13,color:"#7878a0"}}>{desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Paper Details */}
+        <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"1.5rem",marginBottom:16}}>
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:14}}>📋 Paper Details</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+            <div>
+              <label className="form-label">School / Institute Name</label>
+              <input className="form-input" value={schoolName} onChange={e=>setSchoolName(e.target.value)} placeholder="School name"/>
+            </div>
+            <div>
+              <label className="form-label">Exam Title</label>
+              <input className="form-input" value={examTitle} onChange={e=>setExamTitle(e.target.value)} placeholder="Annual Examination 2024-25"/>
+            </div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10}}>
+            <div>
+              <label className="form-label">Class</label>
+              <select className="form-input" value={cls} onChange={e=>setCls(e.target.value)}>
+                <option value="9">Class IX</option>
+                <option value="10">Class X</option>
+                <option value="11">Class XI</option>
+                <option value="12">Class XII</option>
+              </select>
+            </div>
+            <div>
+              <label className="form-label">Subject</label>
+              <select className="form-input" value={subject} onChange={e=>setSubject(e.target.value)}>
+                {(subjectsByClass[cls]||[]).map(s=><option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="form-label">Total Marks</label>
+              <select className="form-input" value={totalMarks} onChange={e=>setTotalMarks(+e.target.value)}>
+                <option value={40}>40 Marks (Half Yearly)</option>
+                <option value={80}>80 Marks (Board)</option>
+                <option value={100}>100 Marks</option>
+              </select>
+            </div>
+            <div>
+              <label className="form-label">Time Allowed</label>
+              <select className="form-input" value={timeAllowed} onChange={e=>setTimeAllowed(e.target.value)}>
+                <option value="1">1 Hour</option>
+                <option value="1.5">1½ Hours</option>
+                <option value="2">2 Hours</option>
+                <option value="3">3 Hours</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Section Distribution */}
+        <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"1.5rem",marginBottom:16}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+            <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700}}>📊 Section Distribution</div>
+            <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.1rem",color:totalCalc===totalMarks?"#43e97b":"#ff6584"}}>{totalCalc} / {totalMarks} Marks</div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 80px 80px 80px",gap:8,padding:"8px 12px",fontSize:11,fontWeight:700,color:"#7878a0",textTransform:"uppercase",letterSpacing:"0.05em"}}>
+            <div>Section</div><div>Type</div><div style={{textAlign:"center"}}>Count</div><div style={{textAlign:"center"}}>Marks</div><div style={{textAlign:"right"}}>Total</div>
+          </div>
+          {sections.map((s,i)=>(
+            <div key={i} style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 80px 80px 80px",gap:8,padding:"10px 12px",background:"#1a1a26",borderRadius:10,marginBottom:6,alignItems:"center"}}>
+              <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:14}}>Section {s.name}</div>
+              <div>
+                <span style={{background:s.type==="mcq"?"rgba(108,99,255,.2)":s.type==="short"?"rgba(67,233,123,.2)":s.type==="long"?"rgba(247,151,30,.2)":"rgba(196,113,245,.2)",color:s.type==="mcq"?"#a89cff":s.type==="short"?"#43e97b":s.type==="long"?"#f7971e":"#c471f5",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700}}>
+                  {s.type==="mcq"?"MCQ":s.type==="short"?"Short":s.type==="long"?"Long":"Case Study"}
+                </span>
+              </div>
+              <div>
+                <input type="number" min={0} max={40} value={sectionCounts[i]??s.count} onChange={e=>setSectionCounts(prev=>({...prev,[i]:+e.target.value}))} style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:8,padding:"6px",color:"#e8e8f0",fontSize:13,textAlign:"center",width:"100%",fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+              </div>
+              <div style={{textAlign:"center",fontWeight:600,fontSize:14}}>{s.marksEach}</div>
+              <div style={{textAlign:"right",fontWeight:700,color:"#6c63ff",fontSize:14}}>{(sectionCounts[i]??s.count)*s.marksEach}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Chapters */}
+        <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"1.5rem",marginBottom:16}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+            <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700}}>📚 Chapters</div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setSelectedChapters(CHAPTERS[subject]||[])} style={{background:"rgba(108,99,255,.15)",border:"1px solid rgba(108,99,255,.3)",color:"#a89cff",padding:"4px 12px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600}}>All</button>
+              <button onClick={()=>setSelectedChapters([])} style={{background:"rgba(255,101,132,.15)",border:"1px solid rgba(255,101,132,.3)",color:"#ff6584",padding:"4px 12px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600}}>None</button>
+            </div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:8}}>
+            {(CHAPTERS[subject]||[]).map(ch=>(
+              <div key={ch} onClick={()=>toggleChapter(ch)} style={{display:"flex",alignItems:"center",gap:8,background:selectedChapters.includes(ch)?"rgba(108,99,255,.15)":"#1a1a26",border:`1px solid ${selectedChapters.includes(ch)?"#6c63ff":"#2a2a3e"}`,borderRadius:10,padding:"8px 12px",cursor:"pointer",fontSize:13,transition:"all 0.15s"}}>
+                <span style={{color:selectedChapters.includes(ch)?"#6c63ff":"#7878a0",fontSize:16}}>{selectedChapters.includes(ch)?"☑":"☐"}</span>
+                <span style={{fontWeight:500}}>{ch}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Options */}
+        <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"1.5rem",marginBottom:24}}>
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:14}}>⚙️ Options</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+            <div>
+              <label className="form-label">Paper Copy Type</label>
+              <select className="form-input" value={includeAnswers} onChange={e=>setIncludeAnswers(e.target.value==="true")}>
+                <option value="false">Student Copy (No Answers)</option>
+                <option value="true">Teacher Copy (With Answers)</option>
+              </select>
+            </div>
+            <div>
+              <label className="form-label">Mark Hot Topics 🔥</label>
+              <select className="form-input" value={markHotspot} onChange={e=>setMarkHotspot(e.target.value==="true")}>
+                <option value="false">No</option>
+                <option value="true">Yes — Mark Frequently Asked Questions</option>
+              </select>
+            </div>
+          </div>
+          <label className="form-label">Special Instructions (optional)</label>
+          <textarea className="form-input" rows={2} value={specialInstructions} onChange={e=>setSpecialInstructions(e.target.value)} placeholder="Any extra instructions for students..."/>
+        </div>
+
+        <button className="btn-primary" style={{width:"100%",fontSize:"1.05rem",padding:"14px"}} onClick={generatePaper} disabled={loading}>
+          {loading?"⏳ Generating Paper...":"🎯 Generate Question Paper"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const PAPER_CSS = `
+  @media print {
+    .no-print { display: none !important; }
+    .paper-bg { background: white !important; padding: 0 !important; }
+    .exam-paper { box-shadow: none !important; border-radius: 0 !important; max-width: 100% !important; }
+    body > div > div:first-child { display: none !important; }
+  }
+  .exam-paper {
+    background: white; max-width: 820px; margin: 0 auto;
+    padding: 40px 50px; font-family: 'Times New Roman', serif;
+    color: #000; box-shadow: 0 4px 40px rgba(0,0,0,.2);
+    border-radius: 4px;
+  }
+  .ep-header { text-align: center; border-bottom: 3px double #000; padding-bottom: 12px; margin-bottom: 14px; }
+  .ep-board { font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; }
+  .ep-exam { font-size: 18px; font-weight: bold; margin: 4px 0; text-transform: uppercase; letter-spacing: 1px; }
+  .ep-subject { font-size: 15px; font-weight: bold; margin: 2px 0; }
+  .ep-school { font-size: 13px; margin: 4px 0; }
+  .ep-meta { display: grid; grid-template-columns: 1fr 1fr; font-size: 13px; margin-bottom: 12px; padding: 8px 12px; border: 1px solid #000; }
+  .ep-instructions { border: 1px solid #000; padding: 8px 12px; margin-bottom: 14px; font-size: 12px; }
+  .ep-instr-title { font-weight: bold; margin-bottom: 4px; font-size: 13px; }
+  .ep-instructions ol { padding-left: 18px; }
+  .ep-instructions li { margin-bottom: 2px; }
+  .ep-section-header { background: #000; color: #fff; padding: 5px 12px; font-weight: bold; font-size: 13px; margin: 14px 0 8px; text-transform: uppercase; letter-spacing: 1px; }
+  .ep-section-note { font-size: 11.5px; font-style: italic; margin-bottom: 8px; color: #444; }
+  .ep-question { margin-bottom: 10px; }
+  .ep-q-row { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.6; }
+  .ep-q-num { font-weight: bold; min-width: 24px; flex-shrink: 0; }
+  .ep-q-body { flex: 1; }
+  .ep-marks { font-size: 12px; color: #444; margin-left: auto; padding-left: 10px; font-style: italic; white-space: nowrap; flex-shrink: 0; }
+  .ep-options { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-top: 5px; font-size: 12.5px; }
+  .ep-option { display: flex; gap: 4px; }
+  .ep-opt-label { font-weight: bold; }
+  .ep-answer { font-size: 11px; color: #006600; margin-top: 5px; padding: 5px 8px; background: #f0fff0; border-left: 3px solid #006600; font-style: italic; }
+  .ep-lines { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+  .ep-line { border-bottom: 1px solid #bbb; height: 22px; }
+  .ep-hotspot { font-size: 10px; color: #8B0000; font-weight: bold; }
+  .ep-footer { margin-top: 24px; border-top: 2px solid #000; padding-top: 10px; }
+  .ep-sign-row { display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center; font-size: 12px; gap: 10px; }
+  .ep-sign-box { display: flex; flex-direction: column; gap: 4px; }
+  .ep-sign-line { border-bottom: 1px solid #000; height: 30px; margin-bottom: 4px; }
+  .ep-end { text-align: center; margin-top: 10px; font-size: 11px; color: #666; }
+`;
 
 // ─── GLOBAL CSS ───────────────────────────────────────────────────────────────
 const GLOBAL_CSS=`
