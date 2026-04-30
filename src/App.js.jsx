@@ -163,15 +163,16 @@ const seedIfEmpty = async () => {
 // ════════════════════════════════════════════════════════════════════════════
 // ─── AI PROMPT GENERATOR ─────────────────────────────────────────────────────
 function getAIPrompt(subject, chapter, difficulty, type) {
-  const base = "class 10 " + subject + " topic: " + chapter + ", difficulty: " + difficulty;
-  if (type === "mcq") return "Create one MCQ for " + base + ". Respond with ONLY this JSON, no extra text, no markdown: {"text":"question?","options":["A","B","C","D"],"answer":1,"explanation":"reason","type":"mcq","marks":1,"hotspot":false}";
-  if (type === "short2") return "Create one 2-mark short answer question for " + base + ". Respond with ONLY this JSON: {"text":"question?","answer":"model answer in 2-3 lines","explanation":"key points","type":"short","marks":2,"hotspot":false}";
-  if (type === "short3") return "Create one 3-mark short answer question for " + base + ". Respond with ONLY this JSON: {"text":"question?","answer":"model answer in 3-4 lines","explanation":"examiner tips","type":"short","marks":3,"hotspot":false}";
-  if (type === "long4") return "Create one 4-mark long answer question for " + base + ". Respond with ONLY this JSON: {"text":"question?","answer":"detailed model answer with all key points","explanation":"marks breakdown","type":"long","marks":4,"hotspot":false}";
-  if (type === "long5") return "Create one 5-mark long answer question for " + base + ". Respond with ONLY this JSON: {"text":"question?","answer":"comprehensive model answer with introduction, main points and conclusion","explanation":"full marks tips","type":"long","marks":5,"hotspot":false}";
-  if (type === "case") return "Create one case study based question for " + base + ". Respond with ONLY this JSON: {"text":"[Short paragraph scenario]. Based on the above: (i) First sub-question (ii) Second sub-question","answer":"(i) Answer one (ii) Answer two","explanation":"concepts tested","type":"case","marks":4,"hotspot":false}";
-  if (type === "hotspot") return "Create one HIGH PROBABILITY exam question for " + base + " that is very likely to appear in CBSE board exams. Respond with ONLY this JSON: {"text":"question?","options":["A","B","C","D"],"answer":1,"explanation":"reason + why frequently asked","type":"mcq","marks":1,"hotspot":true}";
-  return "Create one MCQ for " + base + ". Respond with ONLY this JSON: {"text":"question?","options":["A","B","C","D"],"answer":1,"explanation":"reason","type":"mcq","marks":1,"hotspot":false}";
+  const base = `class 10 ${subject} topic: ${chapter}, difficulty: ${difficulty}`;
+  const json = (fields) => JSON.stringify(fields);
+  if (type === "mcq") return `Create one MCQ for ${base}. Respond with ONLY raw JSON, no markdown, no backticks: ${json({text:"question?",options:["A","B","C","D"],answer:1,explanation:"reason",type:"mcq",marks:1,hotspot:false})}`;
+  if (type === "short2") return `Create one 2-mark short answer question for ${base}. Respond with ONLY raw JSON: ${json({text:"question?",answer:"model answer in 2-3 lines",explanation:"key points",type:"short",marks:2,hotspot:false})}`;
+  if (type === "short3") return `Create one 3-mark short answer question for ${base}. Respond with ONLY raw JSON: ${json({text:"question?",answer:"model answer in 3-4 lines",explanation:"examiner tips",type:"short",marks:3,hotspot:false})}`;
+  if (type === "long4") return `Create one 4-mark long answer question for ${base}. Respond with ONLY raw JSON: ${json({text:"question?",answer:"detailed model answer",explanation:"marks breakdown",type:"long",marks:4,hotspot:false})}`;
+  if (type === "long5") return `Create one 5-mark long answer question for ${base}. Respond with ONLY raw JSON: ${json({text:"question?",answer:"comprehensive model answer",explanation:"full marks tips",type:"long",marks:5,hotspot:false})}`;
+  if (type === "case") return `Create one case study question for ${base}. Respond with ONLY raw JSON: ${json({text:"[scenario]. Based on above: (i) q1 (ii) q2 (iii) q3",answer:"(i) a1 (ii) a2 (iii) a3",explanation:"concepts tested",type:"case",marks:4,hotspot:false})}`;
+  if (type === "hotspot") return `Create one HIGH PROBABILITY CBSE board MCQ for ${base}. Respond with ONLY raw JSON: ${json({text:"question?",options:["A","B","C","D"],answer:1,explanation:"reason + why frequently asked",type:"mcq",marks:1,hotspot:true})}`;
+  return `Create one MCQ for ${base}. Respond with ONLY raw JSON: ${json({text:"question?",options:["A","B","C","D"],answer:1,explanation:"reason",type:"mcq",marks:1,hotspot:false})}`;
 }
 
 export default function App() {
