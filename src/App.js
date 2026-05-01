@@ -210,14 +210,23 @@ export default function App() {
   };
 
   const handleRegister = async (data) => {
+    // Validate inputs
+    if (!data.name || data.name.trim().length < 2) { showToast("Please enter your full name","error"); return; }
+    if (!data.email || !data.email.includes("@") || !data.email.includes(".")) { showToast("Please enter a valid email address","error"); return; }
+    if (!data.password || data.password.length < 6) { showToast("Password must be at least 6 characters","error"); return; }
     try {
       const cred = await createUserWithEmailAndPassword(auth,data.email,data.password);
-      const profile = { uid:cred.user.uid, name:data.name, email:data.email, class:data.class, role:"student", avatar:data.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase() };
+      const profile = { uid:cred.user.uid, name:data.name.trim(), email:data.email, class:data.class, role:"student", avatar:data.name.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase() };
       await fsSet("users",cred.user.uid,profile);
       setUserProfile(profile);
       navigate("dashboard");
       showToast(`Welcome, ${data.name.split(" ")[0]}! 🎉`);
-    } catch(e) { showToast(e.message?.includes("email-already-in-use")?"Email already registered":"Registration failed","error"); }
+    } catch(e) {
+      if(e.message?.includes("email-already-in-use")) showToast("This email is already registered. Please login.","error");
+      else if(e.message?.includes("invalid-email")) showToast("Invalid email address","error");
+      else if(e.message?.includes("weak-password")) showToast("Password is too weak. Use at least 6 characters","error");
+      else showToast("Registration failed. Please try again.","error");
+    }
   };
 
   const handleLogout = async () => { await signOut(auth); setUserProfile(null); navigate("home"); };
@@ -290,12 +299,18 @@ export default function App() {
       const qType = aiType==="short2"||aiType==="short3"?"short":aiType==="long4"||aiType==="long5"?"long":aiType==="case"?"case":"mcq";
       const marks = aiType==="short2"?2:aiType==="short3"?3:aiType==="long4"?4:aiType==="long5"?5:aiType==="case"?4:1;
       
+      // Determine class from subject context
+      const subjectClassMap = {
+        "Physics":"11","Chemistry":"11","Biology":"11","History":"11",
+        "Geography":"11","Economics":"11","Computer Science":"11",
+        "Mathematics":"10","Science":"10","Social Science":"10","English":"10",
+      };
+      const questionClass = subjectClassMap[subject] || "10";
       await fsAdd("questions",{
-        subject, chapter, class:"10", difficulty, source:"ai",
+        subject, chapter, class:questionClass, difficulty, source:"ai",
         exam:"boards", year:new Date().getFullYear().toString(),
         type: qType, marks, hotspot: aiType==="hotspot",
         ...parsed,
-        // For subjective questions, store answer as explanation if needed
         options: isSubjective ? [] : (parsed.options||[]),
       });
       showToast("Question generated & saved! 🤖");
@@ -442,7 +457,6 @@ function HomePage({navigate,userProfile,handleLogout}) {
         </div>
       </section>
 
-      <StudyChatBot userProfile={userProfile}/>
       <footer style={{borderTop:"1px solid #2a2a3e",padding:"2rem 5%",textAlign:"center",color:"#7878a0",fontSize:13}}>
         <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.3rem",marginBottom:8,display:"inline-block"}}>
           <span style={{background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>EduSolve</span><span style={{color:"#43e97b"}}>4U</span>
@@ -753,7 +767,7 @@ function DashboardPage({userProfile,navigate,handleLogout}) {
   useEffect(()=>{
     (async()=>{
       const all=await fsGetAll("results");
-      setMyResults(all.filter(r=>r.userId===(userProfile?.uid||userProfile?.id)));
+      setMyResults(all.filter(r=>r.userId===(userProfile?.uid)));
       setLoading(false);
     })();
   },[userProfile]);
@@ -1095,7 +1109,7 @@ function LeaderboardPage({userProfile,navigate,handleLogout}) {
   useEffect(()=>{
     (async()=>{
       const [users,results]=await Promise.all([fsGetAll("users"),fsGetAll("results")]);
-      const userMap=Object.fromEntries(users.map(u=>[u.uid||u.id,u]));
+      const userMap=Object.fromEntries(users.map(u=>[u.uid,u]));
       const agg={};
       results.forEach(r=>{
         if(!agg[r.userId])agg[r.userId]={tests:[]};
@@ -1115,7 +1129,7 @@ function LeaderboardPage({userProfile,navigate,handleLogout}) {
   },[]);
 
   const filtered=filter==="all"?leaderboard:leaderboard.filter(e=>e.user?.class===filter);
-  const myRank=leaderboard.findIndex(e=>e.uid===(userProfile?.uid||userProfile?.id))+1;
+  const myRank=leaderboard.findIndex(e=>e.uid===(userProfile?.uid))+1;
 
   return (
     <div>
@@ -1160,7 +1174,7 @@ function LeaderboardPage({userProfile,navigate,handleLogout}) {
               {filtered.length===0&&<div style={{padding:"2rem",textAlign:"center",color:"#7878a0"}}>No students yet. Be the first! 🚀</div>}
               {filtered.map((entry,idx)=>{
                 const rank=idx+1;const rankColors={1:"#ffd700",2:"#c0c0c0",3:"#cd7f32"};
-                const isMe=(userProfile?.uid||userProfile?.id)===entry.uid;
+                const isMe=(userProfile?.uid)===entry.uid;
                 return(
                   <div key={entry.uid} style={{display:"grid",gridTemplateColumns:"60px 1fr 80px 80px 80px 80px",padding:"14px 20px",borderBottom:"1px solid #2a2a3e",alignItems:"center",background:isMe?"rgba(108,99,255,0.08)":"transparent"}}>
                     <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.1rem",color:rankColors[rank]||"#7878a0"}}>{rank<=3?["🥇","🥈","🥉"][rank-1]:`#${rank}`}</div>
@@ -1293,11 +1307,11 @@ function AdminPage({userProfile,navigate,handleLogout,handleDeleteQuestion,handl
         {tab==="students"&&(
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {users.filter(u=>u.role==="student").map(u=>{
-              const uRes=results.filter(r=>r.userId===(u.uid||u.id));
+              const uRes=results.filter(r=>r.userId===(u.uid));
               const avg=uRes.length?Math.round(uRes.reduce((a,r)=>a+r.score,0)/uRes.length):0;
               return(
-                <div key={u.uid||u.id} style={{display:"flex",alignItems:"center",gap:14,background:"#12121a",border:"1px solid #2a2a3e",borderRadius:14,padding:"14px 18px"}}>
-                  <div style={{width:40,height:40,borderRadius:"50%",background:avatarColor(u.uid||u.id),display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:"#fff",fontSize:13}}>{u.avatar}</div>
+                <div key={u.uid} style={{display:"flex",alignItems:"center",gap:14,background:"#12121a",border:"1px solid #2a2a3e",borderRadius:14,padding:"14px 18px"}}>
+                  <div style={{width:40,height:40,borderRadius:"50%",background:avatarColor(u.uid),display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:"#fff",fontSize:13}}>{u.avatar}</div>
                   <div style={{flex:1}}>
                     <div style={{fontWeight:600}}>{u.name}</div>
                     <div style={{fontSize:12,color:"#7878a0"}}>{u.email} · Class {u.class}</div>
@@ -1315,7 +1329,7 @@ function AdminPage({userProfile,navigate,handleLogout,handleDeleteQuestion,handl
         {tab==="results"&&(
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {results.slice().sort((a,b)=>(b.date||0)-(a.date||0)).map(r=>{
-              const user=users.find(u=>(u.uid||u.id)===r.userId);
+              const user=users.find(u=>(u.uid)===r.userId);
               return(
                 <div key={r.id} style={{display:"flex",alignItems:"center",gap:14,background:"#12121a",border:"1px solid #2a2a3e",borderRadius:14,padding:"14px 18px"}}>
                   <div style={{flex:1}}>
