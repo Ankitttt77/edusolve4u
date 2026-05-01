@@ -262,7 +262,7 @@ export default function App() {
       const prompt = promptMap[aiType] || promptMap.mcq;
       
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
         {
           method:"POST",
           headers:{"Content-Type":"application/json"},
@@ -1488,31 +1488,27 @@ function StudyChatBot({ userProfile }) {
     setLoading(true);
 
     try {
-      const GEMINI_KEY = process.env.REACT_APP_GEMINI_KEY;
-      if (!GEMINI_KEY) {
-        setMessages(m => [...m, { role: "ai", text: "⚠️ Gemini API key not configured. Add REACT_APP_GEMINI_KEY in Vercel settings." }]);
-        setLoading(false);
-        return;
-      }
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `You are EduBot, a friendly and expert study assistant for Indian students (Class 6-12, JEE, NEET, UPSC). 
-Student${userProfile ? " " + userProfile.name : ""} asks: ${msg}
-Give a clear, concise answer with examples where helpful. Use simple language. If it's a math problem, show step-by-step solution. Give a complete, detailed answer in 3-5 sentences with examples. Never cut off mid-sentence.`
-              }]
-            }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
-          }),
-        }
-      );
+
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.REACT_APP_OPENROUTER_KEY||""}`,
+          "HTTP-Referer": "https://edusolve4u.vercel.app",
+          "X-Title": "EduSolve4U",
+        },
+        body: JSON.stringify({
+          model: "meta-llama/llama-3.2-3b-instruct:free",
+          messages: [
+            { role: "system", content: "You are EduBot, a friendly expert study assistant for Indian students (Class 6-12, JEE, NEET, UPSC). Give clear complete answers with examples. For math show step-by-step solutions. Keep answers under 200 words." },
+            { role: "user", content: msg }
+          ],
+          max_tokens: 512,
+        }),
+      });
       const data = await res.json();
-      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't get an answer. Please try again!";
+      if(data.error) { setMessages(m => [...m, { role: "ai", text: "⚠️ " + (data.error.message||"API error") }]); setLoading(false); return; }
+      const reply = data.choices?.[0]?.message?.content || "Sorry, could not get an answer!";
       setMessages(m => [...m, { role: "ai", text: reply }]);
     } catch (e) {
       setMessages(m => [...m, { role: "ai", text: "Something went wrong. Please try again!" }]);
@@ -1669,27 +1665,27 @@ function HomeChatSection({ userProfile }) {
     setResponse("");
 
     try {
-      const GEMINI_KEY = process.env.REACT_APP_GEMINI_KEY;
-      if (!GEMINI_KEY) { setResponse("⚠️ API key not configured."); setLoading(false); return; }
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `You are EduBot, a friendly expert study assistant for Indian students (Class 6-12, JEE, NEET, UPSC).
-Student asks: ${msg}
-Give a clear, helpful answer with examples. If math, show steps. Give a complete answer in 3-5 sentences. Never leave the answer incomplete.`
-              }]
-            }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
-          }),
-        }
-      );
+
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.REACT_APP_OPENROUTER_KEY||""}`,
+          "HTTP-Referer": "https://edusolve4u.vercel.app",
+          "X-Title": "EduSolve4U",
+        },
+        body: JSON.stringify({
+          model: "meta-llama/llama-3.2-3b-instruct:free",
+          messages: [
+            { role: "system", content: "You are EduBot, a friendly expert study assistant for Indian students (Class 6-12, JEE, NEET, UPSC). Give clear complete answers with examples. For math show step-by-step. Keep under 200 words." },
+            { role: "user", content: msg }
+          ],
+          max_tokens: 512,
+        }),
+      });
       const data = await res.json();
-      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, couldn't get an answer!";
+      if(data.error) { setResponse("⚠️ " + (data.error.message||"API error")); setLoading(false); return; }
+      const reply = data.choices?.[0]?.message?.content || "Sorry, could not get an answer!";
       setResponse(reply);
     } catch { setResponse("Something went wrong. Please try again!"); }
     setLoading(false);
