@@ -262,7 +262,7 @@ export default function App() {
       const prompt = promptMap[aiType] || promptMap.mcq;
       
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
         {
           method:"POST",
           headers:{"Content-Type":"application/json"},
@@ -1492,7 +1492,7 @@ function StudyChatBot({ userProfile }) {
       const GEMINI_KEY = process.env.REACT_APP_GEMINI_KEY;
       if(!GEMINI_KEY) { setMessages(m=>[...m,{role:"ai",text:"⚠️ Add REACT_APP_GEMINI_KEY in Vercel settings"}]); setLoading(false); return; }
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1666,7 +1666,7 @@ function HomeChatSection({ userProfile }) {
       const GEMINI_KEY = process.env.REACT_APP_GEMINI_KEY;
       if(!GEMINI_KEY) { setResponse("⚠️ Add REACT_APP_GEMINI_KEY in Vercel settings"); setLoading(false); return; }
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
