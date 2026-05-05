@@ -1458,7 +1458,7 @@ function BooksPage({userProfile,navigate,handleLogout}) {
 const Tag=({label,color})=><span style={{background:`${color}22`,color,border:`1px solid ${color}44`,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{label}</span>;
 
 
-// ─── STUDY CHATBOT COMPONENT ──────────────────────────────────────────────────
+// ─── STUDY CHATBOT COMPONENT v2.0 ──────────────────────────────────────────────────
 const EDUBOT_RESPONSES = {
   greet: ["Hi! 👋 I'm EduBot, your study assistant! Ask me anything about Maths, Science, History or any subject!", "Hello! Ready to study? Ask me any question! 📚", "Hey there! What subject are you studying today? 😊"],
   math: ["For Maths problems, always start by identifying what's given and what's asked. Show step-by-step working for full marks! ✏️", "Maths tip: Practice at least 5 problems per concept daily. Focus on NCERT examples first, then move to extra questions!", "Remember: In board exams, write formulas first, then substitute values. This earns method marks even if the final answer is wrong! 📐"],
