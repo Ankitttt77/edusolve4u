@@ -1459,177 +1459,119 @@ const Tag=({label,color})=><span style={{background:`${color}22`,color,border:`1
 
 
 // ─── STUDY CHATBOT COMPONENT ──────────────────────────────────────────────────
+const EDUBOT_RESPONSES = {
+  greet: ["Hi! 👋 I'm EduBot, your study assistant! Ask me anything about Maths, Science, History or any subject!", "Hello! Ready to study? Ask me any question! 📚", "Hey there! What subject are you studying today? 😊"],
+  math: ["For Maths problems, always start by identifying what's given and what's asked. Show step-by-step working for full marks! ✏️", "Maths tip: Practice at least 5 problems per concept daily. Focus on NCERT examples first, then move to extra questions!", "Remember: In board exams, write formulas first, then substitute values. This earns method marks even if the final answer is wrong! 📐"],
+  physics: ["Physics tip: Always write SI units with your answers! Missing units = missing marks in boards. ⚛️", "For Physics numericals: Write Given, Find, Formula, Substitution, Answer — in that order. Examiners love this format!", "Key Physics formulas to memorize: F=ma, v=u+at, KE=½mv², E=mc². These appear every year! ⚡"],
+  chemistry: ["Chemistry tip: Learn the periodic table trends — atomic radius, ionization energy, electronegativity. They're asked every year! 🧪", "For organic chemistry, practice reaction mechanisms daily. Draw structures clearly for full marks!", "Remember OILRIG: Oxidation Is Loss, Reduction Is Gain. This helps in electrochemistry questions! ⚗️"],
+  biology: ["Biology tip: Draw and label diagrams for every answer — diagrams carry separate marks in CBSE! 🧬", "Focus on NCERT Biology thoroughly. Almost 80% of NEET Biology questions come directly from NCERT!", "Remember: Life processes = Nutrition, Respiration, Transportation, Excretion. Each has separate chapters — study them systematically!"],
+  history: ["History tip: Remember dates with mnemonics! For example: 1857 = First War of Independence. Make a timeline! 🏛️", "For UPSC History, focus on socio-economic causes, not just political events. Examiners want analysis, not just facts!", "Study history in themes: Political, Social, Economic, Cultural. This helps in both boards and competitive exams!"],
+  geography: ["Geography tip: Always practice map work — it's easy marks! Know important rivers, mountains and cities on map 🗺️", "Remember the factors of climate: Latitude, Altitude, Distance from sea, Ocean currents, Wind direction!", "For board exams, learn definitions of all geographical terms. They appear as 1-2 mark questions every year!"],
+  economics: ["Economics tip: Learn all definitions precisely — GDP, GNP, NNP, inflation. Examiners check exact definitions! 📊", "For development economics, remember: HDI = Health + Education + Income. India's current rank is around 132!", "Practice drawing supply-demand graphs. They carry 2-3 marks in board exams and are easy if practiced!"],
+  jee: ["JEE tip: Focus on NCERT first, then move to HC Verma for Physics, RD Sharma for Maths! ⚡", "For JEE, time management is key — allocate 1 hour per subject in the exam. Don't spend more than 3 mins per question!", "Important JEE topics: Mechanics, Thermodynamics, Electrostatics (Physics), Organic Chemistry, Calculus, Vectors (Maths)!"],
+  neet: ["NEET tip: Biology carries 360 marks out of 720 — it's your biggest scoring opportunity! 🧬", "For NEET, revise NCERT Biology at least 3 times. Read every line carefully — questions come from even small paragraphs!", "NEET strategy: Attempt Biology first (strongest subject), then Chemistry, then Physics!"],
+  upsc: ["UPSC tip: Read The Hindu newspaper daily for current affairs. Make short notes — don't just read! 🏛️", "For UPSC Prelims, solve at least 5 previous year papers. The pattern repeats every 3-4 years!", "UPSC Mains: Write answers in points with headings. Use keywords from syllabus. Aim for 150 words for 10-mark questions!"],
+  exam: ["Exam tip: Start with questions you know best — builds confidence and saves time! ✅", "The night before exam: Don't study new topics. Revise formulae, definitions and key points only. Sleep 7-8 hours!", "During exam: Read the question paper fully in first 15 minutes. Plan which questions to attempt first!"],
+  study: ["Study tip: Use the Pomodoro technique — 25 mins study, 5 mins break. Repeat 4 times then take a long break! ⏱️", "Active recall is better than re-reading. Close your book and try to recall what you just read — this doubles retention!", "Study in a well-lit, quiet place. Keep your phone in another room while studying to avoid distractions!"],
+  motivation: ["You've got this! 💪 Every expert was once a beginner. Keep going!", "Remember why you started. Your dream college, your career goals — let that motivate you every day! 🌟", "Consistency beats intensity. 2 hours of focused study daily is better than 10 hours of distracted study once a week!"],
+  default: ["That's a great question! For best results, try asking about a specific subject like Maths, Physics, Chemistry, Biology, History or Geography 📚", "I'm here to help! Ask me about exam tips, study strategies, or any specific subject! 😊", "Could you be more specific? Try asking something like 'tips for Maths' or 'how to study for NEET'!"],
+};
+
+function getEduBotResponse(msg) {
+  const lower = msg.toLowerCase();
+  if (lower.match(/hi|hello|hey|namaste|start/)) return EDUBOT_RESPONSES.greet;
+  if (lower.match(/math|maths|algebra|geometry|calculus|trigonometry|polynomial|quadratic|arithmetic/)) return EDUBOT_RESPONSES.math;
+  if (lower.match(/physics|motion|force|energy|electricity|light|sound|gravity|newton/)) return EDUBOT_RESPONSES.physics;
+  if (lower.match(/chemistry|chemical|acid|base|metal|carbon|periodic|element|reaction/)) return EDUBOT_RESPONSES.chemistry;
+  if (lower.match(/biology|cell|life|plant|animal|heredity|evolution|reproduction|neet bio/)) return EDUBOT_RESPONSES.biology;
+  if (lower.match(/history|ancient|medieval|modern|revolution|independence|mughal|british/)) return EDUBOT_RESPONSES.history;
+  if (lower.match(/geography|map|climate|river|mountain|soil|agriculture|resource/)) return EDUBOT_RESPONSES.geography;
+  if (lower.match(/economics|gdp|development|money|bank|globalisation|consumer/)) return EDUBOT_RESPONSES.economics;
+  if (lower.match(/jee|iit|engineering|joint entrance/)) return EDUBOT_RESPONSES.jee;
+  if (lower.match(/neet|medical|mbbs|doctor/)) return EDUBOT_RESPONSES.neet;
+  if (lower.match(/upsc|ias|civil service|government/)) return EDUBOT_RESPONSES.upsc;
+  if (lower.match(/exam|test|board|paper|marks|score|rank/)) return EDUBOT_RESPONSES.exam;
+  if (lower.match(/study|learn|prepare|revision|notes|tip/)) return EDUBOT_RESPONSES.study;
+  if (lower.match(/motivat|stress|anxious|tired|fail|give up|scared/)) return EDUBOT_RESPONSES.motivation;
+  return EDUBOT_RESPONSES.default;
+}
+
 function StudyChatBot({ userProfile }) {
   const [messages, setMessages] = useState([
-    { role: "ai", text: "Hi! I'm your AI study assistant 🎓 Ask me anything about your subjects — Maths, Physics, Chemistry, Biology, History and more!" }
+    { role: "ai", text: `Hi${userProfile?" "+userProfile.name.split(" ")[0]:""}! 👋 I'm EduBot — your smart study assistant! Ask me about any subject, exam tips or study strategies!` }
   ]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = React.useRef(null);
 
-  const SUGGESTIONS = [
-    "Explain Pythagoras theorem",
-    "What is Newton's second law?",
-    "How do acids and bases differ?",
-    "What is photosynthesis?",
-    "Solve x² - 5x + 6 = 0",
-    "Explain the French Revolution",
-  ];
+  const QUICK_QUESTIONS = ["📐 Maths tips","⚛️ Physics tips","🧪 Chemistry tips","🧬 Biology tips","⚡ JEE tips","🧬 NEET tips","🏛️ UPSC tips","📝 Exam tips"];
 
-  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  useEffect(() => { scrollToBottom(); }, [messages]);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  const sendMessage = async (text) => {
+  const sendMessage = (text) => {
     const msg = text || input.trim();
     if (!msg) return;
     setInput("");
     setMessages(m => [...m, { role: "user", text: msg }]);
-    setLoading(true);
-
-    try {
-
-      const GEMINI_KEY = process.env.REACT_APP_GEMINI_KEY;
-      if(!GEMINI_KEY) { setMessages(m=>[...m,{role:"ai",text:"⚠️ Add REACT_APP_GEMINI_KEY in Vercel settings"}]); setLoading(false); return; }
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: `You are EduBot, a friendly expert study assistant for Indian students (Class 6-12, JEE, NEET, UPSC). Student asks: ${msg}. Give a clear complete answer with examples. For math show step-by-step. Keep under 200 words.` }] }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
-          }),
-        }
-      );
-      const data = await res.json();
-      if(data.error) { setMessages(m=>[...m,{role:"ai",text:"⚠️ "+data.error.message}]); setLoading(false); return; }
-      const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      const reply = raw || "Sorry, could not get an answer!";
+    setIsTyping(true);
+    setTimeout(() => {
+      const responses = getEduBotResponse(msg);
+      const reply = responses[Math.floor(Math.random() * responses.length)];
       setMessages(m => [...m, { role: "ai", text: reply }]);
-    } catch (e) {
-      setMessages(m => [...m, { role: "ai", text: "Something went wrong. Please try again!" }]);
-    }
-    setLoading(false);
+      setIsTyping(false);
+    }, 800 + Math.random() * 400);
   };
 
   return (
     <>
       {/* Floating bubble */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        style={{
-          position: "fixed", bottom: 24, right: 24, zIndex: 999,
-          width: 56, height: 56, borderRadius: "50%",
-          background: "linear-gradient(135deg,#6c63ff,#ff6584)",
-          border: "none", cursor: "pointer", fontSize: "1.5rem",
-          boxShadow: "0 4px 24px rgba(108,99,255,0.5)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          transition: "transform 0.2s",
-        }}
-        onMouseEnter={e => e.currentTarget.style.transform = "scale(1.1)"}
-        onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
-      >
+      <button onClick={() => setIsOpen(!isOpen)} style={{ position:"fixed", bottom:24, right:24, zIndex:999, width:56, height:56, borderRadius:"50%", background:"linear-gradient(135deg,#6c63ff,#ff6584)", border:"none", cursor:"pointer", fontSize:"1.5rem", boxShadow:"0 4px 24px rgba(108,99,255,0.5)", display:"flex", alignItems:"center", justifyContent:"center", transition:"transform 0.2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
         {isOpen ? "✕" : "🎓"}
       </button>
 
       {/* Chat window */}
       {isOpen && (
-        <div style={{
-          position: "fixed", bottom: 90, right: 24, zIndex: 998,
-          width: 360, height: 520, background: "#12121a",
-          border: "1px solid #2a2a3e", borderRadius: 20,
-          display: "flex", flexDirection: "column",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-          animation: "slideUp 0.3s ease",
-        }}>
+        <div style={{ position:"fixed", bottom:90, right:24, zIndex:998, width:340, height:500, background:"#12121a", border:"1px solid #2a2a3e", borderRadius:20, display:"flex", flexDirection:"column", boxShadow:"0 20px 60px rgba(0,0,0,0.5)", animation:"slideUp 0.3s ease" }}>
           {/* Header */}
-          <div style={{
-            padding: "14px 18px", borderBottom: "1px solid #2a2a3e",
-            display: "flex", alignItems: "center", gap: 10,
-          }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: "50%",
-              background: "linear-gradient(135deg,#6c63ff,#ff6584)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "1.1rem",
-            }}>🎓</div>
+          <div style={{ padding:"14px 18px", borderBottom:"1px solid #2a2a3e", display:"flex", alignItems:"center", gap:10 }}>
+            <div style={{ width:36, height:36, borderRadius:"50%", background:"linear-gradient(135deg,#6c63ff,#ff6584)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"1.1rem" }}>🎓</div>
             <div>
-              <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 14 }}>EduBot</div>
-              <div style={{ fontSize: 11, color: "#43e97b" }}>● Online — AI Study Assistant</div>
+              <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:700, fontSize:14 }}>EduBot</div>
+              <div style={{ fontSize:11, color:"#43e97b" }}>● Online — Always Available</div>
             </div>
           </div>
 
           {/* Messages */}
-          <div style={{ flex: 1, overflowY: "auto", padding: "14px", display: "flex", flexDirection: "column", gap: 10 }}>
-            {messages.map((msg, i) => (
-              <div key={i} style={{
-                display: "flex",
-                justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
-              }}>
-                <div style={{
-                  maxWidth: "80%",
-                  background: msg.role === "user"
-                    ? "linear-gradient(135deg,#6c63ff,#8b7fff)"
-                    : "#1a1a26",
-                  border: msg.role === "ai" ? "1px solid #2a2a3e" : "none",
-                  borderRadius: msg.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-                  padding: "10px 14px",
-                  fontSize: 13,
-                  lineHeight: 1.6,
-                  color: "#e8e8f0",
-                  whiteSpace: "pre-wrap",
-                }}>
+          <div style={{ flex:1, overflowY:"auto", padding:"12px", display:"flex", flexDirection:"column", gap:10 }}>
+            {messages.map((msg,i) => (
+              <div key={i} style={{ display:"flex", justifyContent:msg.role==="user"?"flex-end":"flex-start" }}>
+                <div style={{ maxWidth:"82%", background:msg.role==="user"?"linear-gradient(135deg,#6c63ff,#8b7fff)":"#1a1a26", border:msg.role==="ai"?"1px solid #2a2a3e":"none", borderRadius:msg.role==="user"?"16px 16px 4px 16px":"16px 16px 16px 4px", padding:"10px 14px", fontSize:13, lineHeight:1.6, color:"#e8e8f0" }}>
                   {msg.text}
                 </div>
               </div>
             ))}
-            {loading && (
-              <div style={{ display: "flex", justifyContent: "flex-start" }}>
-                <div style={{ background: "#1a1a26", border: "1px solid #2a2a3e", borderRadius: "16px 16px 16px 4px", padding: "10px 14px", fontSize: 13, color: "#7878a0" }}>
-                  EduBot is thinking<span className="dots">...</span>
-                </div>
+            {isTyping && (
+              <div style={{ display:"flex", justifyContent:"flex-start" }}>
+                <div style={{ background:"#1a1a26", border:"1px solid #2a2a3e", borderRadius:"16px 16px 16px 4px", padding:"10px 14px", fontSize:13, color:"#7878a0" }}>EduBot is typing...</div>
               </div>
             )}
-            <div ref={messagesEndRef} />
+            <div ref={messagesEndRef}/>
           </div>
 
-          {/* Quick suggestions */}
+          {/* Quick questions */}
           {messages.length <= 1 && (
-            <div style={{ padding: "0 14px 8px", display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {SUGGESTIONS.slice(0, 3).map(s => (
-                <button key={s} onClick={() => sendMessage(s)} style={{
-                  background: "rgba(108,99,255,0.15)", border: "1px solid rgba(108,99,255,0.3)",
-                  borderRadius: 20, padding: "4px 10px", color: "#a89cff",
-                  fontSize: 11, cursor: "pointer", fontWeight: 600,
-                }}>{s}</button>
+            <div style={{ padding:"0 12px 8px", display:"flex", gap:6, flexWrap:"wrap" }}>
+              {QUICK_QUESTIONS.slice(0,4).map(q => (
+                <button key={q} onClick={() => sendMessage(q)} style={{ background:"rgba(108,99,255,0.15)", border:"1px solid rgba(108,99,255,0.3)", borderRadius:20, padding:"4px 10px", color:"#a89cff", fontSize:11, cursor:"pointer", fontWeight:600 }}>{q}</button>
               ))}
             </div>
           )}
 
           {/* Input */}
-          <div style={{ padding: "10px 14px", borderTop: "1px solid #2a2a3e", display: "flex", gap: 8 }}>
-            <input
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && !loading && sendMessage()}
-              placeholder="Ask any doubt..."
-              style={{
-                flex: 1, background: "#1a1a26", border: "1px solid #2a2a3e",
-                borderRadius: 10, padding: "8px 12px", color: "#e8e8f0",
-                fontSize: 13, outline: "none", fontFamily: "'DM Sans',sans-serif",
-              }}
-            />
-            <button
-              onClick={() => sendMessage()}
-              disabled={loading || !input.trim()}
-              style={{
-                background: "linear-gradient(135deg,#6c63ff,#8b7fff)",
-                border: "none", borderRadius: 10, padding: "8px 14px",
-                color: "#fff", cursor: "pointer", fontSize: 14,
-                opacity: loading || !input.trim() ? 0.5 : 1,
-              }}
-            >→</button>
+          <div style={{ padding:"10px 12px", borderTop:"1px solid #2a2a3e", display:"flex", gap:8 }}>
+            <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendMessage()} placeholder="Ask any doubt..." style={{ flex:1, background:"#1a1a26", border:"1px solid #2a2a3e", borderRadius:10, padding:"8px 12px", color:"#e8e8f0", fontSize:13, outline:"none", fontFamily:"'DM Sans',sans-serif" }}/>
+            <button onClick={()=>sendMessage()} disabled={!input.trim()} style={{ background:"linear-gradient(135deg,#6c63ff,#8b7fff)", border:"none", borderRadius:10, padding:"8px 14px", color:"#fff", cursor:"pointer", fontSize:14, opacity:!input.trim()?0.5:1 }}>→</button>
           </div>
         </div>
       )}
