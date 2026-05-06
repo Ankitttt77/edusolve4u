@@ -366,9 +366,9 @@ function Nav({userProfile,navigate,handleLogout}) {
         <span style={{background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>EduSolve</span><span style={{color:"#43e97b"}}>4U</span>
       </div>
       <div style={{display:"flex",gap:6,alignItems:"center"}}>
-        <NavBtn onClick={()=>navigate("examhub")} label="🎯 Exam Hubs"/>
-        <NavBtn onClick={()=>navigate("search")} label="🔍 Search"/>
-        <NavBtn onClick={()=>navigate("leaderboard")} label="🏆 Leaderboard"/>
+        <NavBtn onClick={()=>navigate("examhub")} label="🎯 Hubs"/>
+        <NavBtn onClick={()=>navigate("search")} label="🔍"/>
+        <NavBtn onClick={()=>navigate("leaderboard")} label="🏆"/>
         {userProfile?(
           <>
             <NavBtn onClick={()=>navigate("dashboard")} label="Dashboard"/>
@@ -393,7 +393,7 @@ function HomePage({navigate,userProfile,handleLogout}) {
   return (
     <div>
       <Nav userProfile={userProfile} navigate={navigate} handleLogout={handleLogout}/>
-      <section style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",textAlign:"center",padding:"8rem 5% 4rem",position:"relative",overflow:"hidden"}}>
+      <section style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",textAlign:"center",padding:"6rem 4% 3rem",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 70% 60% at 50% 0%,rgba(108,99,255,0.25) 0%,transparent 70%),radial-gradient(ellipse 40% 40% at 80% 70%,rgba(255,101,132,0.12) 0%,transparent 60%),radial-gradient(ellipse 30% 30% at 20% 80%,rgba(67,233,123,0.08) 0%,transparent 60%)"}}/>
         <div style={{position:"relative",zIndex:1,maxWidth:860}}>
           <div className="badge-pill">✦ India's Smartest Exam Platform</div>
@@ -425,7 +425,7 @@ function HomePage({navigate,userProfile,handleLogout}) {
           <h2 className="section-title">Prepare for <span style={{color:"#6c63ff"}}>Your Target Exam</span></h2>
           <p style={{color:"#7878a0",marginTop:8}}>Dedicated practice zones, books and questions for each exam</p>
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16,maxWidth:1100,margin:"0 auto"}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(min(240px,100%),1fr))",gap:16,maxWidth:1100,margin:"0 auto"}}>
           {EXAM_HUBS.map(hub=>(
             <div key={hub.id} onClick={()=>navigate("examhub",{hub})} style={{background:"#12121a",border:`1px solid ${hub.color}33`,borderRadius:20,padding:"1.75rem",cursor:"pointer",transition:"all 0.25s"}} className="hub-card">
               <div style={{fontSize:"2.5rem",marginBottom:12}}>{hub.icon}</div>
@@ -446,7 +446,7 @@ function HomePage({navigate,userProfile,handleLogout}) {
           <div className="section-label">Features</div>
           <h2 className="section-title">Everything You Need to <span style={{color:"#43e97b"}}>Top Your Exam</span></h2>
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:16,maxWidth:1100,margin:"0 auto"}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(min(260px,100%),1fr))",gap:16,maxWidth:1100,margin:"0 auto"}}>
           {[["🎯","Smart Test Builder","Card-based subject & chapter picker with difficulty control","rgba(108,99,255,0.1)"],["🔍","Question Search","Search by subject, chapter, exam, difficulty and year","rgba(67,233,123,0.1)"],["🏆","Live Leaderboard","Ranked by score + speed. Compete with real students nationwide","rgba(255,215,0,0.1)"],["🤖","AI Questions","Gemini AI generates fresh curriculum-aligned MCQs instantly","rgba(79,172,254,0.1)"],["📚","Curated Books","Free PDFs and study materials for JEE, NEET, UPSC and Boards","rgba(247,151,30,0.1)"],["📊","Performance Analytics","Track your weak areas and improve chapter by chapter","rgba(255,101,132,0.1)"]].map(([icon,title,desc,bg])=>(
             <div key={title} className="feature-card" style={{background:bg}}>
               <div style={{fontSize:"2rem",marginBottom:12}}>{icon}</div>
@@ -858,7 +858,7 @@ function BuildTestPage({userProfile,navigate,handleLogout,showToast}) {
         </div>
 
         {/* Mode Toggle */}
-        <div style={{display:"flex",gap:12,marginBottom:28,flexWrap:"wrap"}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:12,marginBottom:28}}>
           <div onClick={()=>setMode("practice")} style={{flex:1,minWidth:220,background:mode==="practice"?"rgba(108,99,255,0.15)":"#12121a",border:`2px solid ${mode==="practice"?"#6c63ff":"#2a2a3e"}`,borderRadius:18,padding:"1.25rem",cursor:"pointer",transition:"all 0.2s"}}>
             <div style={{fontSize:"1.8rem",marginBottom:8}}>📝</div>
             <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,color:mode==="practice"?"#a89cff":"#e8e8f0",marginBottom:4}}>Practice Test</div>
@@ -1030,7 +1030,7 @@ function ExamPage({examConfig,handleExamFinish,userProfile,navigate,handleLogout
           </div>
           )}
         </div>
-        <div style={{display:"flex",gap:10,justifyContent:"space-between"}}>
+        <div style={{display:"flex",gap:8,justifyContent:"space-between",flexWrap:"wrap"}}>
           <button className="btn-secondary" onClick={()=>setCurrent(c=>Math.max(0,c-1))} disabled={current===0}>← Prev</button>
           <div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"center"}}>
             {questions.map((_,i)=>(
@@ -1168,7 +1168,7 @@ function LeaderboardPage({userProfile,navigate,handleLogout}) {
               </div>
             )}
             <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,overflow:"hidden"}}>
-              <div style={{display:"grid",gridTemplateColumns:"60px 1fr 80px 80px 80px 80px",padding:"12px 20px",borderBottom:"1px solid #2a2a3e",fontSize:11,color:"#7878a0",fontWeight:700,letterSpacing:"0.05em",textTransform:"uppercase"}}>
+              <div style={{display:"grid",gridTemplateColumns:"40px 1fr 60px 60px",padding:"10px 14px",borderBottom:"1px solid #2a2a3e",fontSize:10,color:"#7878a0",fontWeight:700,letterSpacing:"0.05em",textTransform:"uppercase",overflowX:"auto"}}>
                 <div>Rank</div><div>Student</div><div style={{textAlign:"center"}}>Avg Score</div><div style={{textAlign:"center"}}>Avg Time</div><div style={{textAlign:"center"}}>Tests</div><div style={{textAlign:"right"}}>Points</div>
               </div>
               {filtered.length===0&&<div style={{padding:"2rem",textAlign:"center",color:"#7878a0"}}>No students yet. Be the first! 🚀</div>}
@@ -1458,120 +1458,135 @@ function BooksPage({userProfile,navigate,handleLogout}) {
 const Tag=({label,color})=><span style={{background:`${color}22`,color,border:`1px solid ${color}44`,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{label}</span>;
 
 
-// ─── STUDY CHATBOT COMPONENT v2.0 ──────────────────────────────────────────────────
-const EDUBOT_RESPONSES = {
-  greet: ["Hi! 👋 I'm EduBot, your study assistant! Ask me anything about Maths, Science, History or any subject!", "Hello! Ready to study? Ask me any question! 📚", "Hey there! What subject are you studying today? 😊"],
-  math: ["For Maths problems, always start by identifying what's given and what's asked. Show step-by-step working for full marks! ✏️", "Maths tip: Practice at least 5 problems per concept daily. Focus on NCERT examples first, then move to extra questions!", "Remember: In board exams, write formulas first, then substitute values. This earns method marks even if the final answer is wrong! 📐"],
-  physics: ["Physics tip: Always write SI units with your answers! Missing units = missing marks in boards. ⚛️", "For Physics numericals: Write Given, Find, Formula, Substitution, Answer — in that order. Examiners love this format!", "Key Physics formulas to memorize: F=ma, v=u+at, KE=½mv², E=mc². These appear every year! ⚡"],
-  chemistry: ["Chemistry tip: Learn the periodic table trends — atomic radius, ionization energy, electronegativity. They're asked every year! 🧪", "For organic chemistry, practice reaction mechanisms daily. Draw structures clearly for full marks!", "Remember OILRIG: Oxidation Is Loss, Reduction Is Gain. This helps in electrochemistry questions! ⚗️"],
-  biology: ["Biology tip: Draw and label diagrams for every answer — diagrams carry separate marks in CBSE! 🧬", "Focus on NCERT Biology thoroughly. Almost 80% of NEET Biology questions come directly from NCERT!", "Remember: Life processes = Nutrition, Respiration, Transportation, Excretion. Each has separate chapters — study them systematically!"],
-  history: ["History tip: Remember dates with mnemonics! For example: 1857 = First War of Independence. Make a timeline! 🏛️", "For UPSC History, focus on socio-economic causes, not just political events. Examiners want analysis, not just facts!", "Study history in themes: Political, Social, Economic, Cultural. This helps in both boards and competitive exams!"],
-  geography: ["Geography tip: Always practice map work — it's easy marks! Know important rivers, mountains and cities on map 🗺️", "Remember the factors of climate: Latitude, Altitude, Distance from sea, Ocean currents, Wind direction!", "For board exams, learn definitions of all geographical terms. They appear as 1-2 mark questions every year!"],
-  economics: ["Economics tip: Learn all definitions precisely — GDP, GNP, NNP, inflation. Examiners check exact definitions! 📊", "For development economics, remember: HDI = Health + Education + Income. India's current rank is around 132!", "Practice drawing supply-demand graphs. They carry 2-3 marks in board exams and are easy if practiced!"],
-  jee: ["JEE tip: Focus on NCERT first, then move to HC Verma for Physics, RD Sharma for Maths! ⚡", "For JEE, time management is key — allocate 1 hour per subject in the exam. Don't spend more than 3 mins per question!", "Important JEE topics: Mechanics, Thermodynamics, Electrostatics (Physics), Organic Chemistry, Calculus, Vectors (Maths)!"],
-  neet: ["NEET tip: Biology carries 360 marks out of 720 — it's your biggest scoring opportunity! 🧬", "For NEET, revise NCERT Biology at least 3 times. Read every line carefully — questions come from even small paragraphs!", "NEET strategy: Attempt Biology first (strongest subject), then Chemistry, then Physics!"],
-  upsc: ["UPSC tip: Read The Hindu newspaper daily for current affairs. Make short notes — don't just read! 🏛️", "For UPSC Prelims, solve at least 5 previous year papers. The pattern repeats every 3-4 years!", "UPSC Mains: Write answers in points with headings. Use keywords from syllabus. Aim for 150 words for 10-mark questions!"],
-  exam: ["Exam tip: Start with questions you know best — builds confidence and saves time! ✅", "The night before exam: Don't study new topics. Revise formulae, definitions and key points only. Sleep 7-8 hours!", "During exam: Read the question paper fully in first 15 minutes. Plan which questions to attempt first!"],
-  study: ["Study tip: Use the Pomodoro technique — 25 mins study, 5 mins break. Repeat 4 times then take a long break! ⏱️", "Active recall is better than re-reading. Close your book and try to recall what you just read — this doubles retention!", "Study in a well-lit, quiet place. Keep your phone in another room while studying to avoid distractions!"],
-  motivation: ["You've got this! 💪 Every expert was once a beginner. Keep going!", "Remember why you started. Your dream college, your career goals — let that motivate you every day! 🌟", "Consistency beats intensity. 2 hours of focused study daily is better than 10 hours of distracted study once a week!"],
-  default: ["That's a great question! For best results, try asking about a specific subject like Maths, Physics, Chemistry, Biology, History or Geography 📚", "I'm here to help! Ask me about exam tips, study strategies, or any specific subject! 😊", "Could you be more specific? Try asking something like 'tips for Maths' or 'how to study for NEET'!"],
-};
+// ─── STUDY CHATBOT COMPONENT ─────────────────────────────────────────────────
+// Add your Gemini API keys below — get free keys at aistudio.google.com/apikey
+// Each Google account gives a separate free quota — add as many as you have!
+const GEMINI_KEYS = [
+  process.env.REACT_APP_GEMINI_KEY,
+  process.env.REACT_APP_GEMINI_KEY2,
+  process.env.REACT_APP_GEMINI_KEY3,
+].filter(Boolean);
 
-function getEduBotResponse(msg) {
-  const lower = msg.toLowerCase();
-  if (lower.match(/hi|hello|hey|namaste|start/)) return EDUBOT_RESPONSES.greet;
-  if (lower.match(/math|maths|algebra|geometry|calculus|trigonometry|polynomial|quadratic|arithmetic/)) return EDUBOT_RESPONSES.math;
-  if (lower.match(/physics|motion|force|energy|electricity|light|sound|gravity|newton/)) return EDUBOT_RESPONSES.physics;
-  if (lower.match(/chemistry|chemical|acid|base|metal|carbon|periodic|element|reaction/)) return EDUBOT_RESPONSES.chemistry;
-  if (lower.match(/biology|cell|life|plant|animal|heredity|evolution|reproduction|neet bio/)) return EDUBOT_RESPONSES.biology;
-  if (lower.match(/history|ancient|medieval|modern|revolution|independence|mughal|british/)) return EDUBOT_RESPONSES.history;
-  if (lower.match(/geography|map|climate|river|mountain|soil|agriculture|resource/)) return EDUBOT_RESPONSES.geography;
-  if (lower.match(/economics|gdp|development|money|bank|globalisation|consumer/)) return EDUBOT_RESPONSES.economics;
-  if (lower.match(/jee|iit|engineering|joint entrance/)) return EDUBOT_RESPONSES.jee;
-  if (lower.match(/neet|medical|mbbs|doctor/)) return EDUBOT_RESPONSES.neet;
-  if (lower.match(/upsc|ias|civil service|government/)) return EDUBOT_RESPONSES.upsc;
-  if (lower.match(/exam|test|board|paper|marks|score|rank/)) return EDUBOT_RESPONSES.exam;
-  if (lower.match(/study|learn|prepare|revision|notes|tip/)) return EDUBOT_RESPONSES.study;
-  if (lower.match(/motivat|stress|anxious|tired|fail|give up|scared/)) return EDUBOT_RESPONSES.motivation;
-  return EDUBOT_RESPONSES.default;
+let currentKeyIndex = 0;
+function getNextKey() {
+  const key = GEMINI_KEYS[currentKeyIndex % GEMINI_KEYS.length];
+  currentKeyIndex++;
+  return key;
+}
+
+async function askGemini(prompt) {
+  if(!GEMINI_KEYS.length) throw new Error("NO_KEY");
+  let lastError = null;
+  // Try each key until one works
+  for(let i = 0; i < GEMINI_KEYS.length; i++) {
+    const key = GEMINI_KEYS[(currentKeyIndex + i) % GEMINI_KEYS.length];
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 512 },
+          }),
+        }
+      );
+      const data = await res.json();
+      if(data.error) {
+        // If quota exceeded, try next key
+        if(data.error.code === 429 || data.error.message?.includes("quota")) {
+          lastError = data.error.message;
+          continue;
+        }
+        throw new Error(data.error.message);
+      }
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      if(!text) throw new Error("EMPTY");
+      return text;
+    } catch(e) {
+      lastError = e.message;
+      continue;
+    }
+  }
+  throw new Error(lastError || "All keys exhausted");
 }
 
 function StudyChatBot({ userProfile }) {
   const [messages, setMessages] = useState([
-    { role: "ai", text: `Hi${userProfile?" "+userProfile.name.split(" ")[0]:""}! 👋 I'm EduBot — your smart study assistant! Ask me about any subject, exam tips or study strategies!` }
+    { role: "ai", text: `Hi${userProfile?" "+userProfile.name.split(" ")[0]:""}! 👋 I'm EduBot — your AI study assistant! Ask me anything about Maths, Science, History or any subject!` }
   ]);
   const [input, setInput] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = React.useRef(null);
 
-  const QUICK_QUESTIONS = ["📐 Maths tips","⚛️ Physics tips","🧪 Chemistry tips","🧬 Biology tips","⚡ JEE tips","🧬 NEET tips","🏛️ UPSC tips","📝 Exam tips"];
+  const QUICK = ["📐 Maths tips","⚛️ Physics tips","🧪 Chemistry tips","⚡ JEE tips","🧬 NEET tips","📝 Exam tips"];
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  const sendMessage = (text) => {
+  const sendMessage = async (text) => {
     const msg = text || input.trim();
-    if (!msg) return;
+    if(!msg) return;
     setInput("");
-    setMessages(m => [...m, { role: "user", text: msg }]);
+    setMessages(m => [...m, { role:"user", text:msg }]);
     setIsTyping(true);
-    setTimeout(() => {
-      const responses = getEduBotResponse(msg);
-      const reply = responses[Math.floor(Math.random() * responses.length)];
-      setMessages(m => [...m, { role: "ai", text: reply }]);
-      setIsTyping(false);
-    }, 800 + Math.random() * 400);
+    try {
+      if(!GEMINI_KEYS.length) throw new Error("NO_KEY");
+      const prompt = `You are EduBot, a friendly expert study assistant for Indian students (Class 6-12, JEE, NEET, UPSC boards). Student${userProfile?" "+userProfile.name.split(" ")[0]:""} asks: "${msg}". Give a clear helpful answer with examples. For maths show steps. Keep under 150 words. Be encouraging!`;
+      const reply = await askGemini(prompt);
+      setMessages(m => [...m, { role:"ai", text:reply }]);
+    } catch(e) {
+      if(e.message === "NO_KEY") {
+        setMessages(m => [...m, { role:"ai", text:"⚠️ No API key configured. Add REACT_APP_GEMINI_KEY in Vercel environment variables." }]);
+      } else if(e.message?.includes("quota") || e.message?.includes("429")) {
+        setMessages(m => [...m, { role:"ai", text:"⏳ Daily limit reached on all keys. Add more keys in Vercel (REACT_APP_GEMINI_KEY2, KEY3) or try again tomorrow!" }]);
+      } else {
+        setMessages(m => [...m, { role:"ai", text:"Something went wrong. Please try again!" }]);
+      }
+    }
+    setIsTyping(false);
   };
 
   return (
     <>
-      {/* Floating bubble */}
-      <button onClick={() => setIsOpen(!isOpen)} style={{ position:"fixed", bottom:24, right:24, zIndex:999, width:56, height:56, borderRadius:"50%", background:"linear-gradient(135deg,#6c63ff,#ff6584)", border:"none", cursor:"pointer", fontSize:"1.5rem", boxShadow:"0 4px 24px rgba(108,99,255,0.5)", display:"flex", alignItems:"center", justifyContent:"center", transition:"transform 0.2s" }} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
-        {isOpen ? "✕" : "🎓"}
+      <button onClick={()=>setIsOpen(!isOpen)} style={{position:"fixed",bottom:24,right:24,zIndex:999,width:56,height:56,borderRadius:"50%",background:"linear-gradient(135deg,#6c63ff,#ff6584)",border:"none",cursor:"pointer",fontSize:"1.5rem",boxShadow:"0 4px 24px rgba(108,99,255,0.5)",display:"flex",alignItems:"center",justifyContent:"center",transition:"transform 0.2s"}} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
+        {isOpen?"✕":"🎓"}
       </button>
-
-      {/* Chat window */}
-      {isOpen && (
-        <div style={{ position:"fixed", bottom:90, right:24, zIndex:998, width:340, height:500, background:"#12121a", border:"1px solid #2a2a3e", borderRadius:20, display:"flex", flexDirection:"column", boxShadow:"0 20px 60px rgba(0,0,0,0.5)", animation:"slideUp 0.3s ease" }}>
-          {/* Header */}
-          <div style={{ padding:"14px 18px", borderBottom:"1px solid #2a2a3e", display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ width:36, height:36, borderRadius:"50%", background:"linear-gradient(135deg,#6c63ff,#ff6584)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"1.1rem" }}>🎓</div>
+      {isOpen&&(
+        <div style={{position:"fixed",bottom:90,right:24,zIndex:998,width:340,height:500,background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,display:"flex",flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,0.5)",animation:"slideUp 0.3s ease"}}>
+          <div style={{padding:"14px 18px",borderBottom:"1px solid #2a2a3e",display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#6c63ff,#ff6584)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.1rem"}}>🎓</div>
             <div>
-              <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:700, fontSize:14 }}>EduBot</div>
-              <div style={{ fontSize:11, color:"#43e97b" }}>● Online — Always Available</div>
+              <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:14}}>EduBot</div>
+              <div style={{fontSize:11,color:"#43e97b"}}>● AI Study Assistant</div>
             </div>
           </div>
-
-          {/* Messages */}
-          <div style={{ flex:1, overflowY:"auto", padding:"12px", display:"flex", flexDirection:"column", gap:10 }}>
-            {messages.map((msg,i) => (
-              <div key={i} style={{ display:"flex", justifyContent:msg.role==="user"?"flex-end":"flex-start" }}>
-                <div style={{ maxWidth:"82%", background:msg.role==="user"?"linear-gradient(135deg,#6c63ff,#8b7fff)":"#1a1a26", border:msg.role==="ai"?"1px solid #2a2a3e":"none", borderRadius:msg.role==="user"?"16px 16px 4px 16px":"16px 16px 16px 4px", padding:"10px 14px", fontSize:13, lineHeight:1.6, color:"#e8e8f0" }}>
+          <div style={{flex:1,overflowY:"auto",padding:"12px",display:"flex",flexDirection:"column",gap:10}}>
+            {messages.map((msg,i)=>(
+              <div key={i} style={{display:"flex",justifyContent:msg.role==="user"?"flex-end":"flex-start"}}>
+                <div style={{maxWidth:"82%",background:msg.role==="user"?"linear-gradient(135deg,#6c63ff,#8b7fff)":"#1a1a26",border:msg.role==="ai"?"1px solid #2a2a3e":"none",borderRadius:msg.role==="user"?"16px 16px 4px 16px":"16px 16px 16px 4px",padding:"10px 14px",fontSize:13,lineHeight:1.6,color:"#e8e8f0",whiteSpace:"pre-wrap"}}>
                   {msg.text}
                 </div>
               </div>
             ))}
-            {isTyping && (
-              <div style={{ display:"flex", justifyContent:"flex-start" }}>
-                <div style={{ background:"#1a1a26", border:"1px solid #2a2a3e", borderRadius:"16px 16px 16px 4px", padding:"10px 14px", fontSize:13, color:"#7878a0" }}>EduBot is typing...</div>
+            {isTyping&&(
+              <div style={{display:"flex",justifyContent:"flex-start"}}>
+                <div style={{background:"#1a1a26",border:"1px solid #2a2a3e",borderRadius:"16px 16px 16px 4px",padding:"10px 14px",fontSize:13,color:"#7878a0"}}>EduBot is thinking...</div>
               </div>
             )}
             <div ref={messagesEndRef}/>
           </div>
-
-          {/* Quick questions */}
-          {messages.length <= 1 && (
-            <div style={{ padding:"0 12px 8px", display:"flex", gap:6, flexWrap:"wrap" }}>
-              {QUICK_QUESTIONS.slice(0,4).map(q => (
-                <button key={q} onClick={() => sendMessage(q)} style={{ background:"rgba(108,99,255,0.15)", border:"1px solid rgba(108,99,255,0.3)", borderRadius:20, padding:"4px 10px", color:"#a89cff", fontSize:11, cursor:"pointer", fontWeight:600 }}>{q}</button>
+          {messages.length<=1&&(
+            <div style={{padding:"0 12px 8px",display:"flex",gap:6,flexWrap:"wrap"}}>
+              {QUICK.slice(0,4).map(q=>(
+                <button key={q} onClick={()=>sendMessage(q)} style={{background:"rgba(108,99,255,0.15)",border:"1px solid rgba(108,99,255,0.3)",borderRadius:20,padding:"4px 10px",color:"#a89cff",fontSize:11,cursor:"pointer",fontWeight:600}}>{q}</button>
               ))}
             </div>
           )}
-
-          {/* Input */}
-          <div style={{ padding:"10px 12px", borderTop:"1px solid #2a2a3e", display:"flex", gap:8 }}>
-            <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendMessage()} placeholder="Ask any doubt..." style={{ flex:1, background:"#1a1a26", border:"1px solid #2a2a3e", borderRadius:10, padding:"8px 12px", color:"#e8e8f0", fontSize:13, outline:"none", fontFamily:"'DM Sans',sans-serif" }}/>
-            <button onClick={()=>sendMessage()} disabled={!input.trim()} style={{ background:"linear-gradient(135deg,#6c63ff,#8b7fff)", border:"none", borderRadius:10, padding:"8px 14px", color:"#fff", cursor:"pointer", fontSize:14, opacity:!input.trim()?0.5:1 }}>→</button>
+          <div style={{padding:"10px 12px",borderTop:"1px solid #2a2a3e",display:"flex",gap:8}}>
+            <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&!isTyping&&sendMessage()} placeholder="Ask any doubt..." style={{flex:1,background:"#1a1a26",border:"1px solid #2a2a3e",borderRadius:10,padding:"8px 12px",color:"#e8e8f0",fontSize:13,outline:"none",fontFamily:"'DM Sans',sans-serif"}}/>
+            <button onClick={()=>sendMessage()} disabled={isTyping||!input.trim()} style={{background:"linear-gradient(135deg,#6c63ff,#8b7fff)",border:"none",borderRadius:10,padding:"8px 14px",color:"#fff",cursor:"pointer",fontSize:14,opacity:isTyping||!input.trim()?0.5:1}}>→</button>
           </div>
         </div>
       )}
@@ -1597,32 +1612,20 @@ function HomeChatSection({ userProfile }) {
 
   const ask = async (text) => {
     const msg = text || input.trim();
-    if (!msg) return;
+    if(!msg) return;
     setInput(msg);
     setLoading(true);
     setAsked(true);
     setResponse("");
-
     try {
-
-      const GEMINI_KEY = process.env.REACT_APP_GEMINI_KEY;
-      if(!GEMINI_KEY) { setResponse("⚠️ Add REACT_APP_GEMINI_KEY in Vercel settings"); setLoading(false); return; }
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: `You are EduBot, a friendly expert study assistant for Indian students (Class 6-12, JEE, NEET, UPSC). Student asks: ${msg}. Give a clear complete answer with examples. For math show step-by-step. Keep under 200 words.` }] }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
-          }),
-        }
-      );
-      const data = await res.json();
-      if(data.error) { setResponse("⚠️ "+data.error.message); setLoading(false); return; }
-      const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      setResponse(raw || "Sorry, could not get an answer!");
-    } catch { setResponse("Something went wrong. Please try again!"); }
+      if(!GEMINI_KEYS.length) { setResponse("⚠️ Add REACT_APP_GEMINI_KEY in Vercel settings"); setLoading(false); return; }
+      const prompt = `You are EduBot, a friendly expert study assistant for Indian students (Class 6-12, JEE, NEET, UPSC). Student asks: "${msg}". Give a clear complete answer with examples. For maths show steps. Keep under 150 words.`;
+      const reply = await askGemini(prompt);
+      setResponse(reply);
+    } catch(e) {
+      if(e.message?.includes("quota")||e.message?.includes("429")) setResponse("⏳ Daily limit reached. Please try again tomorrow or add more API keys in Vercel!");
+      else setResponse("Something went wrong. Please try again!");
+    }
     setLoading(false);
   };
 
@@ -2218,11 +2221,11 @@ function PaperGeneratorPage({userProfile, navigate, handleLogout, showToast}) {
             <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700}}>📊 Section Distribution</div>
             <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.1rem",color:totalCalc===totalMarks?"#43e97b":"#ff6584"}}>{totalCalc} / {totalMarks} Marks</div>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 80px 80px 80px",gap:8,padding:"8px 12px",fontSize:11,fontWeight:700,color:"#7878a0",textTransform:"uppercase",letterSpacing:"0.05em"}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 80px 60px",gap:8,padding:"8px 12px",fontSize:11,fontWeight:700,color:"#7878a0",textTransform:"uppercase",letterSpacing:"0.05em"}}>
             <div>Section</div><div>Type</div><div style={{textAlign:"center"}}>Count</div><div style={{textAlign:"center"}}>Marks</div><div style={{textAlign:"right"}}>Total</div>
           </div>
           {sections.map((s,i)=>(
-            <div key={i} style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 80px 80px 80px",gap:8,padding:"10px 12px",background:"#1a1a26",borderRadius:10,marginBottom:6,alignItems:"center"}}>
+            <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 80px 60px",gap:8,padding:"10px 12px",background:"#1a1a26",borderRadius:10,marginBottom:6,alignItems:"center"}}>
               <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:14}}>Section {s.name}</div>
               <div>
                 <span style={{background:s.type==="mcq"?"rgba(108,99,255,.2)":s.type==="short"?"rgba(67,233,123,.2)":s.type==="long"?"rgba(247,151,30,.2)":"rgba(196,113,245,.2)",color:s.type==="mcq"?"#a89cff":s.type==="short"?"#43e97b":s.type==="long"?"#f7971e":"#c471f5",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700}}>
@@ -2360,4 +2363,97 @@ textarea.form-input{display:block;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .spin{animation:spin .8s linear infinite;}
 @keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+/* ── MOBILE RESPONSIVE ── */
+@media (max-width: 768px) {
+  /* Nav */
+  nav { padding: 0 4% !important; height: 58px !important; }
+  nav > div:last-child { gap: 4px !important; }
+  nav button { font-size: 11px !important; padding: 4px 6px !important; }
+  nav .btn-primary-sm { padding: 5px 10px !important; font-size: 11px !important; }
+
+  /* Hero section */
+  section { padding: 5rem 4% 3rem !important; }
+  h1 { font-size: clamp(2rem,8vw,3rem) !important; letter-spacing: -1px !important; }
+
+  /* Dashboard grids */
+  .grid2, [style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
+  [style*="grid-template-columns: 1fr 1fr 1fr 1fr"] { grid-template-columns: 1fr 1fr !important; }
+  [style*="grid-template-columns: repeat(auto-fill,minmax(150px"] { grid-template-columns: 1fr 1fr !important; }
+  [style*="grid-template-columns: repeat(auto-fill,minmax(200px"] { grid-template-columns: 1fr 1fr !important; }
+  [style*="grid-template-columns: repeat(auto-fill,minmax(260px"] { grid-template-columns: 1fr !important; }
+  [style*="grid-template-columns: repeat(auto-fill,minmax(280px"] { grid-template-columns: 1fr !important; }
+  [style*="grid-template-columns: repeat(auto-fill,minmax(240px"] { grid-template-columns: 1fr !important; }
+
+  /* Leaderboard table */
+  [style*="grid-template-columns: 60px 1fr 80px 80px 80px 80px"] {
+    grid-template-columns: 40px 1fr 60px 60px !important;
+  }
+
+  /* Exam question navigator */
+  [style*="gap:6px;flexWrap:"wrap""] { gap: 4px !important; }
+
+  /* Paper generator sections */
+  [style*="grid-template-columns: 1.5fr 1fr 80px 80px 80px"] {
+    grid-template-columns: 1fr 60px 50px !important;
+  }
+
+  /* Chat window */
+  #chatWindow { width: calc(100vw - 32px) !important; right: 0 !important; }
+
+  /* Buttons full width on mobile */
+  .btn-primary, .btn-secondary { padding: 10px 16px !important; font-size: 14px !important; }
+
+  /* Pages padding */
+  [style*="padding:"6rem 5% 3rem""] { padding: 5rem 4% 2rem !important; }
+  [style*="maxWidth:1200"] { padding-left: 4% !important; padding-right: 4% !important; }
+  [style*="maxWidth:900"] { padding-left: 4% !important; padding-right: 4% !important; }
+  [style*="maxWidth:800"] { padding-left: 4% !important; padding-right: 4% !important; }
+
+  /* Step indicator */
+  [style*="width:36px;height:36px;borderRadius:"50%""] { width: 28px !important; height: 28px !important; }
+  [style*="width:80px;height:2px"] { width: 40px !important; }
+
+  /* Section header in leaderboard */
+  [style*="display:"flex";gap:40"] { gap: 20px !important; }
+
+  /* Hub cards */
+  .hub-card { padding: 1rem !important; }
+
+  /* Feature cards */
+  .feature-card { padding: 1.25rem !important; }
+
+  /* Form inputs */
+  .form-input { font-size: 16px !important; }
+
+  /* Chatbot */
+  [style*="width: 340px"] { width: calc(100vw - 32px) !important; }
+  [style*="bottom: 90px"] { bottom: 80px !important; }
+}
+
+@media (max-width: 480px) {
+  /* Very small screens */
+  h1 { font-size: clamp(1.6rem,7vw,2.4rem) !important; }
+  .section-title { font-size: clamp(1.4rem,6vw,2rem) !important; }
+  nav > div:last-child > span { display: none; }
+
+  /* Hide some nav items on very small screens */
+  [style*="label:"🔍 Search""] { display: none !important; }
+
+  /* Stats grid 2 columns */
+  [style*="grid-template-columns: repeat(auto-fill,minmax(150px"] { grid-template-columns: 1fr 1fr !important; }
+
+  /* Exam hubs 1 column */
+  [style*="grid-template-columns: repeat(auto-fill,minmax(240px"] { grid-template-columns: 1fr !important; }
+
+  /* Paper generator */
+  [style*="grid-template-columns: "1fr 1fr 1fr 1fr""] { grid-template-columns: 1fr 1fr !important; }
+
+  /* Leaderboard podium */
+  [style*="display:"flex";justifyContent:"center";alignItems:"flex-end""] { display: none !important; }
+
+  /* Build test step cards */
+  [style*="minWidth:220"] { min-width: 100% !important; }
+}
 `;
+
