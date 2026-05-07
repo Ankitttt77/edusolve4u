@@ -15,7 +15,7 @@ const firebaseApp = initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
 
-// ─── DATA ────────────────────────────────────────────────────────────────────
+// DATA
 const SUBJECTS = [
   { name: "Physics", icon: "⚛️", color: "#4facfe" },
   { name: "Chemistry", icon: "🧪", color: "#43e97b" },
@@ -161,7 +161,7 @@ const seedIfEmpty = async () => {
 };
 
 // ════════════════════════════════════════════════════════════════════════════
-// ─── AI PROMPT GENERATOR ─────────────────────────────────────────────────────
+// AIPROMPTGENERATOR
 function getAIPrompt(subject, chapter, difficulty, type) {
   const base = `class 10 ${subject} topic: ${chapter}, difficulty: ${difficulty}`;
   const json = (fields) => JSON.stringify(fields);
@@ -344,7 +344,7 @@ export default function App() {
   );
 }
 
-// ─── LOADER ───────────────────────────────────────────────────────────────────
+// LOADER
 function Loader() {
   return <div style={{minHeight:"100vh",background:"#0a0a0f",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}>
     <div className="spin" style={{width:48,height:48,border:"3px solid #2a2a3e",borderTop:"3px solid #6c63ff",borderRadius:"50%"}}/>
@@ -352,12 +352,12 @@ function Loader() {
   </div>;
 }
 
-// ─── TOAST ────────────────────────────────────────────────────────────────────
+// TOAST
 function Toast({msg,type}) {
   return <div style={{position:"fixed",bottom:24,right:24,zIndex:9999,background:type==="error"?"#ff6584":"#43e97b",color:"#0a0a0f",padding:"12px 20px",borderRadius:12,fontWeight:600,fontSize:14,boxShadow:"0 8px 24px rgba(0,0,0,0.4)",animation:"slideUp 0.3s ease"}}>{msg}</div>;
 }
 
-// ─── NAV ──────────────────────────────────────────────────────────────────────
+// NAV
 function Nav({userProfile,navigate,handleLogout}) {
   const [menuOpen,setMenuOpen] = useState(false);
   return (
@@ -388,7 +388,7 @@ function Nav({userProfile,navigate,handleLogout}) {
 }
 const NavBtn = ({onClick,label}) => <button onClick={onClick} style={{background:"none",border:"none",color:"#7878a0",cursor:"pointer",fontSize:13,fontWeight:500,padding:"6px 10px",borderRadius:8,transition:"color 0.2s",fontFamily:"'DM Sans',sans-serif"}} onMouseEnter={e=>e.target.style.color="#e8e8f0"} onMouseLeave={e=>e.target.style.color="#7878a0"}>{label}</button>;
 
-// ─── HOME ─────────────────────────────────────────────────────────────────────
+// HOME
 function HomePage({navigate,userProfile,handleLogout}) {
   return (
     <div>
@@ -467,7 +467,7 @@ function HomePage({navigate,userProfile,handleLogout}) {
   );
 }
 
-// ─── EXAM HUB PAGE ────────────────────────────────────────────────────────────
+// EXAMHUBPAGE
 function ExamHubPage({userProfile,navigate,handleLogout,examHub,showToast}) {
   const [activeHub,setActiveHub] = useState(examHub||EXAM_HUBS[0]);
   const [tab,setTab] = useState("practice");
@@ -594,7 +594,7 @@ function ExamHubPage({userProfile,navigate,handleLogout,examHub,showToast}) {
   );
 }
 
-// ─── SEARCH PAGE ──────────────────────────────────────────────────────────────
+// SEARCHPAGE
 function SearchPage({userProfile,navigate,handleLogout}) {
   const [filters,setFilters] = useState({subject:"",chapter:"",exam:"",difficulty:"",year:"",keyword:""});
   const [results,setResults] = useState([]);
@@ -711,7 +711,7 @@ function SearchPage({userProfile,navigate,handleLogout}) {
   );
 }
 
-// ─── LOGIN ────────────────────────────────────────────────────────────────────
+// LOGIN
 function LoginPage({navigate,handleLogin,userProfile,handleLogout}) {
   const [email,setEmail]=useState(""); const [pass,setPass]=useState("");
   return (
@@ -733,7 +733,7 @@ function LoginPage({navigate,handleLogin,userProfile,handleLogout}) {
   );
 }
 
-// ─── REGISTER ─────────────────────────────────────────────────────────────────
+// REGISTER
 function RegisterPage({navigate,handleRegister,userProfile,handleLogout}) {
   const [form,setForm]=useState({name:"",email:"",password:"",class:"10"});
   const upd=(k,v)=>setForm(f=>({...f,[k]:v}));
@@ -759,7 +759,7 @@ function RegisterPage({navigate,handleRegister,userProfile,handleLogout}) {
   );
 }
 
-// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+// DASHBOARD
 function DashboardPage({userProfile,navigate,handleLogout}) {
   const [myResults,setMyResults]=useState([]);
   const [loading,setLoading]=useState(true);
@@ -827,7 +827,7 @@ function DashboardPage({userProfile,navigate,handleLogout}) {
   );
 }
 
-// ─── BUILD TEST PAGE (Card UI) ────────────────────────────────────────────────
+// BUILDTESTPAGE(CardUI)
 function BuildTestPage({userProfile,navigate,handleLogout,showToast}) {
   const [mode,setMode]=useState("practice"); // practice | paper
   const [step,setStep]=useState(1);
@@ -954,7 +954,7 @@ function BuildTestPage({userProfile,navigate,handleLogout,showToast}) {
   );
 }
 
-// ─── EXAM PAGE ────────────────────────────────────────────────────────────────
+// EXAMPAGE
 function ExamPage({examConfig,handleExamFinish,userProfile,navigate,handleLogout}) {
   const {questions,examTitle}=examConfig;
   const [current,setCurrent]=useState(0);
@@ -1047,7 +1047,7 @@ function ExamPage({examConfig,handleExamFinish,userProfile,navigate,handleLogout
   );
 }
 
-// ─── RESULT PAGE ──────────────────────────────────────────────────────────────
+// RESULTPAGE
 function ResultPage({examResult,examConfig,userProfile,navigate,handleLogout}) {
   const {score,correct,totalQ,timeTaken,answers}=examResult;
   const questions=examConfig?.questions||[];
@@ -1100,7 +1100,7 @@ function ResultPage({examResult,examConfig,userProfile,navigate,handleLogout}) {
   );
 }
 
-// ─── LEADERBOARD ──────────────────────────────────────────────────────────────
+// LEADERBOARD
 function LeaderboardPage({userProfile,navigate,handleLogout}) {
   const [filter,setFilter]=useState("all");
   const [leaderboard,setLeaderboard]=useState([]);
@@ -1200,7 +1200,7 @@ function LeaderboardPage({userProfile,navigate,handleLogout}) {
   );
 }
 
-// ─── ADMIN PAGE ───────────────────────────────────────────────────────────────
+// ADMINPAGE
 function AdminPage({userProfile,navigate,handleLogout,handleDeleteQuestion,handleAIQuestion}) {
   const [tab,setTab]=useState("questions");
   const [questions,setQuestions]=useState([]);
@@ -1347,7 +1347,7 @@ function AdminPage({userProfile,navigate,handleLogout,handleDeleteQuestion,handl
   );
 }
 
-// ─── ADD QUESTION ─────────────────────────────────────────────────────────────
+// ADDQUESTION
 function AddQuestionPage({userProfile,navigate,handleLogout,handleAddQuestion}) {
   const [form,setForm]=useState({subject:"Mathematics",chapter:"Real Numbers",class:"10",difficulty:"medium",type:"mcq",text:"",options:["","","",""],answer:0,explanation:"",exam:"boards",year:new Date().getFullYear().toString()});
   const upd=(k,v)=>setForm(f=>({...f,[k]:v}));
@@ -1422,7 +1422,7 @@ function AddQuestionPage({userProfile,navigate,handleLogout,handleAddQuestion}) 
   );
 }
 
-// ─── BOOKS PAGE ───────────────────────────────────────────────────────────────
+// BOOKSPAGE
 function BooksPage({userProfile,navigate,handleLogout}) {
   const [activeExam,setActiveExam]=useState("jee");
   const hub=EXAM_HUBS.find(h=>h.id===activeExam);
@@ -1454,14 +1454,14 @@ function BooksPage({userProfile,navigate,handleLogout}) {
   );
 }
 
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
+// HELPERS
 const Tag=({label,color})=><span style={{background:`${color}22`,color,border:`1px solid ${color}44`,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{label}</span>;
 
 
-// ─── STUDY CHATBOT COMPONENT ─────────────────────────// ─── STUDY CHATBOT COMPONENT ─────────────────────────────────────────────────
+// STUDYCHATBOTCOMPONENT//STUDYCHATBOTCOMPONENT
 function StudyChatBot() { return null; }
 
-────────────────────────
+
 function HomeChatSection({ userProfile }) {
   const [input, setInput] = useState("");
   const [response, setResponse] = useState("");
@@ -1591,8 +1591,8 @@ function HomeChatSection({ userProfile }) {
 }
 
 
-// ─── PAPER GENERATOR PAGE ────────────────────────────────────────────────────
-// ─── ALL EXAM FORMAT TEMPLATES ───────────────────────────────────────────────
+// PAPERGENERATORPAGE
+// ALLEXAMFORMATTEMPLATES
 const EXAM_FORMATS = {
   cbse10: {
     name: "CBSE Class X Board",
@@ -2202,7 +2202,7 @@ const PAPER_CSS = `
   .ep-end { text-align: center; margin-top: 10px; font-size: 11px; color: #666; }
 `;
 
-// ─── GLOBAL CSS ───────────────────────────────────────────────────────────────
+// GLOBALCSS
 const GLOBAL_CSS=`
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -2323,4 +2323,3 @@ textarea.form-input{display:block;}
   [style*="minWidth:220"] { min-width: 100% !important; }
 }
 `;
-
