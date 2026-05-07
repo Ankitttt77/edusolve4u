@@ -333,7 +333,7 @@ export default function App() {
       {page==="exam"&&<ExamPage {...props}/>}
       {page==="result"&&<ResultPage {...props}/>}
       {page==="leaderboard"&&<LeaderboardPage {...props}/>}
-      {currentUser&&<StudyChatBot userProfile={userProfile}/>}
+      
       {page==="admin"&&<AdminPage {...props}/>}
       {page==="addQuestion"&&<AddQuestionPage {...props}/>}
       {page==="papergen"&&<PaperGeneratorPage {...props}/>}
@@ -416,7 +416,7 @@ function HomePage({navigate,userProfile,handleLogout}) {
         </div>
       </section>
 
-      <HomeChatSection userProfile={userProfile}/>
+
 
       {/* Exam Hubs Preview */}
       <section style={{padding:"5rem 5%",background:"#0d0d14"}}>
@@ -1458,143 +1458,10 @@ function BooksPage({userProfile,navigate,handleLogout}) {
 const Tag=({label,color})=><span style={{background:`${color}22`,color,border:`1px solid ${color}44`,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{label}</span>;
 
 
-// ─── STUDY CHATBOT COMPONENT ─────────────────────────────────────────────────
-// Add your Gemini API keys below — get free keys at aistudio.google.com/apikey
-// Each Google account gives a separate free quota — add as many as you have!
-const GEMINI_KEYS = [
-  process.env.REACT_APP_GEMINI_KEY,
-  process.env.REACT_APP_GEMINI_KEY2,
-  process.env.REACT_APP_GEMINI_KEY3,
-].filter(Boolean);
+// ─── STUDY CHATBOT COMPONENT ─────────────────────────// ─── STUDY CHATBOT COMPONENT ─────────────────────────────────────────────────
+function StudyChatBot() { return null; }
 
-let currentKeyIndex = 0;
-function getNextKey() {
-  const key = GEMINI_KEYS[currentKeyIndex % GEMINI_KEYS.length];
-  currentKeyIndex++;
-  return key;
-}
-
-async function askGemini(prompt) {
-  if(!GEMINI_KEYS.length) throw new Error("NO_KEY");
-  let lastError = null;
-  // Try each key until one works
-  for(let i = 0; i < GEMINI_KEYS.length; i++) {
-    const key = GEMINI_KEYS[(currentKeyIndex + i) % GEMINI_KEYS.length];
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 512 },
-          }),
-        }
-      );
-      const data = await res.json();
-      if(data.error) {
-        // If quota exceeded, try next key
-        if(data.error.code === 429 || data.error.message?.includes("quota")) {
-          lastError = data.error.message;
-          continue;
-        }
-        throw new Error(data.error.message);
-      }
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      if(!text) throw new Error("EMPTY");
-      return text;
-    } catch(e) {
-      lastError = e.message;
-      continue;
-    }
-  }
-  throw new Error(lastError || "All keys exhausted");
-}
-
-function StudyChatBot({ userProfile }) {
-  const [messages, setMessages] = useState([
-    { role: "ai", text: `Hi${userProfile?" "+userProfile.name.split(" ")[0]:""}! 👋 I'm EduBot — your AI study assistant! Ask me anything about Maths, Science, History or any subject!` }
-  ]);
-  const [input, setInput] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = React.useRef(null);
-
-  const QUICK = ["📐 Maths tips","⚛️ Physics tips","🧪 Chemistry tips","⚡ JEE tips","🧬 NEET tips","📝 Exam tips"];
-
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
-
-  const sendMessage = async (text) => {
-    const msg = text || input.trim();
-    if(!msg) return;
-    setInput("");
-    setMessages(m => [...m, { role:"user", text:msg }]);
-    setIsTyping(true);
-    try {
-      if(!GEMINI_KEYS.length) throw new Error("NO_KEY");
-      const prompt = `You are EduBot, a friendly expert study assistant for Indian students (Class 6-12, JEE, NEET, UPSC boards). Student${userProfile?" "+userProfile.name.split(" ")[0]:""} asks: "${msg}". Give a clear helpful answer with examples. For maths show steps. Keep under 150 words. Be encouraging!`;
-      const reply = await askGemini(prompt);
-      setMessages(m => [...m, { role:"ai", text:reply }]);
-    } catch(e) {
-      if(e.message === "NO_KEY") {
-        setMessages(m => [...m, { role:"ai", text:"⚠️ No API key configured. Add REACT_APP_GEMINI_KEY in Vercel environment variables." }]);
-      } else if(e.message?.includes("quota") || e.message?.includes("429")) {
-        setMessages(m => [...m, { role:"ai", text:"⏳ Daily limit reached on all keys. Add more keys in Vercel (REACT_APP_GEMINI_KEY2, KEY3) or try again tomorrow!" }]);
-      } else {
-        setMessages(m => [...m, { role:"ai", text:"Something went wrong. Please try again!" }]);
-      }
-    }
-    setIsTyping(false);
-  };
-
-  return (
-    <>
-      <button onClick={()=>setIsOpen(!isOpen)} style={{position:"fixed",bottom:24,right:24,zIndex:999,width:56,height:56,borderRadius:"50%",background:"linear-gradient(135deg,#6c63ff,#ff6584)",border:"none",cursor:"pointer",fontSize:"1.5rem",boxShadow:"0 4px 24px rgba(108,99,255,0.5)",display:"flex",alignItems:"center",justifyContent:"center",transition:"transform 0.2s"}} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
-        {isOpen?"✕":"🎓"}
-      </button>
-      {isOpen&&(
-        <div style={{position:"fixed",bottom:90,right:24,zIndex:998,width:340,height:500,background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,display:"flex",flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,0.5)",animation:"slideUp 0.3s ease"}}>
-          <div style={{padding:"14px 18px",borderBottom:"1px solid #2a2a3e",display:"flex",alignItems:"center",gap:10}}>
-            <div style={{width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#6c63ff,#ff6584)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.1rem"}}>🎓</div>
-            <div>
-              <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:14}}>EduBot</div>
-              <div style={{fontSize:11,color:"#43e97b"}}>● AI Study Assistant</div>
-            </div>
-          </div>
-          <div style={{flex:1,overflowY:"auto",padding:"12px",display:"flex",flexDirection:"column",gap:10}}>
-            {messages.map((msg,i)=>(
-              <div key={i} style={{display:"flex",justifyContent:msg.role==="user"?"flex-end":"flex-start"}}>
-                <div style={{maxWidth:"82%",background:msg.role==="user"?"linear-gradient(135deg,#6c63ff,#8b7fff)":"#1a1a26",border:msg.role==="ai"?"1px solid #2a2a3e":"none",borderRadius:msg.role==="user"?"16px 16px 4px 16px":"16px 16px 16px 4px",padding:"10px 14px",fontSize:13,lineHeight:1.6,color:"#e8e8f0",whiteSpace:"pre-wrap"}}>
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-            {isTyping&&(
-              <div style={{display:"flex",justifyContent:"flex-start"}}>
-                <div style={{background:"#1a1a26",border:"1px solid #2a2a3e",borderRadius:"16px 16px 16px 4px",padding:"10px 14px",fontSize:13,color:"#7878a0"}}>EduBot is thinking...</div>
-              </div>
-            )}
-            <div ref={messagesEndRef}/>
-          </div>
-          {messages.length<=1&&(
-            <div style={{padding:"0 12px 8px",display:"flex",gap:6,flexWrap:"wrap"}}>
-              {QUICK.slice(0,4).map(q=>(
-                <button key={q} onClick={()=>sendMessage(q)} style={{background:"rgba(108,99,255,0.15)",border:"1px solid rgba(108,99,255,0.3)",borderRadius:20,padding:"4px 10px",color:"#a89cff",fontSize:11,cursor:"pointer",fontWeight:600}}>{q}</button>
-              ))}
-            </div>
-          )}
-          <div style={{padding:"10px 12px",borderTop:"1px solid #2a2a3e",display:"flex",gap:8}}>
-            <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&!isTyping&&sendMessage()} placeholder="Ask any doubt..." style={{flex:1,background:"#1a1a26",border:"1px solid #2a2a3e",borderRadius:10,padding:"8px 12px",color:"#e8e8f0",fontSize:13,outline:"none",fontFamily:"'DM Sans',sans-serif"}}/>
-            <button onClick={()=>sendMessage()} disabled={isTyping||!input.trim()} style={{background:"linear-gradient(135deg,#6c63ff,#8b7fff)",border:"none",borderRadius:10,padding:"8px 14px",color:"#fff",cursor:"pointer",fontSize:14,opacity:isTyping||!input.trim()?0.5:1}}>→</button>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-// ─── HOME CHATBOT SECTION ────────────────────────────────────────────────────
+────────────────────────
 function HomeChatSection({ userProfile }) {
   const [input, setInput] = useState("");
   const [response, setResponse] = useState("");
@@ -2456,3 +2323,4 @@ textarea.form-input{display:block;}
   [style*="minWidth:220"] { min-width: 100% !important; }
 }
 `;
+
