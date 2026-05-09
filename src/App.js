@@ -176,6 +176,112 @@ function getAIPrompt(subject, chapter, difficulty, type) {
 }
 
 
+// HOME CHATBOT SECTION
+function HomeChatSection({ userProfile }) {
+  const [input, setInput] = useState("");
+  const [response, setResponse] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [asked, setAsked] = useState(false);
+
+  const SUGGESTIONS = [
+    "📐 Explain Pythagoras theorem",
+    "⚛️ What is Newton's second law?",
+    "🧪 How do acids and bases differ?",
+    "🧬 What is photosynthesis?",
+    "📊 Solve x² - 5x + 6 = 0",
+    "🏛️ Explain the French Revolution",
+  ];
+
+  const ask = async (text) => {
+    const msg = text || input.trim();
+    if(!msg) return;
+    setInput(msg);
+    setLoading(true);
+    setAsked(true);
+    setResponse("");
+    try {
+      const GEMINI_KEY = process.env.REACT_APP_GEMINI_KEY;
+      if(!GEMINI_KEY) { setResponse("⚠️ Add REACT_APP_GEMINI_KEY in Vercel settings."); setLoading(false); return; }
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `You are EduBot, a friendly expert study assistant for Indian students (Class 6-12, JEE, NEET, UPSC). Student asks: "${msg}". Give a clear complete answer with examples. For maths show steps. Keep under 150 words.` }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 512 },
+          }),
+        }
+      );
+      const data = await res.json();
+      if(data.error) { setResponse("⚠️ " + data.error.message); setLoading(false); return; }
+      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, could not get an answer!";
+      setResponse(reply);
+    } catch { setResponse("Something went wrong. Please try again!"); }
+    setLoading(false);
+  };
+
+  return (
+    <section style={{padding:"5rem 5%",background:"#0a0a0f"}}>
+      <div style={{maxWidth:800,margin:"0 auto",textAlign:"center"}}>
+        <div className="section-label">AI Study Assistant</div>
+        <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"clamp(2rem,4vw,3rem)",letterSpacing:"-1.5px",marginBottom:8}}>
+          Hi {userProfile?userProfile.name.split(" ")[0]:"there"} 👋<br/>
+          <span style={{background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Where should we start?</span>
+        </h2>
+        <p style={{color:"#7878a0",marginBottom:32,fontSize:"1rem"}}>Ask any doubt — Maths, Science, History, anything!</p>
+
+        <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"18px 20px",marginBottom:20,textAlign:"left",boxShadow:"0 8px 40px rgba(108,99,255,0.1)"}}>
+          <input
+            value={input}
+            onChange={e=>setInput(e.target.value)}
+            onKeyDown={e=>e.key==="Enter"&&!loading&&ask()}
+            placeholder="Ask EduBot anything..."
+            style={{width:"100%",background:"transparent",border:"none",color:"#e8e8f0",fontSize:"1rem",outline:"none",fontFamily:"'DM Sans',sans-serif",marginBottom:14}}
+          />
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{fontSize:12,color:"#7878a0"}}>Powered by Gemini AI</div>
+            <button onClick={()=>ask()} disabled={loading||!input.trim()} style={{background:"linear-gradient(135deg,#6c63ff,#8b7fff)",border:"none",borderRadius:12,padding:"8px 20px",color:"#fff",cursor:"pointer",fontWeight:600,fontSize:14,opacity:loading||!input.trim()?0.5:1,fontFamily:"'DM Sans',sans-serif"}}>
+              {loading?"Thinking...":"Ask →"}
+            </button>
+          </div>
+        </div>
+
+        {asked&&(
+          <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"18px 20px",marginBottom:20,textAlign:"left",animation:"fadeIn 0.3s ease"}}>
+            <div style={{display:"flex",gap:10,marginBottom:10,alignItems:"center"}}>
+              <div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#6c63ff,#ff6584)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.8rem"}}>🎓</div>
+              <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:14,color:"#6c63ff"}}>EduBot</span>
+            </div>
+            {loading
+              ?<div style={{color:"#7878a0",fontSize:14}}>EduBot is thinking...</div>
+              :<div style={{fontSize:14,lineHeight:1.7,color:"#e8e8f0",whiteSpace:"pre-wrap"}}>{response}</div>
+            }
+          </div>
+        )}
+
+        {!asked&&(
+          <div style={{display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center"}}>
+            {SUGGESTIONS.map(s=>(
+              <button key={s} onClick={()=>ask(s.slice(2))} style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:50,padding:"8px 18px",color:"#7878a0",cursor:"pointer",fontSize:13,fontWeight:500,transition:"all 0.2s",fontFamily:"'DM Sans',sans-serif"}}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor="#6c63ff";e.currentTarget.style.color="#e8e8f0";}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor="#2a2a3e";e.currentTarget.style.color="#7878a0";}}
+              >{s}</button>
+            ))}
+          </div>
+        )}
+
+        {asked&&(
+          <button onClick={()=>{setAsked(false);setInput("");setResponse("");}} style={{background:"transparent",border:"1px solid #2a2a3e",borderRadius:20,padding:"8px 20px",color:"#7878a0",cursor:"pointer",fontSize:13,marginTop:8,fontFamily:"'DM Sans',sans-serif"}}>
+            Ask another question
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+
 const GLOBAL_CSS=`
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -382,7 +488,7 @@ export default function App() {
       {page==="addQuestion"&&<AddQuestionPage {...props}/>}
       {page==="papergen"&&<PaperGeneratorPage {...props}/>}
       {page==="search"&&<SearchPage {...props}/>}
-      {currentUser&&<StudyChatBot userProfile={userProfile}/>}
+      <StudyChatBot userProfile={userProfile}/>
       {page==="examhub"&&<ExamHubPage {...props}/>}
       {page==="books"&&<BooksPage {...props}/>}
     </div>
@@ -462,6 +568,8 @@ function HomePage({navigate,userProfile,handleLogout}) {
       </section>
 
 
+
+      <HomeChatSection userProfile={userProfile}/>
 
       {/* Exam Hubs Preview */}
       <section style={{padding:"5rem 5%",background:"#0d0d14"}}>
