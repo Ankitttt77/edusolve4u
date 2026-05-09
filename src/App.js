@@ -338,6 +338,7 @@ export default function App() {
       {page==="addQuestion"&&<AddQuestionPage {...props}/>}
       {page==="papergen"&&<PaperGeneratorPage {...props}/>}
       {page==="search"&&<SearchPage {...props}/>}
+      {currentUser&&<StudyChatBot userProfile={userProfile}/>}
       {page==="examhub"&&<ExamHubPage {...props}/>}
       {page==="books"&&<BooksPage {...props}/>}
     </div>
@@ -1458,24 +1459,100 @@ function BooksPage({userProfile,navigate,handleLogout}) {
 const Tag=({label,color})=><span style={{background:`${color}22`,color,border:`1px solid ${color}44`,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{label}</span>;
 
 
-// STUDYCHATBOTCOMPONENT//STUDYCHATBOTCOMPONENT
-function StudyChatBot() { return null; }
+// STUDYCHATBOTCOMPONENT
+// Uses Groq API - Free, fast, no credit card needed
+// Get your free key at console.groq.com
 
+async function askGroq(prompt) {
+  const key = process.env.REACT_APP_GROQ_KEY;
+  if(!key) throw new Error("NO_KEY");
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${key}`,
+    },
+    body: JSON.stringify({
+      model: "llama-3.1-8b-instant",
+      messages: [
+        { role: "system", content: "You are EduBot, a friendly expert study assistant for Indian students (Class 6-12, JEE, NEET, UPSC). Give clear helpful answers with examples. For maths show step-by-step. Keep under 150 words. Be encouraging!" },
+        { role: "user", content: prompt }
+      ],
+      max_tokens: 300,
+      temperature: 0.7,
+    }),
+  });
+  const data = await res.json();
+  if(data.error) throw new Error(data.error.message);
+  return data.choices?.[0]?.message?.content || "";
+}
 
-function HomeChatSection({ userProfile }) {
+function StudyChatBot({ userProfile }) {
+  const [messages, setMessages] = useState([
+    { role: "ai", text: `Hi${userProfile?" "+userProfile.name.split(" ")[0]:""}! 👋 I'm EduBot — your AI study assistant! Ask me anything about Maths, Science, History or any subject!` }
+  ]);
   const [input, setInput] = useState("");
-  const [response, setResponse] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [asked, setAsked] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = React.useRef(null);
+  const QUICK = ["📐 Maths tips","⚛️ Physics tips","🧪 Chemistry tips","⚡ JEE tips","🧬 NEET tips","📝 Exam tips"];
+  useEffect(()=>{ messagesEndRef.current?.scrollIntoView({behavior:"smooth"}); },[messages]);
 
-  const SUGGESTIONS = [
-    "📐 Explain Pythagoras theorem",
-    "⚛️ What is Newton's second law?",
-    "🧪 How do acids and bases differ?",
-    "🧬 What is photosynthesis?",
-    "📊 Solve x² - 5x + 6 = 0",
-    "🏛️ Explain the French Revolution",
-  ];
+  const sendMessage = async (text) => {
+    const msg = text || input.trim();
+    if(!msg) return;
+    setInput("");
+    setMessages(m=>[...m,{role:"user",text:msg}]);
+    setIsTyping(true);
+    try {
+      const reply = await askGroq(msg);
+      setMessages(m=>[...m,{role:"ai",text:reply||"Sorry, could not get an answer!"}]);
+    } catch(e) {
+      if(e.message==="NO_KEY") setMessages(m=>[...m,{role:"ai",text:"⚠️ Add REACT_APP_GROQ_KEY in Vercel settings. Get free key at console.groq.com"}]);
+      else setMessages(m=>[...m,{role:"ai",text:"Something went wrong. Please try again!"}]);
+    }
+    setIsTyping(false);
+  };
+
+  return (
+    <>
+      <button onClick={()=>setIsOpen(!isOpen)} style={{position:"fixed",bottom:24,right:24,zIndex:999,width:56,height:56,borderRadius:"50%",background:"linear-gradient(135deg,#6c63ff,#ff6584)",border:"none",cursor:"pointer",fontSize:"1.5rem",boxShadow:"0 4px 24px rgba(108,99,255,0.5)",display:"flex",alignItems:"center",justifyContent:"center",transition:"transform 0.2s"}} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
+        {isOpen?"✕":"🎓"}
+      </button>
+      {isOpen&&(
+        <div style={{position:"fixed",bottom:90,right:24,zIndex:998,width:340,height:500,background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,display:"flex",flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,0.5)",animation:"slideUp 0.3s ease"}}>
+          <div style={{padding:"14px 18px",borderBottom:"1px solid #2a2a3e",display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#6c63ff,#ff6584)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.1rem"}}>🎓</div>
+            <div>
+              <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:14}}>EduBot</div>
+              <div style={{fontSize:11,color:"#43e97b"}}>● AI Study Assistant (Powered by Groq)</div>
+            </div>
+          </div>
+          <div style={{flex:1,overflowY:"auto",padding:"12px",display:"flex",flexDirection:"column",gap:10}}>
+            {messages.map((msg,i)=>(
+              <div key={i} style={{display:"flex",justifyContent:msg.role==="user"?"flex-end":"flex-start"}}>
+                <div style={{maxWidth:"82%",background:msg.role==="user"?"linear-gradient(135deg,#6c63ff,#8b7fff)":"#1a1a26",border:msg.role==="ai"?"1px solid #2a2a3e":"none",borderRadius:msg.role==="user"?"16px 16px 4px 16px":"16px 16px 16px 4px",padding:"10px 14px",fontSize:13,lineHeight:1.6,color:"#e8e8f0",whiteSpace:"pre-wrap"}}>
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+            {isTyping&&<div style={{display:"flex",justifyContent:"flex-start"}}><div style={{background:"#1a1a26",border:"1px solid #2a2a3e",borderRadius:"16px 16px 16px 4px",padding:"10px 14px",fontSize:13,color:"#7878a0"}}>EduBot is thinking...</div></div>}
+            <div ref={messagesEndRef}/>
+          </div>
+          {messages.length<=1&&(
+            <div style={{padding:"0 12px 8px",display:"flex",gap:6,flexWrap:"wrap"}}>
+              {QUICK.map(q=><button key={q} onClick={()=>sendMessage(q)} style={{background:"rgba(108,99,255,0.15)",border:"1px solid rgba(108,99,255,0.3)",borderRadius:20,padding:"4px 10px",color:"#a89cff",fontSize:11,cursor:"pointer",fontWeight:600}}>{q}</button>)}
+            </div>
+          )}
+          <div style={{padding:"10px 12px",borderTop:"1px solid #2a2a3e",display:"flex",gap:8}}>
+            <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&!isTyping&&sendMessage()} placeholder="Ask any doubt..." style={{flex:1,background:"#1a1a26",border:"1px solid #2a2a3e",borderRadius:10,padding:"8px 12px",color:"#e8e8f0",fontSize:13,outline:"none",fontFamily:"'DM Sans',sans-serif"}}/>
+            <button onClick={()=>sendMessage()} disabled={isTyping||!input.trim()} style={{background:"linear-gradient(135deg,#6c63ff,#8b7fff)",border:"none",borderRadius:10,padding:"8px 14px",color:"#fff",cursor:"pointer",fontSize:14,opacity:isTyping||!input.trim()?0.5:1}}>→</button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
   const ask = async (text) => {
     const msg = text || input.trim();
@@ -1485,841 +1562,11 @@ function HomeChatSection({ userProfile }) {
     setAsked(true);
     setResponse("");
     try {
-      if(!GEMINI_KEYS.length) { setResponse("⚠️ Add REACT_APP_GEMINI_KEY in Vercel settings"); setLoading(false); return; }
-      const prompt = `You are EduBot, a friendly expert study assistant for Indian students (Class 6-12, JEE, NEET, UPSC). Student asks: "${msg}". Give a clear complete answer with examples. For maths show steps. Keep under 150 words.`;
-      const reply = await askGemini(prompt);
-      setResponse(reply);
+      const reply = await askGroq(msg);
+      setResponse(reply || "Sorry, could not get an answer!");
     } catch(e) {
-      if(e.message?.includes("quota")||e.message?.includes("429")) setResponse("⏳ Daily limit reached. Please try again tomorrow or add more API keys in Vercel!");
+      if(e.message==="NO_KEY") setResponse("⚠️ Add REACT_APP_GROQ_KEY in Vercel settings. Get free key at console.groq.com");
       else setResponse("Something went wrong. Please try again!");
     }
     setLoading(false);
   };
-
-  return (
-    <section style={{ padding: "5rem 5%", background: "#0a0a0f" }}>
-      <div style={{ maxWidth: 800, margin: "0 auto", textAlign: "center" }}>
-        <div className="section-label">AI Study Assistant</div>
-        <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 800, fontSize: "clamp(2rem,4vw,3rem)", letterSpacing: "-1.5px", marginBottom: 8 }}>
-          Hi {userProfile ? userProfile.name.split(" ")[0] : "there"} 👋<br />
-          <span style={{ background: "linear-gradient(135deg,#6c63ff,#ff6584)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Where should we start?</span>
-        </h2>
-        <p style={{ color: "#7878a0", marginBottom: 32, fontSize: "1rem" }}>Ask any doubt — Maths, Science, History, anything!</p>
-
-        {/* Input box */}
-        <div style={{
-          background: "#12121a", border: "1px solid #2a2a3e", borderRadius: 20,
-          padding: "18px 20px", marginBottom: 20, textAlign: "left",
-          boxShadow: "0 8px 40px rgba(108,99,255,0.1)",
-        }}>
-          <input
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && !loading && ask()}
-            placeholder="Ask EduBot anything..."
-            style={{
-              width: "100%", background: "transparent", border: "none",
-              color: "#e8e8f0", fontSize: "1rem", outline: "none",
-              fontFamily: "'DM Sans',sans-serif", marginBottom: 14,
-            }}
-          />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ fontSize: 12, color: "#7878a0" }}>Powered by Gemini AI</div>
-            <button
-              onClick={() => ask()}
-              disabled={loading || !input.trim()}
-              style={{
-                background: "linear-gradient(135deg,#6c63ff,#8b7fff)",
-                border: "none", borderRadius: 12, padding: "8px 20px",
-                color: "#fff", cursor: "pointer", fontWeight: 600, fontSize: 14,
-                opacity: loading || !input.trim() ? 0.5 : 1,
-                fontFamily: "'DM Sans',sans-serif",
-              }}
-            >{loading ? "Thinking..." : "Ask →"}</button>
-          </div>
-        </div>
-
-        {/* Response */}
-        {asked && (
-          <div style={{
-            background: "#12121a", border: "1px solid #2a2a3e", borderRadius: 20,
-            padding: "18px 20px", marginBottom: 20, textAlign: "left",
-            animation: "fadeIn 0.3s ease",
-          }}>
-            <div style={{ display: "flex", gap: 10, marginBottom: 10, alignItems: "center" }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: "50%",
-                background: "linear-gradient(135deg,#6c63ff,#ff6584)",
-                display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.8rem",
-              }}>🎓</div>
-              <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 14, color: "#6c63ff" }}>EduBot</span>
-            </div>
-            {loading
-              ? <div style={{ color: "#7878a0", fontSize: 14 }}>EduBot is thinking...</div>
-              : <div style={{ fontSize: 14, lineHeight: 1.7, color: "#e8e8f0", whiteSpace: "pre-wrap" }}>{response}</div>
-            }
-          </div>
-        )}
-
-        {/* Suggestion pills */}
-        {!asked && (
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
-            {SUGGESTIONS.map(s => (
-              <button key={s} onClick={() => ask(s.slice(2))} style={{
-                background: "#12121a", border: "1px solid #2a2a3e",
-                borderRadius: 50, padding: "8px 18px", color: "#7878a0",
-                cursor: "pointer", fontSize: 13, fontWeight: 500,
-                transition: "all 0.2s", fontFamily: "'DM Sans',sans-serif",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor="#6c63ff"; e.currentTarget.style.color="#e8e8f0"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor="#2a2a3e"; e.currentTarget.style.color="#7878a0"; }}
-              >{s}</button>
-            ))}
-          </div>
-        )}
-
-        {asked && (
-          <button onClick={() => { setAsked(false); setInput(""); setResponse(""); }} style={{
-            background: "transparent", border: "1px solid #2a2a3e", borderRadius: 20,
-            padding: "8px 20px", color: "#7878a0", cursor: "pointer",
-            fontSize: 13, marginTop: 8, fontFamily: "'DM Sans',sans-serif",
-          }}>Ask another question</button>
-        )}
-      </div>
-    </section>
-  );
-}
-
-
-// PAPERGENERATORPAGE
-// ALLEXAMFORMATTEMPLATES
-const EXAM_FORMATS = {
-  cbse10: {
-    name: "CBSE Class X Board",
-    board: "Central Board of Secondary Education",
-    totalMarks: 80,
-    time: "3 Hours",
-    subjects: ["Mathematics","Science","Social Science","English"],
-    instructions: [
-      "This question paper contains 5 sections — A, B, C, D and E.",
-      "Section A has 20 MCQs carrying 1 mark each.",
-      "Section B has 6 questions carrying 2 marks each.",
-      "Section C has 7 questions carrying 3 marks each.",
-      "Section D has 3 questions carrying 5 marks each.",
-      "Section E has 3 case study questions carrying 4 marks each.",
-      "All questions are compulsory. However, internal choices are provided.",
-      "Draw neat, labelled diagrams wherever necessary.",
-    ],
-    sections: [
-      { name:"A", type:"mcq",   count:20, marksEach:1, note:"Multiple Choice Questions — 1 mark each. Choose the most appropriate option." },
-      { name:"B", type:"short", count:6,  marksEach:2, note:"Very Short Answer Questions — 2 marks each. Answer in 30-50 words." },
-      { name:"C", type:"short", count:7,  marksEach:3, note:"Short Answer Questions — 3 marks each. Answer in 50-80 words." },
-      { name:"D", type:"long",  count:3,  marksEach:5, note:"Long Answer Questions — 5 marks each. Answer in 80-120 words." },
-      { name:"E", type:"case",  count:3,  marksEach:4, note:"Case Study Based Questions — 4 marks each. Read passage carefully." },
-    ],
-  },
-  cbse12: {
-    name: "CBSE Class XII Board",
-    board: "Central Board of Secondary Education",
-    totalMarks: 80,
-    time: "3 Hours",
-    subjects: ["Physics","Chemistry","Mathematics","Biology","English","History","Geography","Economics"],
-    instructions: [
-      "This question paper contains 5 sections — A, B, C, D and E.",
-      "Section A: 16 MCQs + 4 Assertion-Reason = 20 questions × 1 mark.",
-      "Section B: 5 Very Short Answer questions × 2 marks.",
-      "Section C: 7 Short Answer questions × 3 marks.",
-      "Section D: 2 Long Answer questions × 5 marks.",
-      "Section E: 3 Case Study/Source Based questions × 4 marks.",
-      "Internal choices are given in some questions.",
-      "Use of calculators is NOT permitted.",
-    ],
-    sections: [
-      { name:"A", type:"mcq",   count:20, marksEach:1, note:"MCQs and Assertion-Reason questions — 1 mark each." },
-      { name:"B", type:"short", count:5,  marksEach:2, note:"Very Short Answer — 2 marks each. Answer in 30-50 words." },
-      { name:"C", type:"short", count:7,  marksEach:3, note:"Short Answer — 3 marks each. Answer in 50-80 words." },
-      { name:"D", type:"long",  count:2,  marksEach:5, note:"Long Answer — 5 marks each. Detailed answer required." },
-      { name:"E", type:"case",  count:3,  marksEach:4, note:"Case Study/Source Based — 4 marks each." },
-    ],
-  },
-  jee_main: {
-    name: "JEE Main",
-    board: "National Testing Agency (NTA)",
-    totalMarks: 300,
-    time: "3 Hours",
-    subjects: ["Physics","Chemistry","Mathematics"],
-    instructions: [
-      "This paper has 3 subjects — Physics, Chemistry and Mathematics.",
-      "Each subject has 30 questions: 20 MCQs + 10 Numerical Value questions.",
-      "MCQs: +4 marks for correct, -1 mark for wrong answer.",
-      "Numerical Value Questions: +4 for correct, NO negative marking.",
-      "Only one option is correct in MCQ section.",
-      "Use of electronic devices is strictly prohibited.",
-      "Rough work should be done in the space provided.",
-    ],
-    sections: [
-      { name:"Physics MCQ",     type:"mcq",   count:20, marksEach:4,  note:"Physics — Multiple Choice. +4 correct, -1 wrong. Only ONE correct option." },
-      { name:"Physics Numeric", type:"short", count:10, marksEach:4,  note:"Physics — Numerical Value. Enter integer/decimal answer. No negative marking." },
-      { name:"Chemistry MCQ",   type:"mcq",   count:20, marksEach:4,  note:"Chemistry — Multiple Choice. +4 correct, -1 wrong." },
-      { name:"Chemistry Num",   type:"short", count:10, marksEach:4,  note:"Chemistry — Numerical Value. No negative marking." },
-      { name:"Maths MCQ",       type:"mcq",   count:20, marksEach:4,  note:"Mathematics — Multiple Choice. +4 correct, -1 wrong." },
-      { name:"Maths Numeric",   type:"short", count:10, marksEach:4,  note:"Mathematics — Numerical Value. No negative marking." },
-    ],
-  },
-  jee_advanced: {
-    name: "JEE Advanced — Paper 1",
-    board: "IIT Joint Admission Board",
-    totalMarks: 180,
-    time: "3 Hours",
-    subjects: ["Physics","Chemistry","Mathematics"],
-    instructions: [
-      "This paper consists of 3 sections — Physics, Chemistry, Mathematics.",
-      "Section 1: MCQ with ONE correct option (+3, -1).",
-      "Section 2: MCQ with ONE OR MORE correct options (+4, partial +1, -2).",
-      "Section 3: Numerical Answer Type — no negative marking (+4).",
-      "Answers must be filled in the OMR sheet carefully.",
-      "Calculators and electronic devices are NOT allowed.",
-    ],
-    sections: [
-      { name:"Physics S1",    type:"mcq",   count:6,  marksEach:3, note:"Single Correct MCQ — Physics. +3 correct, -1 wrong." },
-      { name:"Physics S2",    type:"mcq",   count:6,  marksEach:4, note:"One or More Correct MCQ — Physics. +4 all correct, partial marks, -2 wrong." },
-      { name:"Physics S3",    type:"short", count:6,  marksEach:4, note:"Numerical Answer Type — Physics. No negative marking." },
-      { name:"Chemistry S1",  type:"mcq",   count:6,  marksEach:3, note:"Single Correct MCQ — Chemistry." },
-      { name:"Chemistry S2",  type:"mcq",   count:6,  marksEach:4, note:"One or More Correct — Chemistry." },
-      { name:"Chemistry S3",  type:"short", count:6,  marksEach:4, note:"Numerical Answer Type — Chemistry." },
-      { name:"Maths S1",      type:"mcq",   count:6,  marksEach:3, note:"Single Correct MCQ — Mathematics." },
-      { name:"Maths S2",      type:"mcq",   count:6,  marksEach:4, note:"One or More Correct — Mathematics." },
-      { name:"Maths S3",      type:"short", count:6,  marksEach:4, note:"Numerical Answer Type — Mathematics." },
-    ],
-  },
-  neet: {
-    name: "NEET-UG",
-    board: "National Testing Agency (NTA)",
-    totalMarks: 720,
-    time: "3 Hours 20 Minutes",
-    subjects: ["Physics","Chemistry","Biology"],
-    instructions: [
-      "This paper has 4 sections — Physics, Chemistry, Botany and Zoology.",
-      "Each section has 50 questions: Section A (35 MCQs) + Section B (15 MCQs, attempt any 10).",
-      "Correct answer: +4 marks. Wrong answer: -1 mark.",
-      "Only ONE option is correct for each question.",
-      "Use Black/Blue ballpoint pen to darken the circle in OMR sheet.",
-      "Do not use pencil or whitener on OMR sheet.",
-      "Rough work must be done only in the space provided in this booklet.",
-    ],
-    sections: [
-      { name:"Physics A",   type:"mcq", count:35, marksEach:4, note:"Physics Section A — All 35 questions compulsory. +4 correct, -1 wrong." },
-      { name:"Physics B",   type:"mcq", count:15, marksEach:4, note:"Physics Section B — Attempt any 10 out of 15. +4 correct, -1 wrong." },
-      { name:"Chemistry A", type:"mcq", count:35, marksEach:4, note:"Chemistry Section A — All 35 questions compulsory." },
-      { name:"Chemistry B", type:"mcq", count:15, marksEach:4, note:"Chemistry Section B — Attempt any 10 out of 15." },
-      { name:"Botany A",    type:"mcq", count:35, marksEach:4, note:"Botany Section A — All 35 questions compulsory." },
-      { name:"Botany B",    type:"mcq", count:15, marksEach:4, note:"Botany Section B — Attempt any 10 out of 15." },
-      { name:"Zoology A",   type:"mcq", count:35, marksEach:4, note:"Zoology Section A — All 35 questions compulsory." },
-      { name:"Zoology B",   type:"mcq", count:15, marksEach:4, note:"Zoology Section B — Attempt any 10 out of 15." },
-    ],
-  },
-  upsc_prelims: {
-    name: "UPSC Civil Services Prelims — GS Paper I",
-    board: "Union Public Service Commission",
-    totalMarks: 200,
-    time: "2 Hours",
-    subjects: ["History","Geography","Economics","Social Science"],
-    instructions: [
-      "This paper consists of 100 questions of 2 marks each.",
-      "Correct answer: +2 marks. Wrong answer: -0.66 marks (1/3 negative marking).",
-      "All questions are compulsory.",
-      "Questions are in both English and Hindi.",
-      "Use Black Ball Point Pen only to darken the circle in OMR.",
-      "Do not make any stray marks on the OMR Answer Sheet.",
-      "Rough work may be done in the Test Booklet only.",
-    ],
-    sections: [
-      { name:"GS Paper I", type:"mcq", count:100, marksEach:2, note:"General Studies Paper I — 100 MCQs. +2 correct, -0.66 wrong. All questions compulsory." },
-    ],
-  },
-  upsc_mains: {
-    name: "UPSC Mains — General Studies Paper I",
-    board: "Union Public Service Commission",
-    totalMarks: 250,
-    time: "3 Hours",
-    subjects: ["History","Geography","Social Science"],
-    instructions: [
-      "This paper consists of 20 questions of 10 marks each and 10 questions of 15 marks each.",
-      "Answers must be written in the medium authorized in the Admission Certificate.",
-      "Word limit as specified in questions must be adhered to strictly.",
-      "Attempts of questions shall be counted in chronological order.",
-      "Questions relating to maps and diagrams must be answered with clear sketches.",
-    ],
-    sections: [
-      { name:"Section A", type:"short", count:10, marksEach:10, note:"Short Essay Questions — 10 marks each. Answer in approximately 150 words." },
-      { name:"Section B", type:"long",  count:10, marksEach:15, note:"Essay Questions — 15 marks each. Answer in approximately 250 words." },
-    ],
-  },
-  half_yearly: {
-    name: "Half Yearly Examination",
-    board: "School Internal Examination",
-    totalMarks: 40,
-    time: "1½ Hours",
-    subjects: ["Mathematics","Science","Social Science","English","Physics","Chemistry","Biology"],
-    instructions: [
-      "All questions are compulsory.",
-      "Section A: MCQs — 1 mark each.",
-      "Section B: Short Answer — 2 marks each.",
-      "Section C: Long Answer — 3-4 marks each.",
-      "Write answers neatly and clearly.",
-    ],
-    sections: [
-      { name:"A", type:"mcq",   count:10, marksEach:1, note:"MCQ — 1 mark each. Choose the correct option." },
-      { name:"B", type:"short", count:5,  marksEach:2, note:"Short Answer — 2 marks each. Answer in 2-3 sentences." },
-      { name:"C", type:"long",  count:4,  marksEach:3, note:"Long Answer — 3 marks each. Answer in detail." },
-      { name:"D", type:"case",  count:2,  marksEach:4, note:"Case Study — 4 marks each." },
-    ],
-  },
-};
-
-const CBSE_SECTIONS_MAP = {
-  80: EXAM_FORMATS.cbse10.sections,
-  100: [
-    { name:"A", type:"mcq",   count:20, marksEach:1, note:"Each question carries 1 mark." },
-    { name:"B", type:"short", count:10, marksEach:2, note:"Each question carries 2 marks." },
-    { name:"C", type:"short", count:8,  marksEach:3, note:"Each question carries 3 marks." },
-    { name:"D", type:"long",  count:4,  marksEach:5, note:"Each question carries 5 marks." },
-    { name:"E", type:"case",  count:4,  marksEach:4, note:"Each question carries 4 marks." },
-  ],
-  40: EXAM_FORMATS.half_yearly.sections,
-};
-
-function PaperGeneratorPage({userProfile, navigate, handleLogout, showToast}) {
-  const [step, setStep] = useState("config"); // config | preview
-  const [paperType, setPaperType] = useState("cbse");
-  const [examFormat, setExamFormat] = useState("cbse10");
-  const [schoolName, setSchoolName] = useState("EduSolve4U Learning Centre");
-  const [examTitle, setExamTitle] = useState("Annual Examination 2024-25");
-  const [cls, setCls] = useState("10");
-  const [subject, setSubject] = useState("Mathematics");
-  const [totalMarks, setTotalMarks] = useState(80);
-  const [timeAllowed, setTimeAllowed] = useState("3");
-  const [includeAnswers, setIncludeAnswers] = useState(false);
-  const [markHotspot, setMarkHotspot] = useState(false);
-  const [specialInstructions, setSpecialInstructions] = useState("");
-  const [sections, setSections] = useState(CBSE_SECTIONS_MAP[80]);
-  const [sectionCounts, setSectionCounts] = useState({});
-  const [selectedChapters, setSelectedChapters] = useState([]);
-  const [generatedPaper, setGeneratedPaper] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const paperRef = React.useRef(null);
-
-  const subjectsByClass = {
-    "10": ["Mathematics","Science","Social Science","English"],
-    "12": ["Physics","Chemistry","Mathematics","Biology","English","History","Geography","Economics"],
-    "9": ["Mathematics","Science","Social Science","English"],
-    "11": ["Physics","Chemistry","Mathematics","Biology","English"],
-  };
-
-  useEffect(() => {
-    const newSections = CBSE_SECTIONS_MAP[totalMarks] || CBSE_SECTIONS_MAP[80];
-    setSections(newSections);
-    const counts = {};
-    newSections.forEach((s,i) => { counts[i] = s.count; });
-    setSectionCounts(counts);
-  }, [totalMarks]);
-
-  useEffect(() => {
-    const chapters = CHAPTERS[subject] || [];
-    setSelectedChapters(chapters);
-  }, [subject]);
-
-  useEffect(() => {
-    const subjects = subjectsByClass[cls] || [];
-    if (!subjects.includes(subject)) setSubject(subjects[0]);
-  }, [cls]);
-
-  const totalCalc = sections.reduce((a,s,i) => a + (sectionCounts[i]||s.count) * s.marksEach, 0);
-
-  const toggleChapter = (ch) => {
-    setSelectedChapters(prev => prev.includes(ch) ? prev.filter(c=>c!==ch) : [...prev, ch]);
-  };
-
-  const pickQ = (allQ, type, count, marksEach) => {
-    const typeFilter = {
-      mcq: q => (q.type||"mcq")==="mcq",
-      short: q => q.type==="short" || (!q.type && marksEach<=3),
-      long: q => q.type==="long" || (!q.type && marksEach>=4),
-      case: q => q.type==="case",
-    };
-    let pool = allQ.filter(q =>
-      q.subject===subject &&
-      (selectedChapters.length===0 || selectedChapters.includes(q.chapter)) &&
-      (typeFilter[type] ? typeFilter[type](q) : true)
-    );
-    if(pool.length < count) {
-      pool = allQ.filter(q => q.subject===subject && (selectedChapters.length===0||selectedChapters.includes(q.chapter)));
-    }
-    return pool.sort(()=>Math.random()-0.5).slice(0, count);
-  };
-
-  const generatePaper = async () => {
-    setLoading(true);
-    try {
-      const allQ = await fsGetAll("questions");
-      const paperSections = sections.map((s,i) => ({
-        ...s,
-        count: sectionCounts[i] || s.count,
-        questions: pickQ(allQ, s.type, sectionCounts[i]||s.count, s.marksEach),
-      }));
-      setGeneratedPaper(paperSections);
-      setStep("preview");
-    } catch(e) { showToast("Error generating paper: "+e.message, "error"); }
-    setLoading(false);
-  };
-
-  const handlePrint = () => window.print();
-
-  const handleDownloadPDF = () => {
-    showToast("Opening print dialog — select 'Save as PDF' to download 📄");
-    setTimeout(() => window.print(), 500);
-  };
-
-  if (step === "preview" && generatedPaper) {
-    return (
-      <div>
-        {/* Action Bar */}
-        <div className="no-print" style={{position:"fixed",top:0,left:0,right:0,zIndex:200,background:"rgba(10,10,15,0.97)",backdropFilter:"blur(20px)",borderBottom:"1px solid #2a2a3e",padding:"12px 5%",display:"flex",gap:10,alignItems:"center"}}>
-          <button onClick={()=>setStep("config")} style={{background:"none",border:"1px solid #2a2a3e",color:"#7878a0",cursor:"pointer",padding:"7px 14px",borderRadius:8,fontSize:13,fontFamily:"'DM Sans',sans-serif"}}>← Back</button>
-          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:"1rem",marginRight:"auto"}}>📄 Question Paper Preview</div>
-          <button onClick={handlePrint} style={{background:"transparent",border:"1px solid #2a2a3e",color:"#e8e8f0",cursor:"pointer",padding:"8px 18px",borderRadius:10,fontSize:13,fontWeight:600,fontFamily:"'DM Sans',sans-serif"}}>🖨️ Print</button>
-          <button onClick={handleDownloadPDF} className="btn-primary" style={{padding:"8px 18px",fontSize:13}}>📥 Save as PDF</button>
-          <button onClick={generatePaper} style={{background:"transparent",border:"1px solid #2a2a3e",color:"#e8e8f0",cursor:"pointer",padding:"8px 18px",borderRadius:10,fontSize:13,fontWeight:600,fontFamily:"'DM Sans',sans-serif"}}>🔄 Regenerate</button>
-        </div>
-
-        {/* Paper */}
-        <div style={{background:"#e8e8e0",minHeight:"100vh",paddingTop:80,paddingBottom:40}} className="paper-bg">
-          <style>{PAPER_CSS}</style>
-          <div ref={paperRef} className="exam-paper" id="examPaper">
-            {/* Header */}
-            <div className="ep-header">
-              <div className="ep-board">{EXAM_FORMATS[examFormat]?.board||"Central Board of Secondary Education"}</div>
-              <div className="ep-exam">{examTitle}</div>
-              <div className="ep-subject">{subject} — Class {cls==="10"?"X":cls==="12"?"XII":cls==="9"?"IX":"XI"}</div>
-              <div className="ep-school">{schoolName}</div>
-            </div>
-
-            {/* Meta */}
-            <div className="ep-meta">
-              <div>
-                <div><b>Time Allowed:</b> {timeAllowed} {parseFloat(timeAllowed)===1?"Hour":"Hours"}</div>
-                <div style={{marginTop:6}}><b>Roll No.:</b> ___________________</div>
-              </div>
-              <div style={{textAlign:"right"}}>
-                <div><b>Maximum Marks:</b> {totalCalc}</div>
-                <div style={{marginTop:6}}><b>Date:</b> ___________________</div>
-              </div>
-            </div>
-
-            {/* Instructions */}
-            <div className="ep-instructions">
-              <div className="ep-instr-title">General Instructions:</div>
-              <ol>
-                {(EXAM_FORMATS[examFormat]?.instructions||[
-                  "This question paper contains "+generatedPaper.reduce((a,s)=>a+s.count,0)+" questions.",
-                  "All questions are compulsory unless internal choice is given.",
-                  "Draw neat, labelled diagrams wherever necessary.",
-                ]).map((instr,i)=><li key={i}>{instr}</li>)}
-                {specialInstructions&&<li>{specialInstructions}</li>}
-              </ol>
-            </div>
-
-            {/* Sections */}
-            {(() => {
-              let qNum = 1;
-              return generatedPaper.map((section, si) => (
-                <div key={si}>
-                  <div className="ep-section-header">
-                    Section {section.name} [{section.count} × {section.marksEach} = {section.count*section.marksEach} Marks]
-                  </div>
-                  <div className="ep-section-note">{section.note}</div>
-                  {Array.from({length: section.count}).map((_,qi) => {
-                    const q = section.questions[qi];
-                    const num = qNum++;
-                    return (
-                      <div key={qi} className="ep-question">
-                        <div className="ep-q-row">
-                          <span className="ep-q-num">{num}.</span>
-                          <div className="ep-q-body">
-                            {markHotspot && q?.hotspot && <span className="ep-hotspot">★ Frequently Asked &nbsp;</span>}
-                            <span>{q?.text || `[${section.type.toUpperCase()} question — add more ${section.type} questions to your bank]`}</span>
-                            {section.type==="mcq" && q?.options?.length>0 && (
-                              <div className="ep-options">
-                                {q.options.map((opt,oi)=>(
-                                  <div key={oi} className="ep-option">
-                                    <span className="ep-opt-label">({["a","b","c","d"][oi]})</span> {opt}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            {includeAnswers && q && (
-                              <div className="ep-answer">
-                                ✓ {section.type==="mcq"
-                                  ? `Answer: (${["a","b","c","d"][q.answer]}) ${q.options?.[q.answer]||""}`
-                                  : `Model Answer: ${q.answer||q.explanation||""}`}
-                              </div>
-                            )}
-                            {!includeAnswers && section.type!=="mcq" && (
-                              <div className="ep-lines">
-                                {Array.from({length: section.marksEach<=2?3:section.marksEach<=3?5:8}).map((_,li)=>(
-                                  <div key={li} className="ep-line"/>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          <span className="ep-marks">[{section.marksEach} {section.marksEach===1?"mark":"marks"}]</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ));
-            })()}
-
-            {/* Footer */}
-            <div className="ep-footer">
-              <div className="ep-sign-row">
-                <div className="ep-sign-box"><div className="ep-sign-line"/><div>Examiner's Signature</div></div>
-                <div className="ep-sign-box"><div className="ep-sign-line"/><div>Checked By</div></div>
-                <div className="ep-sign-box"><div className="ep-sign-line"/><div>Head of Department</div></div>
-              </div>
-              <div className="ep-end">--- End of Question Paper --- | Generated by EduSolve4U</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <Nav userProfile={userProfile} navigate={navigate} handleLogout={handleLogout}/>
-      <div style={{padding:"6rem 5% 3rem",maxWidth:900,margin:"0 auto"}}>
-        <button onClick={()=>navigate("buildtest")} style={{background:"none",border:"none",color:"#7878a0",cursor:"pointer",fontSize:14,padding:0,marginBottom:16}}>← Back to Test Builder</button>
-        <div className="section-label">Paper Generator</div>
-        <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"2.2rem",marginBottom:24}}>🏛️ CBSE Exam Paper Generator</h1>
-
-        {/* Exam Format Selector */}
-        <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"1.5rem",marginBottom:16}}>
-          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:14}}>🎯 Select Exam Format</div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:10}}>
-            {Object.entries(EXAM_FORMATS).map(([key,fmt])=>{
-              const icons = {cbse10:"📚",cbse12:"🎓",jee_main:"⚡",jee_advanced:"🔬",neet:"🧬",upsc_prelims:"🏛️",upsc_mains:"📜",half_yearly:"📝"};
-              const colors = {cbse10:"#6c63ff",cbse12:"#4facfe",jee_main:"#f7971e",jee_advanced:"#ff6584",neet:"#43e97b",upsc_prelims:"#ffd700",upsc_mains:"#c471f5",half_yearly:"#38f9d7"};
-              const color = colors[key]||"#6c63ff";
-              const isSelected = examFormat===key;
-              return (
-                <div key={key} onClick={()=>{
-                  setExamFormat(key);
-                  setSections(fmt.sections);
-                  const counts={};
-                  fmt.sections.forEach((s,i)=>{counts[i]=s.count;});
-                  setSectionCounts(counts);
-                  setTotalMarks(fmt.totalMarks);
-                  setTimeAllowed(fmt.time.split(" ")[0]);
-                }} style={{background:isSelected?`${color}18`:"#1a1a26",border:`2px solid ${isSelected?color:"#2a2a3e"}`,borderRadius:14,padding:"1rem",cursor:"pointer",transition:"all 0.2s"}}>
-                  <div style={{fontSize:"1.5rem",marginBottom:6}}>{icons[key]}</div>
-                  <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:13,color:isSelected?color:"#e8e8f0",marginBottom:2}}>{fmt.name}</div>
-                  <div style={{fontSize:11,color:"#7878a0"}}>{fmt.totalMarks} Marks · {fmt.time}</div>
-                  {isSelected&&<div style={{marginTop:6,fontSize:11,color,fontWeight:700}}>● Selected</div>}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Paper Details */}
-        <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"1.5rem",marginBottom:16}}>
-          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:14}}>📋 Paper Details</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
-            <div>
-              <label className="form-label">School / Institute Name</label>
-              <input className="form-input" value={schoolName} onChange={e=>setSchoolName(e.target.value)} placeholder="School name"/>
-            </div>
-            <div>
-              <label className="form-label">Exam Title</label>
-              <input className="form-input" value={examTitle} onChange={e=>setExamTitle(e.target.value)} placeholder="Annual Examination 2024-25"/>
-            </div>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10}}>
-            <div>
-              <label className="form-label">Class</label>
-              <select className="form-input" value={cls} onChange={e=>setCls(e.target.value)}>
-                <option value="9">Class IX</option>
-                <option value="10">Class X</option>
-                <option value="11">Class XI</option>
-                <option value="12">Class XII</option>
-              </select>
-            </div>
-            <div>
-              <label className="form-label">Subject</label>
-              <select className="form-input" value={subject} onChange={e=>setSubject(e.target.value)}>
-                {(subjectsByClass[cls]||[]).map(s=><option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="form-label">Total Marks</label>
-              <select className="form-input" value={totalMarks} onChange={e=>setTotalMarks(+e.target.value)}>
-                <option value={40}>40 Marks (Half Yearly)</option>
-                <option value={80}>80 Marks (Board)</option>
-                <option value={100}>100 Marks</option>
-              </select>
-            </div>
-            <div>
-              <label className="form-label">Time Allowed</label>
-              <select className="form-input" value={timeAllowed} onChange={e=>setTimeAllowed(e.target.value)}>
-                <option value="1">1 Hour</option>
-                <option value="1.5">1½ Hours</option>
-                <option value="2">2 Hours</option>
-                <option value="3">3 Hours</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Section Distribution */}
-        <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"1.5rem",marginBottom:16}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-            <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700}}>📊 Section Distribution</div>
-            <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.1rem",color:totalCalc===totalMarks?"#43e97b":"#ff6584"}}>{totalCalc} / {totalMarks} Marks</div>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 80px 60px",gap:8,padding:"8px 12px",fontSize:11,fontWeight:700,color:"#7878a0",textTransform:"uppercase",letterSpacing:"0.05em"}}>
-            <div>Section</div><div>Type</div><div style={{textAlign:"center"}}>Count</div><div style={{textAlign:"center"}}>Marks</div><div style={{textAlign:"right"}}>Total</div>
-          </div>
-          {sections.map((s,i)=>(
-            <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 80px 60px",gap:8,padding:"10px 12px",background:"#1a1a26",borderRadius:10,marginBottom:6,alignItems:"center"}}>
-              <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:14}}>Section {s.name}</div>
-              <div>
-                <span style={{background:s.type==="mcq"?"rgba(108,99,255,.2)":s.type==="short"?"rgba(67,233,123,.2)":s.type==="long"?"rgba(247,151,30,.2)":"rgba(196,113,245,.2)",color:s.type==="mcq"?"#a89cff":s.type==="short"?"#43e97b":s.type==="long"?"#f7971e":"#c471f5",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700}}>
-                  {s.type==="mcq"?"MCQ":s.type==="short"?"Short":s.type==="long"?"Long":"Case Study"}
-                </span>
-              </div>
-              <div>
-                <input type="number" min={0} max={40} value={sectionCounts[i]??s.count} onChange={e=>setSectionCounts(prev=>({...prev,[i]:+e.target.value}))} style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:8,padding:"6px",color:"#e8e8f0",fontSize:13,textAlign:"center",width:"100%",fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
-              </div>
-              <div style={{textAlign:"center",fontWeight:600,fontSize:14}}>{s.marksEach}</div>
-              <div style={{textAlign:"right",fontWeight:700,color:"#6c63ff",fontSize:14}}>{(sectionCounts[i]??s.count)*s.marksEach}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Chapters */}
-        <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"1.5rem",marginBottom:16}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-            <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700}}>📚 Chapters</div>
-            <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setSelectedChapters(CHAPTERS[subject]||[])} style={{background:"rgba(108,99,255,.15)",border:"1px solid rgba(108,99,255,.3)",color:"#a89cff",padding:"4px 12px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600}}>All</button>
-              <button onClick={()=>setSelectedChapters([])} style={{background:"rgba(255,101,132,.15)",border:"1px solid rgba(255,101,132,.3)",color:"#ff6584",padding:"4px 12px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600}}>None</button>
-            </div>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:8}}>
-            {(CHAPTERS[subject]||[]).map(ch=>(
-              <div key={ch} onClick={()=>toggleChapter(ch)} style={{display:"flex",alignItems:"center",gap:8,background:selectedChapters.includes(ch)?"rgba(108,99,255,.15)":"#1a1a26",border:`1px solid ${selectedChapters.includes(ch)?"#6c63ff":"#2a2a3e"}`,borderRadius:10,padding:"8px 12px",cursor:"pointer",fontSize:13,transition:"all 0.15s"}}>
-                <span style={{color:selectedChapters.includes(ch)?"#6c63ff":"#7878a0",fontSize:16}}>{selectedChapters.includes(ch)?"☑":"☐"}</span>
-                <span style={{fontWeight:500}}>{ch}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Options */}
-        <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"1.5rem",marginBottom:24}}>
-          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:14}}>⚙️ Options</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
-            <div>
-              <label className="form-label">Paper Copy Type</label>
-              <select className="form-input" value={includeAnswers} onChange={e=>setIncludeAnswers(e.target.value==="true")}>
-                <option value="false">Student Copy (No Answers)</option>
-                <option value="true">Teacher Copy (With Answers)</option>
-              </select>
-            </div>
-            <div>
-              <label className="form-label">Mark Hot Topics 🔥</label>
-              <select className="form-input" value={markHotspot} onChange={e=>setMarkHotspot(e.target.value==="true")}>
-                <option value="false">No</option>
-                <option value="true">Yes — Mark Frequently Asked Questions</option>
-              </select>
-            </div>
-          </div>
-          <label className="form-label">Special Instructions (optional)</label>
-          <textarea className="form-input" rows={2} value={specialInstructions} onChange={e=>setSpecialInstructions(e.target.value)} placeholder="Any extra instructions for students..."/>
-        </div>
-
-        <button className="btn-primary" style={{width:"100%",fontSize:"1.05rem",padding:"14px"}} onClick={generatePaper} disabled={loading}>
-          {loading?"⏳ Generating Paper...":"🎯 Generate Question Paper"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-const PAPER_CSS = `
-  @media print {
-    .no-print { display: none !important; }
-    .paper-bg { background: white !important; padding: 0 !important; }
-    .exam-paper { box-shadow: none !important; border-radius: 0 !important; max-width: 100% !important; }
-    body > div > div:first-child { display: none !important; }
-  }
-  .exam-paper {
-    background: white; max-width: 820px; margin: 0 auto;
-    padding: 40px 50px; font-family: 'Times New Roman', serif;
-    color: #000; box-shadow: 0 4px 40px rgba(0,0,0,.2);
-    border-radius: 4px;
-  }
-  .ep-header { text-align: center; border-bottom: 3px double #000; padding-bottom: 12px; margin-bottom: 14px; }
-  .ep-board { font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; }
-  .ep-exam { font-size: 18px; font-weight: bold; margin: 4px 0; text-transform: uppercase; letter-spacing: 1px; }
-  .ep-subject { font-size: 15px; font-weight: bold; margin: 2px 0; }
-  .ep-school { font-size: 13px; margin: 4px 0; }
-  .ep-meta { display: grid; grid-template-columns: 1fr 1fr; font-size: 13px; margin-bottom: 12px; padding: 8px 12px; border: 1px solid #000; }
-  .ep-instructions { border: 1px solid #000; padding: 8px 12px; margin-bottom: 14px; font-size: 12px; }
-  .ep-instr-title { font-weight: bold; margin-bottom: 4px; font-size: 13px; }
-  .ep-instructions ol { padding-left: 18px; }
-  .ep-instructions li { margin-bottom: 2px; }
-  .ep-section-header { background: #000; color: #fff; padding: 5px 12px; font-weight: bold; font-size: 13px; margin: 14px 0 8px; text-transform: uppercase; letter-spacing: 1px; }
-  .ep-section-note { font-size: 11.5px; font-style: italic; margin-bottom: 8px; color: #444; }
-  .ep-question { margin-bottom: 10px; }
-  .ep-q-row { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.6; }
-  .ep-q-num { font-weight: bold; min-width: 24px; flex-shrink: 0; }
-  .ep-q-body { flex: 1; }
-  .ep-marks { font-size: 12px; color: #444; margin-left: auto; padding-left: 10px; font-style: italic; white-space: nowrap; flex-shrink: 0; }
-  .ep-options { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-top: 5px; font-size: 12.5px; }
-  .ep-option { display: flex; gap: 4px; }
-  .ep-opt-label { font-weight: bold; }
-  .ep-answer { font-size: 11px; color: #006600; margin-top: 5px; padding: 5px 8px; background: #f0fff0; border-left: 3px solid #006600; font-style: italic; }
-  .ep-lines { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
-  .ep-line { border-bottom: 1px solid #bbb; height: 22px; }
-  .ep-hotspot { font-size: 10px; color: #8B0000; font-weight: bold; }
-  .ep-footer { margin-top: 24px; border-top: 2px solid #000; padding-top: 10px; }
-  .ep-sign-row { display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center; font-size: 12px; gap: 10px; }
-  .ep-sign-box { display: flex; flex-direction: column; gap: 4px; }
-  .ep-sign-line { border-bottom: 1px solid #000; height: 30px; margin-bottom: 4px; }
-  .ep-end { text-align: center; margin-top: 10px; font-size: 11px; color: #666; }
-`;
-
-// GLOBALCSS
-const GLOBAL_CSS=`
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Sans',sans-serif;}
-.badge-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(108,99,255,0.15);border:1px solid rgba(108,99,255,0.3);color:#a89cff;padding:6px 16px;border-radius:50px;font-size:12px;font-weight:600;letter-spacing:.05em;}
-.section-label{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#6c63ff;margin-bottom:8px;}
-.section-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;line-height:1.1;letter-spacing:-1px;margin-bottom:12px;}
-.feature-card{border:1px solid #2a2a3e;border-radius:20px;padding:1.75rem;transition:transform .25s,border-color .25s,box-shadow .25s;}
-.feature-card:hover{transform:translateY(-4px);border-color:#6c63ff;box-shadow:0 12px 40px rgba(108,99,255,.15);}
-.hub-card:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,0.3);}
-.btn-primary{background:linear-gradient(135deg,#6c63ff,#8b7fff);color:white;border:none;padding:11px 24px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(108,99,255,.4);font-family:'DM Sans',sans-serif;}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(108,99,255,.5);}
-.btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none;}
-.btn-primary-sm{background:linear-gradient(135deg,#6c63ff,#8b7fff);color:white;border:none;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
-.btn-secondary{background:transparent;color:#e8e8f0;border:1px solid #2a2a3e;padding:11px 24px;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;transition:border-color .2s,background .2s;font-family:'DM Sans',sans-serif;}
-.btn-secondary:hover{border-color:#6c63ff;background:rgba(108,99,255,.08);}
-.btn-ghost{background:transparent;color:#7878a0;border:1px solid #2a2a3e;padding:6px 12px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
-.btn-ghost:hover{color:#e8e8f0;}
-.form-label{display:block;font-size:11px;font-weight:700;color:#7878a0;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
-.form-input{width:100%;background:#1a1a26;border:1px solid #2a2a3e;border-radius:10px;padding:10px 14px;color:#e8e8f0;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;}
-.form-input:focus{border-color:#6c63ff;}
-textarea.form-input{display:block;}
-.fade-in{animation:fadeIn 0.3s ease;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-@keyframes spin{to{transform:rotate(360deg);}}
-.spin{animation:spin .8s linear infinite;}
-@keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
-
-/* ── MOBILE RESPONSIVE ── */
-@media (max-width: 768px) {
-  /* Nav */
-  nav { padding: 0 4% !important; height: 58px !important; }
-  nav > div:last-child { gap: 4px !important; }
-  nav button { font-size: 11px !important; padding: 4px 6px !important; }
-  nav .btn-primary-sm { padding: 5px 10px !important; font-size: 11px !important; }
-
-  /* Hero section */
-  section { padding: 5rem 4% 3rem !important; }
-  h1 { font-size: clamp(2rem,8vw,3rem) !important; letter-spacing: -1px !important; }
-
-  /* Dashboard grids */
-  .grid2, [style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
-  [style*="grid-template-columns: 1fr 1fr 1fr 1fr"] { grid-template-columns: 1fr 1fr !important; }
-  [style*="grid-template-columns: repeat(auto-fill,minmax(150px"] { grid-template-columns: 1fr 1fr !important; }
-  [style*="grid-template-columns: repeat(auto-fill,minmax(200px"] { grid-template-columns: 1fr 1fr !important; }
-  [style*="grid-template-columns: repeat(auto-fill,minmax(260px"] { grid-template-columns: 1fr !important; }
-  [style*="grid-template-columns: repeat(auto-fill,minmax(280px"] { grid-template-columns: 1fr !important; }
-  [style*="grid-template-columns: repeat(auto-fill,minmax(240px"] { grid-template-columns: 1fr !important; }
-
-  /* Leaderboard table */
-  [style*="grid-template-columns: 60px 1fr 80px 80px 80px 80px"] {
-    grid-template-columns: 40px 1fr 60px 60px !important;
-  }
-
-  /* Exam question navigator */
-  [style*="gap:6px;flexWrap:"wrap""] { gap: 4px !important; }
-
-  /* Paper generator sections */
-  [style*="grid-template-columns: 1.5fr 1fr 80px 80px 80px"] {
-    grid-template-columns: 1fr 60px 50px !important;
-  }
-
-  /* Chat window */
-  #chatWindow { width: calc(100vw - 32px) !important; right: 0 !important; }
-
-  /* Buttons full width on mobile */
-  .btn-primary, .btn-secondary { padding: 10px 16px !important; font-size: 14px !important; }
-
-  /* Pages padding */
-  [style*="padding:"6rem 5% 3rem""] { padding: 5rem 4% 2rem !important; }
-  [style*="maxWidth:1200"] { padding-left: 4% !important; padding-right: 4% !important; }
-  [style*="maxWidth:900"] { padding-left: 4% !important; padding-right: 4% !important; }
-  [style*="maxWidth:800"] { padding-left: 4% !important; padding-right: 4% !important; }
-
-  /* Step indicator */
-  [style*="width:36px;height:36px;borderRadius:"50%""] { width: 28px !important; height: 28px !important; }
-  [style*="width:80px;height:2px"] { width: 40px !important; }
-
-  /* Section header in leaderboard */
-  [style*="display:"flex";gap:40"] { gap: 20px !important; }
-
-  /* Hub cards */
-  .hub-card { padding: 1rem !important; }
-
-  /* Feature cards */
-  .feature-card { padding: 1.25rem !important; }
-
-  /* Form inputs */
-  .form-input { font-size: 16px !important; }
-
-  /* Chatbot */
-  [style*="width: 340px"] { width: calc(100vw - 32px) !important; }
-  [style*="bottom: 90px"] { bottom: 80px !important; }
-}
-
-@media (max-width: 480px) {
-  /* Very small screens */
-  h1 { font-size: clamp(1.6rem,7vw,2.4rem) !important; }
-  .section-title { font-size: clamp(1.4rem,6vw,2rem) !important; }
-  nav > div:last-child > span { display: none; }
-
-  /* Hide some nav items on very small screens */
-  [style*="label:"🔍 Search""] { display: none !important; }
-
-  /* Stats grid 2 columns */
-  [style*="grid-template-columns: repeat(auto-fill,minmax(150px"] { grid-template-columns: 1fr 1fr !important; }
-
-  /* Exam hubs 1 column */
-  [style*="grid-template-columns: repeat(auto-fill,minmax(240px"] { grid-template-columns: 1fr !important; }
-
-  /* Paper generator */
-  [style*="grid-template-columns: "1fr 1fr 1fr 1fr""] { grid-template-columns: 1fr 1fr !important; }
-
-  /* Leaderboard podium */
-  [style*="display:"flex";justifyContent:"center";alignItems:"flex-end""] { display: none !important; }
-
-  /* Build test step cards */
-  [style*="minWidth:220"] { min-width: 100% !important; }
-}
-`;
