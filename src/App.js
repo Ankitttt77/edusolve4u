@@ -200,23 +200,8 @@ function HomeChatSection({ userProfile }) {
     setAsked(true);
     setResponse("");
     try {
-      const GEMINI_KEY = process.env.REACT_APP_GEMINI_KEY;
-      if(!GEMINI_KEY) { setResponse("⚠️ Add REACT_APP_GEMINI_KEY in Vercel settings."); setLoading(false); return; }
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: `You are EduBot, a friendly expert study assistant for Indian students (Class 6-12, JEE, NEET, UPSC). Student asks: "${msg}". Give a clear complete answer with examples. For maths show steps. Keep under 150 words.` }] }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 512 },
-          }),
-        }
-      );
-      const data = await res.json();
-      if(data.error) { setResponse("⚠️ " + data.error.message); setLoading(false); return; }
-      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, could not get an answer!";
-      setResponse(reply);
+      const reply = await askGroq(msg);
+      setResponse(reply || "Sorry, could not get an answer!");
     } catch { setResponse("Something went wrong. Please try again!"); }
     setLoading(false);
   };
@@ -240,7 +225,7 @@ function HomeChatSection({ userProfile }) {
             style={{width:"100%",background:"transparent",border:"none",color:"#e8e8f0",fontSize:"1rem",outline:"none",fontFamily:"'DM Sans',sans-serif",marginBottom:14}}
           />
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div style={{fontSize:12,color:"#7878a0"}}>Powered by Gemini AI</div>
+            <div style={{fontSize:12,color:"#7878a0"}}>Powered by Groq AI ⚡</div>
             <button onClick={()=>ask()} disabled={loading||!input.trim()} style={{background:"linear-gradient(135deg,#6c63ff,#8b7fff)",border:"none",borderRadius:12,padding:"8px 20px",color:"#fff",cursor:"pointer",fontWeight:600,fontSize:14,opacity:loading||!input.trim()?0.5:1,fontFamily:"'DM Sans',sans-serif"}}>
               {loading?"Thinking...":"Ask →"}
             </button>
