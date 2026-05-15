@@ -146,10 +146,23 @@ const SEED_QUESTIONS = [
   { subject: "History", chapter: "Modern India", class: "12", type: "mcq", difficulty: "medium", text: "Salt March was in which year?", options: ["1928","1930","1932","1935"], answer: 1, source: "admin", exam: "upsc", year: "2020", explanation: "Dandi March was in 1930." },
 ];
 
-const calcPoints = (score, timeTaken, totalQ) => Math.round((score/100)*totalQ*10 + Math.max(0,100-Math.floor(timeTaken/10))*0.3);
+const calcPoints = (score, timeTaken, totalQ) => {
+  const base = (score/100)*totalQ*10;
+  const mins = timeTaken/60;
+  const timeBonus = Math.max(0, 30 - Math.floor(mins)) * 2; // max 60 bonus points for fast answers
+  return Math.round(base + timeBonus);
+};
 const AVATAR_COLORS = ["#6c63ff","#ff6584","#43e97b","#f7971e","#4facfe","#c471f5","#38f9d7"];
 const avatarColor = (id) => { let h=0; for(let c of (id||"x")) h+=c.charCodeAt(0); return AVATAR_COLORS[h%AVATAR_COLORS.length]; };
-const fsGetAll = async (col) => { const snap = await getDocs(collection(db,col)); return snap.docs.map(d=>({id:d.id,...d.data()})); };
+const fsGetAll = async (col) => {
+  try {
+    const snap = await getDocs(collection(db,col));
+    return snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e) {
+    console.error(`fsGetAll(${col}) failed:`, e.message);
+    return [];
+  }
+};
 const fsAdd = async (col,data) => addDoc(collection(db,col),{...data,createdAt:serverTimestamp()});
 const fsSet = async (col,id,data) => setDoc(doc(db,col,id),data,{merge:true});
 const fsDel = async (col,id) => deleteDoc(doc(db,col,id));
@@ -202,7 +215,10 @@ function HomeChatSection({ userProfile }) {
     try {
       const reply = await askGroq(msg);
       setResponse(reply || "Sorry, could not get an answer!");
-    } catch { setResponse("Something went wrong. Please try again!"); }
+    } catch(e) {
+      if(e.message==="NO_KEY") setResponse("⚠️ Add REACT_APP_GROQ_KEY in Vercel settings. Get free key at console.groq.com");
+      else setResponse("Something went wrong. Please try again!");
+    }
     setLoading(false);
   };
 
@@ -267,6 +283,283 @@ function HomeChatSection({ userProfile }) {
 }
 
 
+// PAPER GENERATOR PAGE
+function PaperGeneratorPage({userProfile, navigate, handleLogout, showToast}) {
+  const [step, setStep] = useState("config");
+  const [examFormat, setExamFormat] = useState("cbse10");
+  const [schoolName, setSchoolName] = useState("EduSolve4U Learning Centre");
+  const [examTitle, setExamTitle] = useState("Annual Examination 2024-25");
+  const [cls, setCls] = useState("10");
+  const [subject, setSubject] = useState("Mathematics");
+  const [totalMarks, setTotalMarks] = useState(80);
+  const [timeAllowed, setTimeAllowed] = useState("3");
+  const [includeAnswers, setIncludeAnswers] = useState(false);
+  const [markHotspot, setMarkHotspot] = useState(false);
+  const [specialInstructions, setSpecialInstructions] = useState("");
+  const [selectedChapters, setSelectedChapters] = useState([]);
+  const [sectionCounts, setSectionCounts] = useState({});
+  const [sections, setSections] = useState(EXAM_FORMATS?.cbse10?.sections || []);
+  const [generatedPaper, setGeneratedPaper] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const paperRef = React.useRef(null);
+
+  const subjectsByClass = {
+    "10":["Mathematics","Science","Social Science","English"],
+    "12":["Physics","Chemistry","Mathematics","Biology","English","History","Geography","Economics"],
+    "9":["Mathematics","Science","Social Science","English"],
+    "11":["Physics","Chemistry","Mathematics","Biology","English"],
+  };
+
+  useEffect(()=>{
+    const fmt = EXAM_FORMATS?.[examFormat];
+    if(fmt) {
+      setSections(fmt.sections);
+      const counts={};
+      fmt.sections.forEach((s,i)=>{counts[i]=s.count;});
+      setSectionCounts(counts);
+      setTotalMarks(fmt.totalMarks);
+      setTimeAllowed(fmt.time?.split(" ")[0]||"3");
+    }
+  },[examFormat]);
+
+  useEffect(()=>{
+    setSelectedChapters(CHAPTERS[subject]||[]);
+  },[subject]);
+
+  useEffect(()=>{
+    const subjects = subjectsByClass[cls]||[];
+    if(!subjects.includes(subject)) setSubject(subjects[0]);
+  },[cls]);
+
+  const totalCalc = sections.reduce((a,s,i)=>a+(sectionCounts[i]||s.count)*s.marksEach,0);
+  const toggleChapter = (ch) => setSelectedChapters(prev=>prev.includes(ch)?prev.filter(c=>c!==ch):[...prev,ch]);
+
+  const pickQ = (allQ, type, count) => {
+    const typeFilter = {
+      mcq: q=>(q.type||"mcq")==="mcq",
+      short: q=>q.type==="short",
+      long: q=>q.type==="long",
+      case: q=>q.type==="case",
+    };
+    let pool = allQ.filter(q=>q.subject===subject&&(selectedChapters.length===0||selectedChapters.includes(q.chapter))&&(typeFilter[type]?typeFilter[type](q):true));
+    if(pool.length<count) pool = allQ.filter(q=>q.subject===subject&&(selectedChapters.length===0||selectedChapters.includes(q.chapter)));
+    return pool.sort(()=>Math.random()-0.5).slice(0,count);
+  };
+
+  const generatePaper = async () => {
+    setLoading(true);
+    try {
+      const allQ = await fsGetAll("questions");
+      const paperSections = sections.map((s,i)=>({...s,count:sectionCounts[i]||s.count,questions:pickQ(allQ,s.type,sectionCounts[i]||s.count)}));
+      setGeneratedPaper(paperSections);
+      setStep("preview");
+    } catch(e) { showToast("Error: "+e.message,"error"); }
+    setLoading(false);
+  };
+
+  if(step==="preview"&&generatedPaper) {
+    let qNum=1;
+    return (
+      <div>
+        <div className="no-print" style={{position:"fixed",top:0,left:0,right:0,zIndex:200,background:"rgba(10,10,15,0.97)",backdropFilter:"blur(20px)",borderBottom:"1px solid #2a2a3e",padding:"12px 5%",display:"flex",gap:10,alignItems:"center"}}>
+          <button onClick={()=>setStep("config")} style={{background:"none",border:"1px solid #2a2a3e",color:"#7878a0",cursor:"pointer",padding:"7px 14px",borderRadius:8,fontSize:13,fontFamily:"'DM Sans',sans-serif"}}>← Back</button>
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:"1rem",marginRight:"auto"}}>📄 Question Paper Preview</div>
+          <button onClick={()=>window.print()} style={{background:"transparent",border:"1px solid #2a2a3e",color:"#e8e8f0",cursor:"pointer",padding:"8px 18px",borderRadius:10,fontSize:13,fontWeight:600,fontFamily:"'DM Sans',sans-serif"}}>🖨️ Print</button>
+          <button onClick={()=>{showToast("Opening print dialog — select Save as PDF");setTimeout(()=>window.print(),500);}} className="btn-primary" style={{padding:"8px 18px",fontSize:13}}>📥 Save as PDF</button>
+          <button onClick={generatePaper} style={{background:"transparent",border:"1px solid #2a2a3e",color:"#e8e8f0",cursor:"pointer",padding:"8px 18px",borderRadius:10,fontSize:13,fontWeight:600,fontFamily:"'DM Sans',sans-serif"}}>🔄 Regenerate</button>
+        </div>
+        <style>{PAPER_CSS}</style>
+        <div style={{background:"#e8e8e0",minHeight:"100vh",paddingTop:80,paddingBottom:40}}>
+          <div ref={paperRef} className="exam-paper">
+            <div className="ep-header">
+              <div className="ep-board">{EXAM_FORMATS?.[examFormat]?.board||"Central Board of Secondary Education"}</div>
+              <div className="ep-exam">{examTitle}</div>
+              <div className="ep-subject">{subject} — Class {cls==="10"?"X":cls==="12"?"XII":cls==="9"?"IX":"XI"}</div>
+              <div className="ep-school">{schoolName}</div>
+            </div>
+            <div className="ep-meta">
+              <div><div><b>Time Allowed:</b> {timeAllowed} {parseFloat(timeAllowed)===1?"Hour":"Hours"}</div><div style={{marginTop:6}}><b>Roll No.:</b> ___________________</div></div>
+              <div style={{textAlign:"right"}}><div><b>Maximum Marks:</b> {totalCalc}</div><div style={{marginTop:6}}><b>Date:</b> ___________________</div></div>
+            </div>
+            <div className="ep-instructions">
+              <div className="ep-instr-title">General Instructions:</div>
+              <ol>
+                {(EXAM_FORMATS?.[examFormat]?.instructions||["All questions are compulsory.","Draw neat labelled diagrams wherever necessary."]).map((instr,i)=><li key={i}>{instr}</li>)}
+                {specialInstructions&&<li>{specialInstructions}</li>}
+              </ol>
+            </div>
+            {generatedPaper.map((section,si)=>(
+              <div key={si}>
+                <div className="ep-section-header">Section {section.name} [{section.count} x {section.marksEach} = {section.count*section.marksEach} Marks]</div>
+                <div className="ep-section-note">{section.note}</div>
+                {Array.from({length:section.count}).map((_,qi)=>{
+                  const q=section.questions[qi];
+                  const num=qNum++;
+                  return (
+                    <div key={qi} className="ep-question">
+                      <div className="ep-q-row">
+                        <span className="ep-q-num">{num}.</span>
+                        <div className="ep-q-body">
+                          {markHotspot&&q?.hotspot&&<span className="ep-hotspot">★ Frequently Asked </span>}
+                          <span>{q?.text||`[${section.type.toUpperCase()} — add more questions to your bank]`}</span>
+                          {section.type==="mcq"&&q?.options?.length>0&&(
+                            <div className="ep-options">
+                              {q.options.map((opt,oi)=><div key={oi} className="ep-option"><span className="ep-opt-label">({["a","b","c","d"][oi]})</span> {opt}</div>)}
+                            </div>
+                          )}
+                          {includeAnswers&&q&&(
+                            <div className="ep-answer">✓ {section.type==="mcq"?`Answer: (${["a","b","c","d"][q.answer]}) ${q.options?.[q.answer]||""}`:q.answer||q.explanation||""}</div>
+                          )}
+                          {!includeAnswers&&section.type!=="mcq"&&(
+                            <div className="ep-lines">{Array.from({length:section.marksEach<=2?3:section.marksEach<=3?5:8}).map((_,li)=><div key={li} className="ep-line"/>)}</div>
+                          )}
+                        </div>
+                        <span className="ep-marks">[{section.marksEach} {section.marksEach===1?"mark":"marks"}]</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+            <div className="ep-footer">
+              <div className="ep-sign-row">
+                <div className="ep-sign-box"><div className="ep-sign-line"/><div>Examiner Signature</div></div>
+                <div className="ep-sign-box"><div className="ep-sign-line"/><div>Checked By</div></div>
+                <div className="ep-sign-box"><div className="ep-sign-line"/><div>Head of Department</div></div>
+              </div>
+              <div className="ep-end">End of Question Paper | Generated by EduSolve4U</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <Nav userProfile={userProfile} navigate={navigate} handleLogout={handleLogout}/>
+      <div style={{padding:"6rem 5% 3rem",maxWidth:900,margin:"0 auto"}}>
+        <button onClick={()=>navigate("buildtest")} style={{background:"none",border:"none",color:"#7878a0",cursor:"pointer",fontSize:14,padding:0,marginBottom:16}}>← Back</button>
+        <div className="section-label">Paper Generator</div>
+        <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"2.2rem",marginBottom:24}}>🏛️ CBSE Exam Paper Generator</h1>
+
+        <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"1.5rem",marginBottom:16}}>
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:14}}>🎯 Select Exam Format</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:10}}>
+            {Object.entries(EXAM_FORMATS||{}).map(([key,fmt])=>{
+              const icons={cbse10:"📚",cbse12:"🎓",jee_main:"⚡",jee_advanced:"🔬",neet:"🧬",upsc_prelims:"🏛️",upsc_mains:"📜",half_yearly:"📝"};
+              const colors={cbse10:"#6c63ff",cbse12:"#4facfe",jee_main:"#f7971e",jee_advanced:"#ff6584",neet:"#43e97b",upsc_prelims:"#ffd700",upsc_mains:"#c471f5",half_yearly:"#38f9d7"};
+              const color=colors[key]||"#6c63ff";
+              const isSelected=examFormat===key;
+              return (
+                <div key={key} onClick={()=>setExamFormat(key)} style={{background:isSelected?`${color}18`:"#1a1a26",border:`2px solid ${isSelected?color:"#2a2a3e"}`,borderRadius:14,padding:"1rem",cursor:"pointer",transition:"all 0.2s"}}>
+                  <div style={{fontSize:"1.3rem",marginBottom:4}}>{icons[key]||"📄"}</div>
+                  <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:12,color:isSelected?color:"#e8e8f0",marginBottom:2}}>{fmt.name}</div>
+                  <div style={{fontSize:10,color:"#7878a0"}}>{fmt.totalMarks} Marks</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"1.5rem",marginBottom:16}}>
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:14}}>📋 Paper Details</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+            <div><label className="form-label">School Name</label><input className="form-input" value={schoolName} onChange={e=>setSchoolName(e.target.value)}/></div>
+            <div><label className="form-label">Exam Title</label><input className="form-input" value={examTitle} onChange={e=>setExamTitle(e.target.value)}/></div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10}}>
+            <div><label className="form-label">Class</label><select className="form-input" value={cls} onChange={e=>setCls(e.target.value)}><option value="9">IX</option><option value="10">X</option><option value="11">XI</option><option value="12">XII</option></select></div>
+            <div><label className="form-label">Subject</label><select className="form-input" value={subject} onChange={e=>setSubject(e.target.value)}>{(subjectsByClass[cls]||[]).map(s=><option key={s} value={s}>{s}</option>)}</select></div>
+            <div><label className="form-label">Marks</label><div style={{padding:"10px 14px",background:"#1a1a26",borderRadius:10,color:totalCalc===totalMarks?"#43e97b":"#ff6584",fontWeight:700}}>{totalCalc}/{totalMarks}</div></div>
+            <div><label className="form-label">Time</label><select className="form-input" value={timeAllowed} onChange={e=>setTimeAllowed(e.target.value)}><option value="1">1 Hr</option><option value="1.5">1.5 Hrs</option><option value="2">2 Hrs</option><option value="3">3 Hrs</option></select></div>
+          </div>
+        </div>
+
+        <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"1.5rem",marginBottom:16}}>
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:12}}>📊 Sections</div>
+          {sections.map((s,i)=>(
+            <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 80px 60px 60px 70px",gap:8,padding:"10px 12px",background:"#1a1a26",borderRadius:10,marginBottom:6,alignItems:"center"}}>
+              <div style={{fontWeight:600,fontSize:13}}>Section {s.name} <span style={{fontSize:11,color:"#7878a0",fontWeight:400}}>({s.type})</span></div>
+              <div><input type="number" min={0} max={40} value={sectionCounts[i]??s.count} onChange={e=>setSectionCounts(prev=>({...prev,[i]:+e.target.value}))} style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:8,padding:"6px",color:"#e8e8f0",fontSize:13,textAlign:"center",width:"100%",fontFamily:"'DM Sans',sans-serif",outline:"none"}}/></div>
+              <div style={{textAlign:"center",fontWeight:600,color:"#7878a0",fontSize:13}}>×{s.marksEach}</div>
+              <div style={{textAlign:"center",fontWeight:700,color:"#6c63ff",fontSize:13}}>{(sectionCounts[i]??s.count)*s.marksEach}</div>
+              <div style={{fontSize:10,color:"#7878a0"}}>{s.note?.slice(0,30)}...</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"1.5rem",marginBottom:16}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+            <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700}}>📚 Chapters</div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setSelectedChapters(CHAPTERS[subject]||[])} style={{background:"rgba(108,99,255,.15)",border:"1px solid rgba(108,99,255,.3)",color:"#a89cff",padding:"4px 12px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600}}>All</button>
+              <button onClick={()=>setSelectedChapters([])} style={{background:"rgba(255,101,132,.15)",border:"1px solid rgba(255,101,132,.3)",color:"#ff6584",padding:"4px 12px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600}}>None</button>
+            </div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:6}}>
+            {(CHAPTERS[subject]||[]).map(ch=>(
+              <div key={ch} onClick={()=>toggleChapter(ch)} style={{display:"flex",alignItems:"center",gap:8,background:selectedChapters.includes(ch)?"rgba(108,99,255,.15)":"#1a1a26",border:`1px solid ${selectedChapters.includes(ch)?"#6c63ff":"#2a2a3e"}`,borderRadius:10,padding:"8px 12px",cursor:"pointer",fontSize:13,transition:"all 0.15s"}}>
+                <span style={{color:selectedChapters.includes(ch)?"#6c63ff":"#7878a0"}}>{selectedChapters.includes(ch)?"☑":"☐"}</span>
+                <span>{ch}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"1.5rem",marginBottom:24}}>
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:14}}>⚙️ Options</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+            <div><label className="form-label">Copy Type</label><select className="form-input" value={String(includeAnswers)} onChange={e=>setIncludeAnswers(e.target.value==="true")}><option value="false">Student Copy</option><option value="true">Teacher Copy (With Answers)</option></select></div>
+            <div><label className="form-label">Hot Topics</label><select className="form-input" value={String(markHotspot)} onChange={e=>setMarkHotspot(e.target.value==="true")}><option value="false">No</option><option value="true">Mark Frequently Asked</option></select></div>
+          </div>
+          <label className="form-label">Special Instructions</label>
+          <textarea className="form-input" rows={2} value={specialInstructions} onChange={e=>setSpecialInstructions(e.target.value)} placeholder="Any extra instructions..."/>
+        </div>
+
+        <button className="btn-primary" style={{width:"100%",fontSize:"1.05rem",padding:"14px"}} onClick={generatePaper} disabled={loading}>
+          {loading?"⏳ Generating...":"🎯 Generate Question Paper"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const PAPER_CSS = `
+  @media print { .no-print{display:none!important;} body{background:white;} .exam-paper{box-shadow:none!important;max-width:100%!important;} }
+  .exam-paper{background:white;max-width:820px;margin:0 auto;padding:40px 50px;font-family:'Times New Roman',serif;color:#000;box-shadow:0 4px 40px rgba(0,0,0,.2);border-radius:4px;}
+  .ep-header{text-align:center;border-bottom:3px double #000;padding-bottom:12px;margin-bottom:14px;}
+  .ep-board{font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;}
+  .ep-exam{font-size:18px;font-weight:bold;margin:4px 0;text-transform:uppercase;letter-spacing:1px;}
+  .ep-subject{font-size:15px;font-weight:bold;margin:2px 0;}
+  .ep-school{font-size:13px;margin:4px 0;}
+  .ep-meta{display:grid;grid-template-columns:1fr 1fr;font-size:13px;margin-bottom:12px;padding:8px 12px;border:1px solid #000;}
+  .ep-instructions{border:1px solid #000;padding:8px 12px;margin-bottom:14px;font-size:12px;}
+  .ep-instr-title{font-weight:bold;margin-bottom:4px;font-size:13px;}
+  .ep-instructions ol{padding-left:18px;}
+  .ep-instructions li{margin-bottom:2px;}
+  .ep-section-header{background:#000;color:#fff;padding:5px 12px;font-weight:bold;font-size:13px;margin:14px 0 8px;text-transform:uppercase;letter-spacing:1px;}
+  .ep-section-note{font-size:11.5px;font-style:italic;margin-bottom:8px;color:#444;}
+  .ep-question{margin-bottom:10px;}
+  .ep-q-row{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.6;}
+  .ep-q-num{font-weight:bold;min-width:24px;flex-shrink:0;}
+  .ep-q-body{flex:1;}
+  .ep-marks{font-size:12px;color:#444;margin-left:auto;padding-left:10px;font-style:italic;white-space:nowrap;flex-shrink:0;}
+  .ep-options{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:5px;font-size:12.5px;}
+  .ep-option{display:flex;gap:4px;}
+  .ep-opt-label{font-weight:bold;}
+  .ep-answer{font-size:11px;color:#006600;margin-top:5px;padding:5px 8px;background:#f0fff0;border-left:3px solid #006600;font-style:italic;}
+  .ep-lines{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
+  .ep-line{border-bottom:1px solid #bbb;height:22px;}
+  .ep-hotspot{font-size:10px;color:#8B0000;font-weight:bold;}
+  .ep-footer{margin-top:24px;border-top:2px solid #000;padding-top:10px;}
+  .ep-sign-row{display:grid;grid-template-columns:1fr 1fr 1fr;text-align:center;font-size:12px;gap:10px;}
+  .ep-sign-box{display:flex;flex-direction:column;gap:4px;}
+  .ep-sign-line{border-bottom:1px solid #000;height:30px;margin-bottom:4px;}
+  .ep-end{text-align:center;margin-top:10px;font-size:11px;color:#666;}
+`;
+
+
 const GLOBAL_CSS=`
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -321,8 +614,9 @@ export default function App() {
   const [examHub, setExamHub] = useState(null);
 
   useEffect(() => {
-    seedIfEmpty();
+    // Only seed if user is authenticated to respect Firestore rules
     const unsub = onAuthStateChanged(auth, async (user) => {
+      if(user) seedIfEmpty();
       setCurrentUser(user);
       if(user) { const p=await fsGet("users",user.uid); setUserProfile(p); }
       else setUserProfile(null);
@@ -609,6 +903,7 @@ function HomePage({navigate,userProfile,handleLogout}) {
 function ExamHubPage({userProfile,navigate,handleLogout,examHub,showToast}) {
   const [activeHub,setActiveHub] = useState(examHub||EXAM_HUBS[0]);
   const [tab,setTab] = useState("practice");
+  useEffect(()=>{ if(examHub) setActiveHub(examHub); },[examHub]);
   const [questions,setQuestions] = useState([]);
   const [loading,setLoading] = useState(false);
 
@@ -873,7 +1168,7 @@ function LoginPage({navigate,handleLogin,userProfile,handleLogout}) {
 
 // REGISTER
 function RegisterPage({navigate,handleRegister,userProfile,handleLogout}) {
-  const [form,setForm]=useState({name:"",email:"",password:"",class:"10"});
+  const [form,setForm]=useState({name:"",email:"",password:"",studentClass:"10"});
   const upd=(k,v)=>setForm(f=>({...f,[k]:v}));
   return (
     <div>
@@ -1226,8 +1521,13 @@ function ResultPage({examResult,examConfig,userProfile,navigate,handleLogout}) {
                 <p style={{fontWeight:500,lineHeight:1.5}}><strong>Q{idx+1}.</strong> {q.text}</p>
               </div>
               <div style={{paddingLeft:28,fontSize:14}}>
-                {ua!==undefined&&<div style={{color:ok?"#43e97b":"#ff6584"}}>Your answer: ({["A","B","C","D"][ua]}) {q.options[ua]}</div>}
-                {!ok&&<div style={{color:"#43e97b"}}>Correct: ({["A","B","C","D"][q.answer]}) {q.options[q.answer]}</div>}
+                {ua!==undefined&&(
+                  q.type==="short"||q.type==="long"||q.type==="case"
+                  ? <div style={{color:"#4facfe"}}>Your answer: {typeof ua==="string"?ua:"(not answered)"}</div>
+                  : <div style={{color:ok?"#43e97b":"#ff6584"}}>Your answer: ({["A","B","C","D"][ua]}) {q.options?.[ua]||""}</div>
+                )}
+                {!ok&&q.type!=="short"&&q.type!=="long"&&q.type!=="case"&&<div style={{color:"#43e97b"}}>Correct: ({["A","B","C","D"][q.answer]}) {q.options?.[q.answer]||""}</div>}
+                {(q.type==="short"||q.type==="long"||q.type==="case")&&q.answer&&<div style={{color:"#43e97b",marginTop:4}}>Model Answer: {q.answer}</div>}
                 {q.explanation&&<div style={{marginTop:6,color:"#7878a0"}}>💡 {q.explanation}</div>}
               </div>
             </div>
@@ -1306,7 +1606,7 @@ function LeaderboardPage({userProfile,navigate,handleLogout}) {
               </div>
             )}
             <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,overflow:"hidden"}}>
-              <div style={{display:"grid",gridTemplateColumns:"40px 1fr 60px 60px",padding:"10px 14px",borderBottom:"1px solid #2a2a3e",fontSize:10,color:"#7878a0",fontWeight:700,letterSpacing:"0.05em",textTransform:"uppercase",overflowX:"auto"}}>
+              <div style={{display:"grid",gridTemplateColumns:"50px 1fr 70px 70px 60px 70px",padding:"12px 20px",borderBottom:"1px solid #2a2a3e",fontSize:11,color:"#7878a0",fontWeight:700,letterSpacing:"0.05em",textTransform:"uppercase"}}>
                 <div>Rank</div><div>Student</div><div style={{textAlign:"center"}}>Avg Score</div><div style={{textAlign:"center"}}>Avg Time</div><div style={{textAlign:"center"}}>Tests</div><div style={{textAlign:"right"}}>Points</div>
               </div>
               {filtered.length===0&&<div style={{padding:"2rem",textAlign:"center",color:"#7878a0"}}>No students yet. Be the first! 🚀</div>}
@@ -1314,7 +1614,7 @@ function LeaderboardPage({userProfile,navigate,handleLogout}) {
                 const rank=idx+1;const rankColors={1:"#ffd700",2:"#c0c0c0",3:"#cd7f32"};
                 const isMe=(userProfile?.uid)===entry.uid;
                 return(
-                  <div key={entry.uid} style={{display:"grid",gridTemplateColumns:"60px 1fr 80px 80px 80px 80px",padding:"14px 20px",borderBottom:"1px solid #2a2a3e",alignItems:"center",background:isMe?"rgba(108,99,255,0.08)":"transparent"}}>
+                  <div key={entry.uid} style={{display:"grid",gridTemplateColumns:"50px 1fr 70px 70px 60px 70px",padding:"12px 20px",borderBottom:"1px solid #2a2a3e",alignItems:"center",background:isMe?"rgba(108,99,255,0.08)":"transparent"}}>
                     <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.1rem",color:rankColors[rank]||"#7878a0"}}>{rank<=3?["🥇","🥈","🥉"][rank-1]:`#${rank}`}</div>
                     <div style={{display:"flex",alignItems:"center",gap:10}}>
                       <div style={{width:36,height:36,borderRadius:"50%",background:avatarColor(entry.uid),display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:"#fff",fontSize:12,flexShrink:0}}>{entry.user?.avatar}</div>
@@ -1487,7 +1787,7 @@ function AdminPage({userProfile,navigate,handleLogout,handleDeleteQuestion,handl
 
 // ADDQUESTION
 function AddQuestionPage({userProfile,navigate,handleLogout,handleAddQuestion}) {
-  const [form,setForm]=useState({subject:"Mathematics",chapter:"Real Numbers",class:"10",difficulty:"medium",type:"mcq",text:"",options:["","","",""],answer:0,explanation:"",exam:"boards",year:new Date().getFullYear().toString()});
+  const [form,setForm]=useState({subject:"Mathematics",chapter:"Real Numbers",studentClass:"10",difficulty:"medium",type:"mcq",text:"",options:["","","",""],answer:0,explanation:"",exam:"boards",year:new Date().getFullYear().toString()});
   const upd=(k,v)=>setForm(f=>({...f,[k]:v}));
   const updOpt=(i,v)=>setForm(f=>{const opts=[...f.options];opts[i]=v;return{...f,options:opts};});
   const submit=()=>{
@@ -1691,19 +1991,3 @@ function StudyChatBot({ userProfile }) {
   );
 }
 
-  const ask = async (text) => {
-    const msg = text || input.trim();
-    if(!msg) return;
-    setInput(msg);
-    setLoading(true);
-    setAsked(true);
-    setResponse("");
-    try {
-      const reply = await askGroq(msg);
-      setResponse(reply || "Sorry, could not get an answer!");
-    } catch(e) {
-      if(e.message==="NO_KEY") setResponse("⚠️ Add REACT_APP_GROQ_KEY in Vercel settings. Get free key at console.groq.com");
-      else setResponse("Something went wrong. Please try again!");
-    }
-    setLoading(false);
-  };
