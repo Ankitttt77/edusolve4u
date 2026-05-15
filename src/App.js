@@ -676,73 +676,61 @@ export default function App() {
   const handleAIQuestion = async (subject,chapter,difficulty,aiType="mcq") => {
     showToast("AI generating question… ✨");
     try {
-      const GEMINI_KEY = process.env.REACT_APP_GEMINI_KEY;
-      if(!GEMINI_KEY) { showToast("Add REACT_APP_GEMINI_KEY in Vercel settings","error"); return; }
-      
+      const GROQ_KEY = process.env.REACT_APP_GROQ_KEY;
+      if(!GROQ_KEY) { showToast("Add REACT_APP_GROQ_KEY in Vercel settings","error"); return; }
+
       const promptMap = {
-        mcq: `Create one MCQ for class 10 ${subject} - ${chapter} at ${difficulty} difficulty. Respond with ONLY this JSON: {"text":"question?","options":["A","B","C","D"],"answer":1,"explanation":"reason","type":"mcq","marks":1,"hotspot":false}`,
-        short2: `Create one 2-mark short answer question for class 10 ${subject} - ${chapter} at ${difficulty} difficulty. Respond with ONLY this JSON: {"text":"question?","answer":"model answer in 2-3 lines","explanation":"key points","type":"short","marks":2,"hotspot":false}`,
-        short3: `Create one 3-mark short answer question for class 10 ${subject} - ${chapter} at ${difficulty} difficulty. Respond with ONLY this JSON: {"text":"question?","answer":"model answer in 3-4 lines","explanation":"key points","type":"short","marks":3,"hotspot":false}`,
-        long4: `Create one 4-mark long answer question for class 10 ${subject} - ${chapter} at ${difficulty} difficulty. Respond with ONLY this JSON: {"text":"question?","answer":"detailed model answer","explanation":"marks breakdown","type":"long","marks":4,"hotspot":false}`,
-        long5: `Create one 5-mark long answer question for class 10 ${subject} - ${chapter} at ${difficulty} difficulty. Respond with ONLY this JSON: {"text":"question?","answer":"comprehensive model answer","explanation":"full marks tips","type":"long","marks":5,"hotspot":false}`,
-        case: `Create one case study question for class 10 ${subject} - ${chapter}. Respond with ONLY this JSON: {"text":"[Short scenario]. Based on the above: (i) sub-question1 (ii) sub-question2 (iii) sub-question3","answer":"(i) answer1 (ii) answer2 (iii) answer3","explanation":"concepts tested","type":"case","marks":4,"hotspot":false}`,
-        hotspot: `Create one HIGH PROBABILITY CBSE board exam MCQ for class 10 ${subject} - ${chapter}. Respond with ONLY this JSON: {"text":"question?","options":["A","B","C","D"],"answer":1,"explanation":"reason + why frequently asked","type":"mcq","marks":1,"hotspot":true}`,
+        mcq: `Create one MCQ for class 10 ${subject} - ${chapter} at ${difficulty} difficulty. Respond with ONLY this JSON, no extra text: {"text":"question?","options":["A","B","C","D"],"answer":1,"explanation":"reason","type":"mcq","marks":1,"hotspot":false}`,
+        short2: `Create one 2-mark short answer question for class 10 ${subject} - ${chapter}. Respond with ONLY this JSON: {"text":"question?","answer":"model answer","explanation":"key points","type":"short","marks":2,"hotspot":false}`,
+        short3: `Create one 3-mark short answer question for class 10 ${subject} - ${chapter}. Respond with ONLY this JSON: {"text":"question?","answer":"model answer","explanation":"key points","type":"short","marks":3,"hotspot":false}`,
+        long4: `Create one 4-mark long answer question for class 10 ${subject} - ${chapter}. Respond with ONLY this JSON: {"text":"question?","answer":"detailed answer","explanation":"marks breakdown","type":"long","marks":4,"hotspot":false}`,
+        long5: `Create one 5-mark long answer question for class 10 ${subject} - ${chapter}. Respond with ONLY this JSON: {"text":"question?","answer":"comprehensive answer","explanation":"full marks tips","type":"long","marks":5,"hotspot":false}`,
+        case: `Create one case study question for class 10 ${subject} - ${chapter}. Respond with ONLY this JSON: {"text":"[scenario]. (i) q1 (ii) q2 (iii) q3","answer":"(i) a1 (ii) a2 (iii) a3","explanation":"concepts tested","type":"case","marks":4,"hotspot":false}`,
+        hotspot: `Create one HIGH PROBABILITY CBSE board MCQ for class 10 ${subject} - ${chapter}. Respond with ONLY this JSON: {"text":"question?","options":["A","B","C","D"],"answer":1,"explanation":"reason + why frequently asked","type":"mcq","marks":1,"hotspot":true}`,
       };
       const prompt = promptMap[aiType] || promptMap.mcq;
-      
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
-        {
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({
-            contents:[{parts:[{text: prompt}]}],
-            generationConfig:{temperature:0.3, maxOutputTokens:1024},
-          }),
-        }
-      );
-      
+
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${GROQ_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "llama-3.1-8b-instant",
+          messages: [
+            { role: "system", content: "You are an expert Indian school teacher. Always respond with ONLY valid JSON, no markdown, no backticks, no extra text." },
+            { role: "user", content: prompt }
+          ],
+          max_tokens: 512,
+          temperature: 0.4,
+        }),
+      });
+
       const data = await res.json();
-      
-      // Check for API errors
-      if(data.error) { showToast("API Error: "+data.error.message,"error"); return; }
-      
-      const raw = data.candidates?.[0]?.content?.parts?.[0]?.text||"";
-      if(!raw) { showToast("AI returned empty. Check your API key in Vercel settings.","error"); return; }
-      
-      // Extract JSON from response
-      let parsed = null;
-      const cleaned = raw.replace(/```json|```/g,"").trim();
-      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-      if(jsonMatch) {
-        try { parsed = JSON.parse(jsonMatch[0]); } 
-        catch { showToast("Could not parse response. Try again.","error"); return; }
-      } else {
-        showToast("No JSON found in response. Try again.","error"); return;
-      }
-      
-      if(!parsed||!parsed.text) { showToast("Invalid format. Try again.","error"); return; }
-      
-      // Save with correct type info
+      if(data.error) { showToast("Error: "+data.error.message,"error"); return; }
+      const raw = data.choices?.[0]?.message?.content || "";
+      if(!raw) { showToast("AI returned empty response","error"); return; }
+
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if(!jsonMatch) { showToast("Could not parse AI response","error"); return; }
+      const parsed = JSON.parse(jsonMatch[0]);
+      if(!parsed.text) { showToast("Invalid question format","error"); return; }
+
+      const subjectClassMap = {"Physics":"11","Chemistry":"11","Biology":"11","History":"11","Geography":"11","Economics":"11","Computer Science":"11","Mathematics":"10","Science":"10","Social Science":"10","English":"10"};
+      const questionClass = subjectClassMap[subject] || "10";
       const isSubjective = aiType==="short2"||aiType==="short3"||aiType==="long4"||aiType==="long5"||aiType==="case";
       const qType = aiType==="short2"||aiType==="short3"?"short":aiType==="long4"||aiType==="long5"?"long":aiType==="case"?"case":"mcq";
       const marks = aiType==="short2"?2:aiType==="short3"?3:aiType==="long4"?4:aiType==="long5"?5:aiType==="case"?4:1;
-      
-      // Determine class from subject context
-      const subjectClassMap = {
-        "Physics":"11","Chemistry":"11","Biology":"11","History":"11",
-        "Geography":"11","Economics":"11","Computer Science":"11",
-        "Mathematics":"10","Science":"10","Social Science":"10","English":"10",
-      };
-      const questionClass = subjectClassMap[subject] || "10";
+
       await fsAdd("questions",{
-        subject, chapter, class:questionClass, difficulty, source:"ai",
+        subject, chapter, studentClass:questionClass, difficulty, source:"ai",
         exam:"boards", year:new Date().getFullYear().toString(),
-        type: qType, marks, hotspot: aiType==="hotspot",
+        type:qType, marks, hotspot:aiType==="hotspot",
         ...parsed,
         options: isSubjective ? [] : (parsed.options||[]),
       });
-      showToast("Question generated & saved! 🤖");
+      showToast("AI question generated & saved! 🤖");
     } catch(e) { showToast("Error: "+e.message,"error"); }
   };
 
