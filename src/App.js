@@ -673,7 +673,7 @@ export default function App() {
 
   const handleDeleteQuestion = async (id) => { await fsDel("questions",id); showToast("Question deleted"); };
 
-  const handleAIQuestion = async (subject,chapter,difficulty,aiType="mcq") => {
+  const handleAIQuestion = async (subject,chapter,difficulty,aiType="mcq",examType="boards") => {
     showToast("AI generating question… ✨");
     try {
       const GROQ_KEY = process.env.REACT_APP_GROQ_KEY;
@@ -723,15 +723,17 @@ export default function App() {
       const qType = aiType==="short2"||aiType==="short3"?"short":aiType==="long4"||aiType==="long5"?"long":aiType==="case"?"case":"mcq";
       const marks = aiType==="short2"?2:aiType==="short3"?3:aiType==="long4"?4:aiType==="long5"?5:aiType==="case"?4:1;
 
-      await fsAdd("questions",{
+      const newQ = {
         subject, chapter, studentClass:questionClass, difficulty, source:"ai",
-        exam:"boards", year:new Date().getFullYear().toString(),
+        exam:examType||"boards", year:new Date().getFullYear().toString(),
         type:qType, marks, hotspot:aiType==="hotspot",
         ...parsed,
         options: isSubjective ? [] : (parsed.options||[]),
-      });
+      };
+      await fsAdd("questions", newQ);
       showToast("AI question generated & saved! 🤖");
-    } catch(e) { showToast("Error: "+e.message,"error"); }
+      return newQ;
+    } catch(e) { showToast("Error: "+e.message,"error"); return null; }
   };
 
   if(appLoading) return <Loader/>;
@@ -1638,6 +1640,8 @@ function AdminPage({userProfile,navigate,handleLogout,handleDeleteQuestion,handl
   const [aiDiff,setAiDiff]=useState("medium");
   const [aiLoading,setAiLoading]=useState(false);
   const [aiType,setAiType]=useState("mcq");
+  const [aiExam,setAiExam]=useState("boards");
+  const [lastGeneratedQ,setLastGeneratedQ]=useState(null);
 
   useEffect(()=>{
     (async()=>{
@@ -1649,7 +1653,15 @@ function AdminPage({userProfile,navigate,handleLogout,handleDeleteQuestion,handl
   if(!userProfile||(userProfile.role!=="admin"&&userProfile.role!=="teacher")) return <div style={{padding:"8rem 5%",textAlign:"center",color:"#7878a0"}}>Access denied.</div>;
 
   const filtered=questions.filter(q=>q.text?.toLowerCase().includes(search.toLowerCase())||q.subject?.toLowerCase().includes(search.toLowerCase()));
-  const aiGen=async()=>{setAiLoading(true);await handleAIQuestion(aiSubject,aiChapter,aiDiff,aiType);const q=await fsGetAll("questions");setQuestions(q);setAiLoading(false);};
+  const aiGen=async()=>{
+    setAiLoading(true);
+    setLastGeneratedQ(null);
+    const q = await handleAIQuestion(aiSubject,aiChapter,aiDiff,aiType,aiExam);
+    if(q) setLastGeneratedQ(q);
+    const allQ=await fsGetAll("questions");
+    setQuestions(allQ);
+    setAiLoading(false);
+  };
   const delQ=async(id)=>{await handleDeleteQuestion(id);setQuestions(q=>q.filter(x=>x.id!==id));};
 
   return (
@@ -1703,32 +1715,98 @@ function AdminPage({userProfile,navigate,handleLogout,handleDeleteQuestion,handl
         )}
 
         {tab==="ai"&&(
-          <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"2rem",maxWidth:520}}>
-            <h3 style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:6}}>🤖 AI Question Generator</h3>
-            <p style={{color:"#7878a0",fontSize:14,marginBottom:20}}>Generate any type of exam question using Gemini AI.</p>
-            <label className="form-label">Question Type</label>
-            <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>
-              {[["mcq","MCQ","#6c63ff"],["short2","2 Mark","#43e97b"],["short3","3 Mark","#4facfe"],["long4","4 Mark","#f7971e"],["long5","5 Mark","#ff6584"],["case","Case Study","#c471f5"],["hotspot","🔥 Hot Topic","#ffd700"]].map(([val,label,color])=>(
-                <button key={val} onClick={()=>setAiType(val)} style={{padding:"6px 14px",borderRadius:20,border:`1.5px solid ${aiType===val?color:"#2a2a3e"}`,background:aiType===val?`${color}22`:"transparent",color:aiType===val?color:"#7878a0",cursor:"pointer",fontWeight:600,fontSize:12,fontFamily:"'DM Sans',sans-serif"}}>{label}</button>
-              ))}
+          <div style={{maxWidth:700}}>
+            <div style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:20,padding:"2rem",marginBottom:16}}>
+              <h3 style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:4}}>🤖 AI Question Generator</h3>
+              <p style={{color:"#7878a0",fontSize:14,marginBottom:20}}>Generate curriculum-aligned questions using Groq AI (Llama 3.1). Select type, subject, chapter and difficulty.</p>
+              
+              <label className="form-label">Question Type</label>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}}>
+                {[["mcq","📝 MCQ","#6c63ff"],["short2","✏️ 2 Mark","#43e97b"],["short3","📄 3 Mark","#4facfe"],["long4","📃 4 Mark","#f7971e"],["long5","📋 5 Mark","#ff6584"],["case","📊 Case Study","#c471f5"],["hotspot","🔥 Hot Topic","#ffd700"]].map(([val,label,color])=>(
+                  <button key={val} onClick={()=>setAiType(val)} style={{padding:"7px 14px",borderRadius:20,border:`1.5px solid ${aiType===val?color:"#2a2a3e"}`,background:aiType===val?`${color}22`:"transparent",color:aiType===val?color:"#7878a0",cursor:"pointer",fontWeight:600,fontSize:12,fontFamily:"'DM Sans',sans-serif"}}>{label}</button>
+                ))}
+              </div>
+
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+                <div>
+                  <label className="form-label">Subject</label>
+                  <select className="form-input" value={aiSubject} onChange={e=>{setAiSubject(e.target.value);setAiChapter(CHAPTERS[e.target.value]?.[0]||"");}}>
+                    {SUBJECTS.map(s=><option key={s.name} value={s.name}>{s.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">Chapter</label>
+                  <select className="form-input" value={aiChapter} onChange={e=>setAiChapter(e.target.value)}>
+                    {(CHAPTERS[aiSubject]||[]).map(c=><option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">Difficulty</label>
+                  <select className="form-input" value={aiDiff} onChange={e=>setAiDiff(e.target.value)}>
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">Exam Type</label>
+                  <select className="form-input" value={aiExam} onChange={e=>setAiExam(e.target.value)}>
+                    <option value="boards">📚 Boards (CBSE)</option>
+                    <option value="jee">⚡ JEE</option>
+                    <option value="neet">🧬 NEET</option>
+                    <option value="upsc">🏛️ UPSC</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Context Preview */}
+              <div style={{background:"rgba(108,99,255,0.08)",border:"1px solid rgba(108,99,255,0.2)",borderRadius:12,padding:"12px 16px",marginBottom:16,fontSize:13}}>
+                <div style={{color:"#a89cff",fontWeight:600,marginBottom:4}}>📋 Generating:</div>
+                <div style={{color:"#e8e8f0"}}>
+                  {aiType==="mcq"?"MCQ (1 mark)":aiType==="short2"?"Short Answer (2 marks)":aiType==="short3"?"Short Answer (3 marks)":aiType==="long4"?"Long Answer (4 marks)":aiType==="long5"?"Long Answer (5 marks)":aiType==="case"?"Case Study (4 marks)":"🔥 Hot Topic MCQ"} · {aiSubject} · {aiChapter} · {aiDiff.charAt(0).toUpperCase()+aiDiff.slice(1)} · {aiExam.toUpperCase()}
+                </div>
+              </div>
+
+              <button className="btn-primary" style={{width:"100%",opacity:aiLoading?0.7:1}} onClick={aiGen} disabled={aiLoading}>
+                {aiLoading?"⏳ Generating with Groq AI...":"🤖 Generate Question"}
+              </button>
             </div>
-            <label className="form-label">Subject</label>
-            <select className="form-input" value={aiSubject} onChange={e=>{setAiSubject(e.target.value);setAiChapter(CHAPTERS[e.target.value]?.[0]||"");}} style={{marginBottom:12}}>
-              {SUBJECTS.map(s=><option key={s.name} value={s.name}>{s.name}</option>)}
-            </select>
-            <label className="form-label">Chapter</label>
-            <select className="form-input" value={aiChapter} onChange={e=>setAiChapter(e.target.value)} style={{marginBottom:12}}>
-              {(CHAPTERS[aiSubject]||[]).map(c=><option key={c} value={c}>{c}</option>)}
-            </select>
-            <label className="form-label">Difficulty</label>
-            <select className="form-input" value={aiDiff} onChange={e=>setAiDiff(e.target.value)} style={{marginBottom:20}}>
-              <option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option>
-            </select>
-            <button className="btn-primary" style={{width:"100%",opacity:aiLoading?0.7:1}} onClick={aiGen} disabled={aiLoading}>
-              {aiLoading?"⏳ Generating...":"🤖 Generate Question"}
-            </button>
-          </div>
-        )}
+
+            {/* Question Preview */}
+            {lastGeneratedQ&&(
+              <div style={{background:"#12121a",border:"1px solid #43e97b",borderRadius:20,padding:"1.5rem",animation:"fadeIn 0.3s ease"}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+                  <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,color:"#43e97b"}}>✅ Question Generated & Saved!</div>
+                  <div style={{display:"flex",gap:6}}>
+                    <span style={{background:"rgba(67,233,123,0.15)",color:"#43e97b",border:"1px solid rgba(67,233,123,0.3)",borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{lastGeneratedQ.type?.toUpperCase()||"MCQ"}</span>
+                    <span style={{background:"rgba(79,172,254,0.15)",color:"#4facfe",border:"1px solid rgba(79,172,254,0.3)",borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{lastGeneratedQ.marks} Mark{lastGeneratedQ.marks>1?"s":""}</span>
+                    {lastGeneratedQ.hotspot&&<span style={{background:"rgba(255,215,0,0.15)",color:"#ffd700",border:"1px solid rgba(255,215,0,0.3)",borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>🔥 Hot</span>}
+                  </div>
+                </div>
+                <p style={{fontWeight:600,fontSize:14,lineHeight:1.6,marginBottom:12}}>{lastGeneratedQ.text}</p>
+                {lastGeneratedQ.options?.length>0&&(
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:12}}>
+                    {lastGeneratedQ.options.map((opt,i)=>(
+                      <div key={i} style={{background:i===lastGeneratedQ.answer?"rgba(67,233,123,0.1)":"#1a1a26",border:`1px solid ${i===lastGeneratedQ.answer?"rgba(67,233,123,0.4)":"#2a2a3e"}`,borderRadius:8,padding:"7px 12px",fontSize:13,display:"flex",gap:8}}>
+                        <span style={{fontWeight:700,color:i===lastGeneratedQ.answer?"#43e97b":"#7878a0"}}>{["A","B","C","D"][i]}.</span>{opt}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {lastGeneratedQ.answer&&typeof lastGeneratedQ.answer==="string"&&(
+                  <div style={{background:"rgba(67,233,123,0.08)",border:"1px solid rgba(67,233,123,0.2)",borderRadius:10,padding:"10px 14px",marginBottom:8,fontSize:13}}>
+                    <span style={{fontWeight:600,color:"#43e97b"}}>Model Answer: </span>{lastGeneratedQ.answer}
+                  </div>
+                )}
+                {lastGeneratedQ.explanation&&(
+                  <div style={{fontSize:13,color:"#7878a0",padding:"8px 12px",background:"rgba(108,99,255,0.08)",borderRadius:10}}>💡 {lastGeneratedQ.explanation}</div>
+                )}
+                <button className="btn-primary" style={{marginTop:12,width:"100%"}} onClick={aiGen} disabled={aiLoading}>
+                  🔄 Generate Another
+                </button>
+              </div>
+            )}
+          </div>        )}
 
         {tab==="students"&&(
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
