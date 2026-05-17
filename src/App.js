@@ -223,7 +223,7 @@ function HomeChatSection({ userProfile }) {
   };
 
   return (
-    <section style={{padding:"5rem 5%",background:"#0a0a0f"}}>
+    <section style={{padding:"5rem 5%"}}>
       <div style={{maxWidth:800,margin:"0 auto",textAlign:"center"}}>
         <div className="section-label">AI Study Assistant</div>
         <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"clamp(2rem,4vw,3rem)",letterSpacing:"-1.5px",marginBottom:8}}>
@@ -837,7 +837,7 @@ function useScrollReveal() {
   });
 }
 
-// Counter animation — runs once when counter scrolls into view
+// Counter animation — runs once on scroll into view, re-runs on hover
 function useCounters() {
   useEffect(() => {
     function animateCounter(el) {
@@ -868,15 +868,16 @@ function useCounters() {
     if (first) obs.observe(first.closest("section") || first);
 
     const counters = document.querySelectorAll(".es-counter[data-target]");
+    const handlers = [];
     counters.forEach((el) => {
-      el.addEventListener("mouseenter", () => animateCounter(el));
+      const fn = () => animateCounter(el);
+      el.addEventListener("mouseenter", fn);
+      handlers.push({ el, fn });
     });
 
     return () => {
       obs.disconnect();
-      counters.forEach((el) => {
-        el.removeEventListener("mouseenter", () => animateCounter(el));
-      });
+      handlers.forEach(({ el, fn }) => el.removeEventListener("mouseenter", fn));
     };
   }, []);
 }
@@ -1258,7 +1259,7 @@ function HomePage({navigate,userProfile,handleLogout}) {
       <HomeChatSection userProfile={userProfile}/>
 
       {/* Exam Hubs Preview */}
-      <section style={{padding:"5rem 5%",background:"#0d0d14"}}>
+      <section style={{padding:"5rem 5%"}}>
         <div style={{textAlign:"center",marginBottom:"2.5rem"}} className="es-reveal">
           <div className="section-label">Exam Hubs</div>
           <h2 className="section-title">Prepare for <span style={{color:"#6c63ff"}}>Your Target Exam</span></h2>
