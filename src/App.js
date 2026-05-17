@@ -563,13 +563,14 @@ const PAPER_CSS = `
 const GLOBAL_CSS=`
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Sans',sans-serif;cursor:none;}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;cursor:none;overflow-x:hidden;}
 
-/* ── CUSTOM CURSOR ── */
-#es-cursor{position:fixed;width:12px;height:12px;background:#6c63ff;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:transform .1s,background .2s;mix-blend-mode:screen;}
-#es-cursor-ring{position:fixed;width:36px;height:36px;border:1.5px solid rgba(108,99,255,.5);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all .12s ease-out;}
-#es-cursor.hovered{transform:translate(-50%,-50%) scale(2.5);background:#ff6584;}
-#es-cursor-ring.hovered{transform:translate(-50%,-50%) scale(1.6);border-color:rgba(255,101,132,.6);}
+/* ── CUSTOM CURSOR (lagged ring) ── */
+#es-cursor{position:fixed;width:10px;height:10px;background:#6c63ff;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:transform .08s,background .2s;mix-blend-mode:screen;}
+#es-cursor-ring{position:fixed;width:34px;height:34px;border:1.5px solid rgba(108,99,255,.55);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);}
+#es-cursor.hovered{transform:translate(-50%,-50%) scale(2.8);background:#ff6584;}
+#es-cursor-ring.hovered{border-color:rgba(255,101,132,.6);width:44px;height:44px;}
 
 /* ── AURORA BG ── */
 .es-aurora{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden;}
@@ -621,7 +622,7 @@ body{font-family:'DM Sans',sans-serif;cursor:none;}
 
 /* ── MARQUEE ── */
 .es-marquee-wrap{overflow:hidden;padding:1.5rem 0;border-top:1px solid #2a2a3e;border-bottom:1px solid #2a2a3e;background:linear-gradient(90deg,#0a0a0f,transparent 5%,transparent 95%,#0a0a0f);position:relative;z-index:2;}
-.es-marquee-track{display:flex;gap:0;animation:es-marquee 30s linear infinite;width:max-content;}
+.es-marquee-track{display:flex;gap:0;animation:es-marquee 25s linear infinite;width:max-content;}
 .es-marquee-track:hover{animation-play-state:paused;}
 .es-marquee-item{display:flex;align-items:center;gap:12px;padding:0 32px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;white-space:nowrap;color:#7878a0;}
 .es-marquee-item span{color:#6c63ff;font-size:1.2rem;}
@@ -648,35 +649,82 @@ body{font-family:'DM Sans',sans-serif;cursor:none;}
 @keyframes es-blink{0%,100%{border-color:#6c63ff;}50%{border-color:transparent;}}
 
 /* ── GLOW BUTTON ── */
-.es-glow-btn{position:relative;background:linear-gradient(135deg,#6c63ff,#8b7fff);color:#fff;border:none;padding:14px 28px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 0 20px rgba(108,99,255,.5),0 4px 24px rgba(108,99,255,.4);transition:all .3s;overflow:hidden;}
-.es-glow-btn::before{content:'';position:absolute;top:50%;left:50%;width:0;height:0;background:rgba(255,255,255,.2);border-radius:50%;transform:translate(-50%,-50%);transition:width .6s,height .6s,opacity .6s;opacity:1;}
-.es-glow-btn:hover::before{width:400px;height:400px;opacity:0;}
-.es-glow-btn:hover{transform:translateY(-3px);box-shadow:0 0 40px rgba(108,99,255,.7),0 12px 36px rgba(108,99,255,.55);}
+.es-glow-btn{position:relative;background:linear-gradient(135deg,#6c63ff,#ff6584);color:#fff;border:none;padding:15px 36px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;letter-spacing:.3px;transition:all .3s;overflow:hidden;}
+.es-glow-btn::before{content:'';position:absolute;inset:-2px;background:linear-gradient(135deg,#6c63ff,#ff6584,#f7971e);border-radius:16px;z-index:-1;opacity:0;filter:blur(12px);transition:opacity .3s;}
+.es-glow-btn:hover::before{opacity:.8;}
+.es-glow-btn:hover{transform:translateY(-3px);box-shadow:0 20px 40px rgba(108,99,255,.4);}
+.es-glow-btn:active{transform:translateY(-1px);}
 
-/* ── FEATURE CARD (enhanced) ── */
-.feature-card{border:1px solid #2a2a3e;border-radius:20px;padding:1.75rem;transition:transform .3s cubic-bezier(.22,1,.36,1),border-color .3s,box-shadow .3s;position:relative;overflow:hidden;cursor:pointer;}
+/* ── FEATURE CARD (mouse-glow + shimmer top border) ── */
+.feature-card{border:1px solid #2a2a3e;border-radius:20px;padding:1.75rem;transition:all .3s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden;cursor:pointer;}
 .feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(108,99,255,.8),transparent);transform:scaleX(0);transition:transform .4s ease;}
 .feature-card:hover::before{transform:scaleX(1);}
+.feature-card::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(108,99,255,.08) 0%,transparent 60%);opacity:0;transition:opacity .3s;pointer-events:none;}
+.feature-card:hover::after{opacity:1;}
 .feature-card:hover{transform:translateY(-6px);border-color:rgba(108,99,255,.4);box-shadow:0 20px 60px rgba(108,99,255,.12);}
 .feature-card .f-icon{transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
 .feature-card:hover .f-icon{transform:scale(1.2) rotate(-5deg);}
+.feature-card:hover .f-title{color:#a89cff;}
+.f-glow{position:absolute;width:180px;height:180px;border-radius:50%;filter:blur(60px);opacity:0;transition:opacity .4s;top:-40px;right:-40px;pointer-events:none;}
+.feature-card:hover .f-glow{opacity:.18;}
 
-/* ── HUB CARD (enhanced) ── */
-.hub-card{transition:all .3s cubic-bezier(.22,1,.36,1);}
-.hub-card:hover{transform:translateY(-5px) scale(1.02);box-shadow:0 20px 50px rgba(0,0,0,0.4);}
+/* ── HUB CARD ── */
+.hub-card{transition:all .3s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden;}
+.hub-card:hover{transform:translateY(-5px) scale(1.02);}
+.hub-bg{position:absolute;inset:0;opacity:.06;transition:opacity .3s;pointer-events:none;}
+.hub-card:hover .hub-bg{opacity:.14;}
+.hub-inner{position:relative;z-index:1;}
 
-/* ── COUNTER ── */
-.es-counter{font-family:'Space Grotesk',sans-serif;font-weight:800;}
+/* ── GRID SECTION BG ── */
+.es-section-grid{background-image:linear-gradient(rgba(42,42,62,.25) 1px,transparent 1px),linear-gradient(90deg,rgba(42,42,62,.25) 1px,transparent 1px);background-size:60px 60px;}
+
+/* ── PROGRESS BAR ── */
+.es-progress-item{margin-bottom:18px;}
+.es-progress-label{display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:6px;}
+.es-progress-track{height:6px;background:#2a2a3e;border-radius:6px;overflow:hidden;position:relative;}
+.es-progress-fill{height:100%;border-radius:6px;width:0;transition:width 1.4s cubic-bezier(.22,1,.36,1);position:relative;}
+.es-progress-fill::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:es-shimmer 2s ease-in-out infinite;}
+@keyframes es-shimmer{from{transform:translateX(-100%);}to{transform:translateX(200%);}}
+
+/* ── ORBITING DOTS ── */
+.es-orbit-wrapper{position:relative;width:180px;height:180px;margin:0 auto;}
+.es-orbit-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60px;height:60px;background:linear-gradient(135deg,#6c63ff,#ff6584);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.7rem;box-shadow:0 0 40px rgba(108,99,255,.55);}
+.es-orbit-ring{position:absolute;top:50%;left:50%;border:1px dashed rgba(108,99,255,.3);border-radius:50%;transform:translate(-50%,-50%);animation:es-spin-orbit 10s linear infinite;}
+.es-orbit-ring:nth-child(2){width:120px;height:120px;}
+.es-orbit-ring:nth-child(3){width:170px;height:170px;animation-duration:14s;animation-direction:reverse;}
+.es-orbit-dot{position:absolute;width:10px;height:10px;border-radius:50%;top:50%;left:100%;transform:translate(-50%,-50%);}
+@keyframes es-spin-orbit{to{transform:translate(-50%,-50%) rotate(360deg);}}
+
+/* ── HUB SPOTLIGHT SECTION ── */
+.es-hub-spotlight{background:linear-gradient(135deg,rgba(108,99,255,.14),rgba(255,101,132,.07));border:1px solid rgba(108,99,255,.2);border-radius:28px;padding:3rem;position:relative;overflow:hidden;text-align:center;}
+.es-hub-spotlight::before{content:'';position:absolute;top:-80px;right:-80px;width:300px;height:300px;background:radial-gradient(circle,rgba(108,99,255,.2),transparent 70%);pointer-events:none;animation:es-pulse-bg 4s ease-in-out infinite;}
+@keyframes es-pulse-bg{0%,100%{transform:scale(1);opacity:.8;}50%{transform:scale(1.1);opacity:.5;}}
 
 /* ── SPOTLIGHT CARD ── */
 .es-spotlight-card{background:#12121a;border:1px solid #2a2a3e;border-radius:24px;padding:2.5rem;position:relative;overflow:hidden;}
 .es-spotlight-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at var(--sx,50%) var(--sy,50%),rgba(108,99,255,.15) 0%,transparent 50%);opacity:0;transition:opacity .3s;pointer-events:none;}
 .es-spotlight-card:hover::before{opacity:1;}
 
+/* ── LEADERBOARD ROW HOVER ── */
+.es-lb-row{transition:all .25s;}
+.es-lb-row:hover{border-color:#6c63ff!important;transform:translateX(4px);background:rgba(108,99,255,.06)!important;}
+
+/* ── Q CARD LEFT ACCENT ── */
+.es-q-card{position:relative;overflow:hidden;}
+.es-q-card::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(to bottom,#6c63ff,#ff6584);transform:scaleY(0);transform-origin:top;transition:transform .3s;}
+.es-q-card:hover::after{transform:scaleY(1);}
+
 /* ── MAGNETIC ── */
 .es-magnetic{display:inline-block;transition:transform .3s cubic-bezier(.22,1,.36,1);}
 
-/* ── NAV SCROLL EFFECT is applied via JS ── */
+/* ── COUNTER ── */
+.es-counter{font-family:'Space Grotesk',sans-serif;font-weight:800;}
+
+/* ── STAT CARD ── */
+.es-stat-card{background:#12121a;border:1px solid #2a2a3e;border-radius:20px;padding:2rem;text-align:center;position:relative;overflow:hidden;transition:all .3s;cursor:pointer;}
+.es-stat-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(108,99,255,.14),transparent 60%);opacity:0;transition:opacity .3s;}
+.es-stat-card:hover::before{opacity:1;}
+.es-stat-card:hover{transform:translateY(-4px);border-color:rgba(108,99,255,.3);box-shadow:0 16px 48px rgba(108,99,255,.12);}
 
 .section-label{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#6c63ff;margin-bottom:8px;}
 .section-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;line-height:1.1;letter-spacing:-1px;margin-bottom:12px;}
@@ -686,7 +734,7 @@ body{font-family:'DM Sans',sans-serif;cursor:none;}
 .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(108,99,255,.5);}
 .btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none;}
 .btn-primary-sm{background:linear-gradient(135deg,#6c63ff,#8b7fff);color:white;border:none;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
-.btn-secondary{background:transparent;color:#e8e8f0;border:1px solid #2a2a3e;padding:11px 24px;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;transition:border-color .2s,background .2s,transform .2s;font-family:'DM Sans',sans-serif;}
+.btn-secondary{background:transparent;color:#e8e8f0;border:1px solid #2a2a3e;padding:11px 24px;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;transition:border-color .2s,background .2s,transform .2s;font-family:'DM Sans',sans-serif;backdrop-filter:blur(10px);}
 .btn-secondary:hover{border-color:#6c63ff;background:rgba(108,99,255,.08);transform:translateY(-2px);}
 .btn-ghost{background:transparent;color:#7878a0;border:1px solid #2a2a3e;padding:6px 12px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .btn-ghost:hover{color:#e8e8f0;}
@@ -699,7 +747,6 @@ textarea.form-input{display:block;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .spin{animation:spin .8s linear infinite;}
 @keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
-@keyframes es-toast-in{from{opacity:0;transform:translateY(20px) scale(.9);}to{opacity:1;transform:translateY(0) scale(1);}}
 @media (max-width:768px){
   body{cursor:auto;}
   #es-cursor,#es-cursor-ring{display:none;}
@@ -722,18 +769,26 @@ textarea.form-input{display:block;}
 // ═══════════════════════════════════════════════════════════════════════
 // ANIMATION UTILITIES
 
-// Custom cursor hook
+// Custom cursor hook — lagged ring
 function useCursor() {
   useEffect(() => {
     const cursor = document.getElementById("es-cursor");
     const ring = document.getElementById("es-cursor-ring");
     if (!cursor || !ring) return;
+    let mx = 0, my = 0, rx = 0, ry = 0, raf;
     const move = (e) => {
-      cursor.style.left = e.clientX + "px";
-      cursor.style.top = e.clientY + "px";
-      ring.style.left = e.clientX + "px";
-      ring.style.top = e.clientY + "px";
+      mx = e.clientX; my = e.clientY;
+      cursor.style.left = mx + "px";
+      cursor.style.top = my + "px";
     };
+    const animRing = () => {
+      rx += (mx - rx) * 0.12;
+      ry += (my - ry) * 0.12;
+      ring.style.left = rx + "px";
+      ring.style.top = ry + "px";
+      raf = requestAnimationFrame(animRing);
+    };
+    animRing();
     const onOver = (e) => {
       if (e.target.closest("a,button")) {
         cursor.classList.add("hovered");
@@ -746,13 +801,14 @@ function useCursor() {
     window.addEventListener("mousemove", move);
     window.addEventListener("mouseover", onOver);
     return () => {
+      cancelAnimationFrame(raf);
       window.removeEventListener("mousemove", move);
       window.removeEventListener("mouseover", onOver);
     };
   }, []);
 }
 
-// Particles canvas hook
+// Particles canvas hook with page-load burst
 function useParticles() {
   useEffect(() => {
     const canvas = document.getElementById("es-particles");
@@ -761,31 +817,40 @@ function useParticles() {
     const COLORS = ["#6c63ff","#ff6584","#43e97b","#4facfe","#f7971e","#38f9d7"];
     let W = canvas.width = window.innerWidth;
     let H = canvas.height = window.innerHeight;
-    let particles = [];
-    const NUM = 60;
+    const particles = Array.from({length: 90}, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.35, vy: (Math.random() - 0.5) * 0.35,
+      r: Math.random() * 1.8 + 0.5,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      opacity: Math.random() * 0.5 + 0.15,
+      pulse: Math.random() * Math.PI * 2,
+    }));
 
-    for (let i = 0; i < NUM; i++) {
-      particles.push({
-        x: Math.random() * W, y: Math.random() * H,
-        vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
-        r: Math.random() * 2 + 0.5,
-        color: COLORS[Math.floor(Math.random() * COLORS.length)],
-        opacity: Math.random() * 0.5 + 0.1,
-        pulse: Math.random() * Math.PI * 2,
-      });
-    }
+    // Page-load burst
+    setTimeout(() => {
+      for (let i = 0; i < 20; i++) {
+        const p = {
+          x: W / 2 + (Math.random() - 0.5) * 200,
+          y: H / 2 + (Math.random() - 0.5) * 200,
+          vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3,
+          r: Math.random() * 3 + 1,
+          color: COLORS[Math.floor(Math.random() * COLORS.length)],
+          opacity: 0.8, pulse: 0,
+        };
+        particles.push(p);
+        setTimeout(() => { const idx = particles.indexOf(p); if (idx > -1) particles.splice(idx, 1); }, 3000);
+      }
+    }, 500);
 
-    const onResize = () => {
-      W = canvas.width = window.innerWidth;
-      H = canvas.height = window.innerHeight;
-    };
+    const onResize = () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; };
     window.addEventListener("resize", onResize);
 
     let raf;
     const draw = () => {
       ctx.clearRect(0, 0, W, H);
       particles.forEach((p) => {
-        p.x += p.vx; p.y += p.vy; p.pulse += 0.02;
+        p.pulse += 0.018;
+        p.x += p.vx; p.y += p.vy;
         if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
         if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
         const op = p.opacity * (0.7 + 0.3 * Math.sin(p.pulse));
@@ -796,31 +861,25 @@ function useParticles() {
         ctx.fill();
       });
       ctx.globalAlpha = 1;
-      // Connection lines
       for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x;
           const dy = particles[i].y - particles[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 100) {
+          if (dist < 110) {
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = "#6c63ff";
-            ctx.globalAlpha = (1 - dist / 100) * 0.08;
+            ctx.strokeStyle = `rgba(108,99,255,${0.12 * (1 - dist / 110)})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
-            ctx.globalAlpha = 1;
           }
         }
       }
       raf = requestAnimationFrame(draw);
     };
     draw();
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", onResize);
-    };
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); };
   }, []);
 }
 
@@ -924,7 +983,64 @@ function useSpotlight() {
   });
 }
 
-// Typewriter effect hook
+// Card mouse-glow (for .feature-card --mx --my)
+function useCardGlow() {
+  useEffect(() => {
+    const cards = document.querySelectorAll(".feature-card");
+    const handlers = [];
+    cards.forEach((card) => {
+      const mm = (e) => {
+        const r = card.getBoundingClientRect();
+        card.style.setProperty("--mx", ((e.clientX - r.left) / r.width * 100) + "%");
+        card.style.setProperty("--my", ((e.clientY - r.top) / r.height * 100) + "%");
+      };
+      card.addEventListener("mousemove", mm);
+      handlers.push({ card, mm });
+    });
+    return () => handlers.forEach(({ card, mm }) => card.removeEventListener("mousemove", mm));
+  });
+}
+
+// Progress bar animation — fills on scroll into view
+function useProgressBars() {
+  useEffect(() => {
+    const bars = document.querySelectorAll(".es-progress-fill[data-width]");
+    if (!bars.length) return;
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          bars.forEach((bar) => { setTimeout(() => { bar.style.width = bar.dataset.width + "%"; }, 200); });
+          obs.disconnect();
+        }
+      });
+    }, { threshold: 0.3 });
+    obs.observe(bars[0].closest("section") || bars[0]);
+    return () => obs.disconnect();
+  });
+}
+
+// Leaderboard row stagger-in on scroll
+function useLeaderboardStagger() {
+  useEffect(() => {
+    const rows = document.querySelectorAll(".es-lb-stagger");
+    if (!rows.length) return;
+    rows.forEach((row, i) => {
+      row.style.opacity = "0";
+      row.style.transform = "translateX(-20px)";
+      row.style.transition = `opacity .5s ease ${i * 0.07}s, transform .5s cubic-bezier(.22,1,.36,1) ${i * 0.07}s`;
+    });
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          rows.forEach((row) => { row.style.opacity = "1"; row.style.transform = "translateX(0)"; });
+          obs.disconnect();
+        }
+      });
+    }, { threshold: 0.15 });
+    if (rows[0]) obs.observe(rows[0].closest("section") || rows[0]);
+    return () => obs.disconnect();
+  });
+}
 const TYPEWRITER_PHRASES = ["Crack JEE 2025","Top the Boards","Master NEET","Clear UPSC","Score 100%"];
 function useTypewriter() {
   const [text, setText] = useState("");
@@ -1205,6 +1321,181 @@ function HomePage({navigate,userProfile,handleLogout}) {
   useCounters();
   useMagnetic();
   useSpotlight();
+  useCardGlow();
+  useProgressBars();
+  return (
+    <div>
+      <Nav userProfile={userProfile} navigate={navigate} handleLogout={handleLogout}/>
+
+      {/* ── HERO ── */}
+      <section style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",textAlign:"center",padding:"8rem 4% 3rem",position:"relative",overflow:"hidden"}}>
+        <div style={{position:"relative",zIndex:1,maxWidth:860}}>
+          <div className="badge-pill"><span className="es-badge-dot"/>&nbsp;✦ India's Smartest Exam Platform</div>
+
+          <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(2.8rem,6vw,5rem)",fontWeight:800,lineHeight:1.0,letterSpacing:"-3px",margin:"1.5rem 0"}}>
+            <span className="es-hero-line es-line-1"><span className="es-word">Crack JEE, NEET,</span></span>
+            <span className="es-hero-line es-line-2"><span className="es-word">UPSC &amp; Boards with</span></span>
+            <span className="es-hero-line es-line-3">
+              <span className="es-word es-grad-text es-glitch" data-text="EduSolve4U">EduSolve4U</span>
+            </span>
+          </h1>
+
+          <p className="es-fade-up-1" style={{fontSize:"1.1rem",color:"#7878a0",maxWidth:540,margin:"0 auto 1.5rem",lineHeight:1.7}}>
+            Smart practice tests, AI-generated questions, real-time leaderboards and curated books — all in one place.
+          </p>
+          <p style={{fontSize:"1rem",color:"#a89cff",marginBottom:"2rem",minHeight:"1.6rem"}}>
+            <span className="es-typewriter">{twText}</span>
+          </p>
+
+          <div className="es-fade-up-2" style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",marginBottom:"3.5rem"}}>
+            <button onClick={()=>navigate(userProfile?"dashboard":"register")} className="es-glow-btn es-magnetic">🎯 Start Practising Free</button>
+            <button onClick={()=>navigate("examhub")} className="btn-secondary es-magnetic" style={{fontSize:"1rem",padding:"14px 28px"}}>🏛️ Explore Exam Hubs</button>
+          </div>
+
+          <div className="es-fade-up-3" style={{display:"flex",gap:32,justifyContent:"center",flexWrap:"wrap"}}>
+            {[["50000","Questions","50K+"],["4","Exam Hubs","4"],["12000","Students","12K+"],["100","Free","100%"]].map(([target,label,fallback])=>(
+              <div key={label} className="es-stat-card" style={{minWidth:110}}>
+                {target==="100"
+                  ? <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"2rem",fontWeight:800,background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{fallback}</div>
+                  : <div className="es-counter" data-target={target} style={{fontSize:"2rem",background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{fallback}</div>
+                }
+                <div style={{fontSize:12,color:"#7878a0",marginTop:4}}>{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── MARQUEE ── */}
+      <div className="es-marquee-wrap">
+        <div className="es-marquee-track">
+          {[...MARQUEE_ITEMS,...MARQUEE_ITEMS].map(([icon,label],i)=>(
+            <div key={i} className="es-marquee-item"><span>{icon}</span>{label}</div>
+          ))}
+        </div>
+      </div>
+
+      <HomeChatSection userProfile={userProfile}/>
+
+      {/* ── EXAM HUBS (grid bg + hub-bg radial) ── */}
+      <section className="es-section-grid" style={{padding:"5rem 5%"}}>
+        <div style={{textAlign:"center",marginBottom:"2.5rem"}} className="es-reveal">
+          <div className="section-label">Exam Hubs</div>
+          <h2 className="section-title">Prepare for <span style={{color:"#6c63ff"}}>Your Target Exam</span></h2>
+          <p style={{color:"#7878a0",marginTop:8}}>Dedicated practice zones, books and PYQs for each exam</p>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(min(240px,100%),1fr))",gap:16,maxWidth:1100,margin:"0 auto"}}>
+          {EXAM_HUBS.map((hub,i)=>(
+            <div key={hub.id} onClick={()=>navigate("examhub",{hub})} style={{background:"#12121a",border:`1px solid ${hub.color}33`,borderRadius:20,padding:"1.75rem",cursor:"pointer"}} className={`hub-card es-reveal es-stagger-${i+1}`}>
+              <div className="hub-bg" style={{background:`radial-gradient(circle at top right, ${hub.color}, transparent)`}}/>
+              <div className="hub-inner">
+                <div style={{fontSize:"2.5rem",marginBottom:12}} className={`es-float es-float-${(i%3)+1}`}>{hub.icon}</div>
+                <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.4rem",color:hub.color,marginBottom:4}}>{hub.name}</div>
+                <div style={{fontWeight:600,fontSize:13,marginBottom:8,color:"#e8e8f0"}}>{hub.full}</div>
+                <p style={{color:"#7878a0",fontSize:13,lineHeight:1.6}}>{hub.desc}</p>
+                <div style={{marginTop:14,display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {hub.subjects.slice(0,3).map(s=><span key={s} style={{background:`${hub.color}22`,color:hub.color,border:`1px solid ${hub.color}44`,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{s}</span>)}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── DIVIDER ── */}
+      <div style={{height:1,background:"linear-gradient(90deg,transparent,#2a2a3e,transparent)",margin:"0 5%"}}/>
+
+      {/* ── FEATURES (with per-card glow orb) ── */}
+      <section style={{padding:"5rem 5%"}}>
+        <div style={{textAlign:"center",marginBottom:"2.5rem"}} className="es-reveal">
+          <div className="section-label">Features</div>
+          <h2 className="section-title">Everything You Need to <span style={{color:"#43e97b"}}>Top Your Exam</span></h2>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(min(260px,100%),1fr))",gap:16,maxWidth:1100,margin:"0 auto"}}>
+          {[
+            ["🎯","Smart Test Builder","Card-based subject & chapter picker with difficulty control.","rgba(108,99,255,0.08)","#6c63ff"],
+            ["🔍","Question Search","Search 50K+ questions by subject, chapter, exam and year.","rgba(67,233,123,0.08)","#43e97b"],
+            ["🏆","Live Leaderboard","Ranked by score + speed. Compete with students nationwide.","rgba(255,215,0,0.08)","#ffd700"],
+            ["🤖","AI Questions","Groq AI generates fresh MCQs, short answers and case studies.","rgba(79,172,254,0.08)","#4facfe"],
+            ["📚","Curated Books","Free PDFs for JEE, NEET, UPSC and Boards — all in one place.","rgba(247,151,30,0.08)","#f7971e"],
+            ["📊","Analytics","Track weak areas and improve chapter by chapter.","rgba(255,101,132,0.08)","#ff6584"],
+          ].map(([icon,title,desc,bg,glowColor],i)=>(
+            <div key={title} className={`feature-card es-reveal es-stagger-${i+1}`} style={{background:bg}}>
+              <div className="f-glow" style={{background:glowColor}}/>
+              <div className="f-icon" style={{fontSize:"2rem",marginBottom:12}}>{icon}</div>
+              <h3 className="f-title" style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:8,transition:"color .2s"}}>{title}</h3>
+              <p style={{color:"#7878a0",fontSize:14,lineHeight:1.6}}>{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── DIVIDER ── */}
+      <div style={{height:1,background:"linear-gradient(90deg,transparent,#2a2a3e,transparent)",margin:"0 5%"}}/>
+
+      {/* ── SUBJECT PROGRESS SECTION ── */}
+      <section id="progress-section" style={{padding:"5rem 5%"}}>
+        <div style={{maxWidth:1100,margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(400px,100%),1fr))",gap:40,alignItems:"center"}}>
+          <div className="es-reveal-left">
+            <div className="section-label">Subject Coverage</div>
+            <h2 className="section-title">50,000+ Questions Across <span className="es-grad-text">Every Subject</span></h2>
+            <p style={{color:"#7878a0",lineHeight:1.7,marginBottom:"2rem"}}>From Class 6 to JEE Advanced — every topic, every difficulty, every year.</p>
+            {[
+              ["Physics","#4facfe",88],["Mathematics","#6c63ff",95],["Chemistry","#43e97b",82],
+              ["Biology","#f7971e",76],["History","#ffd700",70],["English","#c471f5",90],
+            ].map(([subj,color,pct])=>(
+              <div key={subj} className="es-progress-item">
+                <div className="es-progress-label">
+                  <span>{subj}</span>
+                  <span style={{color}}>{pct}%</span>
+                </div>
+                <div className="es-progress-track">
+                  <div className="es-progress-fill" data-width={pct} style={{background:`linear-gradient(90deg,${color}99,${color})`}}/>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="es-reveal-right" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            {[["50K+","Questions","#6c63ff"],["4","Exam Hubs","#43e97b"],["12K+","Students","#ff6584"],["100%","Free Forever","#f7971e"]].map(([num,label,color])=>(
+              <div key={label} className="es-stat-card">
+                <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"2.2rem",fontWeight:800,color,marginBottom:4}}>{num}</div>
+                <div style={{fontSize:13,color:"#7878a0"}}>{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA SECTION WITH ORBIT ── */}
+      <section style={{padding:"5rem 5%"}}>
+        <div style={{maxWidth:700,margin:"0 auto"}} className="es-reveal">
+          <div className="es-hub-spotlight">
+            <div className="es-orbit-wrapper" style={{marginBottom:"2rem"}}>
+              <div className="es-orbit-ring">
+                <div className="es-orbit-dot" style={{background:"#6c63ff"}}/>
+              </div>
+              <div className="es-orbit-ring">
+                <div className="es-orbit-dot" style={{background:"#ff6584"}}/>
+              </div>
+              <div className="es-orbit-center">🎓</div>
+            </div>
+            <div className="section-label">Get Started Today</div>
+            <h2 className="section-title" style={{marginBottom:12}}>Ready to <span className="es-grad-text">Ace Your Exam?</span></h2>
+            <p style={{color:"#7878a0",maxWidth:440,margin:"0 auto 2rem",lineHeight:1.7}}>Join 12,000+ students already practising on EduSolve4U. Free forever. No credit card needed.</p>
+            <button onClick={()=>navigate(userProfile?"dashboard":"register")} className="es-glow-btn es-magnetic" style={{fontSize:"1rem",padding:"16px 40px"}}>🚀 Start For Free</button>
+          </div>
+        </div>
+      </section>
+
+      <footer style={{borderTop:"1px solid #2a2a3e",padding:"2rem 5%",textAlign:"center",color:"#7878a0",fontSize:13}}>
+        <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.3rem",marginBottom:8,display:"inline-block"}}>
+          <span style={{background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>EduSolve</span><span style={{color:"#43e97b"}}>4U</span>
+        </div>
+        <p>Made with ❤️ for every student in India · JEE · NEET · UPSC · Boards</p>
+      </footer>
+    </div>
+  );
+}
   return (
     <div>
       <Nav userProfile={userProfile} navigate={navigate} handleLogout={handleLogout}/>
@@ -1521,7 +1812,7 @@ function SearchPage({userProfile,navigate,handleLogout}) {
             {results.length===0?<div style={{textAlign:"center",padding:"3rem",color:"#7878a0"}}>No questions found. Try different filters.</div>:(
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {results.map((q,i)=>(
-                  <div key={q.id} style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:16,padding:"1.25rem"}}>
+                  <div key={q.id} style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:16,padding:"1.25rem"}} className="es-q-card">
                     <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap"}}>
                       <Tag label={q.subject} color="#6c63ff"/>
                       <Tag label={q.chapter} color="#7878a0"/>
@@ -1951,6 +2242,7 @@ function LeaderboardPage({userProfile,navigate,handleLogout}) {
   const [filter,setFilter]=useState("all");
   const [leaderboard,setLeaderboard]=useState([]);
   const [loading,setLoading]=useState(true);
+  useLeaderboardStagger();
 
   useEffect(()=>{
     (async()=>{
@@ -2022,7 +2314,7 @@ function LeaderboardPage({userProfile,navigate,handleLogout}) {
                 const rank=idx+1;const rankColors={1:"#ffd700",2:"#c0c0c0",3:"#cd7f32"};
                 const isMe=(userProfile?.uid)===entry.uid;
                 return(
-                  <div key={entry.uid} style={{display:"grid",gridTemplateColumns:"50px 1fr 70px 70px 60px 70px",padding:"12px 20px",borderBottom:"1px solid #2a2a3e",alignItems:"center",background:isMe?"rgba(108,99,255,0.08)":"transparent"}}>
+                  <div key={entry.uid} style={{display:"grid",gridTemplateColumns:"50px 1fr 70px 70px 60px 70px",padding:"12px 20px",borderBottom:"1px solid #2a2a3e",alignItems:"center",background:isMe?"rgba(108,99,255,0.08)":"transparent"}} className="es-lb-row es-lb-stagger">
                     <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.1rem",color:rankColors[rank]||"#7878a0"}}>{rank<=3?["🥇","🥈","🥉"][rank-1]:`#${rank}`}</div>
                     <div style={{display:"flex",alignItems:"center",gap:10}}>
                       <div style={{width:36,height:36,borderRadius:"50%",background:avatarColor(entry.uid),display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:"#fff",fontSize:12,flexShrink:0}}>{entry.user?.avatar}</div>
