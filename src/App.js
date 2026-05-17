@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc, getDocs, addDoc, deleteDoc, collection, serverTimestamp } from "firebase/firestore";
@@ -563,23 +563,135 @@ const PAPER_CSS = `
 const GLOBAL_CSS=`
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Sans',sans-serif;}
-.badge-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(108,99,255,0.15);border:1px solid rgba(108,99,255,0.3);color:#a89cff;padding:6px 16px;border-radius:50px;font-size:12px;font-weight:600;letter-spacing:.05em;}
+body{font-family:'DM Sans',sans-serif;cursor:none;}
+
+/* ── CUSTOM CURSOR ── */
+#es-cursor{position:fixed;width:12px;height:12px;background:#6c63ff;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:transform .1s,background .2s;mix-blend-mode:screen;}
+#es-cursor-ring{position:fixed;width:36px;height:36px;border:1.5px solid rgba(108,99,255,.5);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all .12s ease-out;}
+#es-cursor.hovered{transform:translate(-50%,-50%) scale(2.5);background:#ff6584;}
+#es-cursor-ring.hovered{transform:translate(-50%,-50%) scale(1.6);border-color:rgba(255,101,132,.6);}
+
+/* ── AURORA BG ── */
+.es-aurora{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden;}
+.es-aurora-orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.18;animation:es-drift 20s ease-in-out infinite;}
+.es-aurora-orb:nth-child(1){width:700px;height:700px;background:#6c63ff;top:-15%;left:-10%;animation-duration:25s;}
+.es-aurora-orb:nth-child(2){width:500px;height:500px;background:#ff6584;top:40%;right:-10%;animation-duration:20s;animation-delay:-8s;}
+.es-aurora-orb:nth-child(3){width:400px;height:400px;background:#43e97b;bottom:-15%;left:30%;animation-duration:30s;animation-delay:-15s;}
+.es-aurora-orb:nth-child(4){width:300px;height:300px;background:#4facfe;top:20%;left:50%;animation-duration:18s;animation-delay:-5s;}
+@keyframes es-drift{0%,100%{transform:translate(0,0) scale(1);}25%{transform:translate(60px,-40px) scale(1.05);}50%{transform:translate(-40px,60px) scale(.95);}75%{transform:translate(80px,30px) scale(1.02);}}
+
+/* ── GRAIN OVERLAY ── */
+.es-grain{position:fixed;top:-50%;left:-50%;width:200%;height:200%;pointer-events:none;z-index:1;opacity:.04;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");animation:es-grain-shift 8s steps(10) infinite;}
+@keyframes es-grain-shift{0%,100%{transform:translate(0,0);}10%{transform:translate(-2%,-3%);}20%{transform:translate(3%,2%);}30%{transform:translate(-4%,1%);}40%{transform:translate(1%,-4%);}50%{transform:translate(-3%,3%);}60%{transform:translate(4%,-2%);}70%{transform:translate(-1%,4%);}80%{transform:translate(2%,-1%);}90%{transform:translate(-3%,-2%);}}
+
+/* ── PARTICLES CANVAS ── */
+#es-particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+
+/* ── HERO BADGE ── */
+.badge-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(108,99,255,.12);border:1px solid rgba(108,99,255,.3);color:#a89cff;padding:8px 20px;border-radius:50px;font-size:12px;font-weight:600;letter-spacing:.05em;animation:es-badge-pop .6s cubic-bezier(.34,1.56,.64,1) .2s both;}
+@keyframes es-badge-pop{from{opacity:0;transform:scale(.7) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.es-badge-dot{width:6px;height:6px;border-radius:50%;background:#43e97b;animation:es-pulse-dot 2s ease-in-out infinite;display:inline-block;}
+@keyframes es-pulse-dot{0%,100%{box-shadow:0 0 0 0 rgba(67,233,123,.4);}50%{box-shadow:0 0 0 6px rgba(67,233,123,0);}}
+
+/* ── GLITCH TEXT ── */
+.es-glitch{position:relative;display:inline-block;}
+.es-glitch::before,.es-glitch::after{content:attr(data-text);position:absolute;top:0;left:0;width:100%;pointer-events:none;}
+.es-glitch::before{color:#ff6584;animation:es-glitch-1 4s infinite;clip-path:polygon(0 0,100% 0,100% 33%,0 33%);}
+.es-glitch::after{color:#4facfe;animation:es-glitch-2 4s infinite;clip-path:polygon(0 66%,100% 66%,100% 100%,0 100%);}
+@keyframes es-glitch-1{0%,90%,100%{transform:translate(0);}92%{transform:translate(-3px,1px);}94%{transform:translate(3px,-1px);}96%{transform:translate(-1px,2px);}}
+@keyframes es-glitch-2{0%,90%,100%{transform:translate(0);}93%{transform:translate(3px,-2px);}95%{transform:translate(-3px,1px);}97%{transform:translate(2px,2px);}}
+
+/* ── GRADIENT TEXT ── */
+.es-grad-text{background:linear-gradient(135deg,#6c63ff,#ff6584,#f7971e,#6c63ff);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:es-grad-shift 4s ease-in-out infinite;}
+@keyframes es-grad-shift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+
+/* ── WORD RISE ── */
+.es-hero-line{overflow:hidden;display:block;}
+.es-word{display:inline-block;animation:es-word-rise 1s cubic-bezier(.22,1,.36,1) both;}
+.es-line-1 .es-word{animation-delay:.3s;}
+.es-line-2 .es-word{animation-delay:.45s;}
+.es-line-3 .es-word{animation-delay:.6s;}
+@keyframes es-word-rise{from{opacity:0;transform:translateY(110%) skewY(8deg);}to{opacity:1;transform:translateY(0) skewY(0);}}
+
+/* ── FADE UP ── */
+.es-fade-up-1{animation:es-fade-up .8s ease .8s both;}
+.es-fade-up-2{animation:es-fade-up .8s ease 1s both;}
+.es-fade-up-3{animation:es-fade-up .8s ease 1.2s both;}
+@keyframes es-fade-up{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── MARQUEE ── */
+.es-marquee-wrap{overflow:hidden;padding:1.5rem 0;border-top:1px solid #2a2a3e;border-bottom:1px solid #2a2a3e;background:linear-gradient(90deg,#0a0a0f,transparent 5%,transparent 95%,#0a0a0f);position:relative;z-index:2;}
+.es-marquee-track{display:flex;gap:0;animation:es-marquee 30s linear infinite;width:max-content;}
+.es-marquee-track:hover{animation-play-state:paused;}
+.es-marquee-item{display:flex;align-items:center;gap:12px;padding:0 32px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;white-space:nowrap;color:#7878a0;}
+.es-marquee-item span{color:#6c63ff;font-size:1.2rem;}
+@keyframes es-marquee{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+
+/* ── SCROLL REVEAL ── */
+.es-reveal{opacity:0;transform:translateY(40px);transition:opacity .7s ease,transform .7s cubic-bezier(.22,1,.36,1);}
+.es-reveal.in-view{opacity:1;transform:translateY(0);}
+.es-reveal-left{opacity:0;transform:translateX(-40px);transition:opacity .7s ease,transform .7s cubic-bezier(.22,1,.36,1);}
+.es-reveal-left.in-view{opacity:1;transform:translateX(0);}
+.es-reveal-right{opacity:0;transform:translateX(40px);transition:opacity .7s ease,transform .7s cubic-bezier(.22,1,.36,1);}
+.es-reveal-right.in-view{opacity:1;transform:translateX(0);}
+.es-reveal-scale{opacity:0;transform:scale(.85);transition:opacity .7s ease,transform .7s cubic-bezier(.34,1.56,.64,1);}
+.es-reveal-scale.in-view{opacity:1;transform:scale(1);}
+.es-stagger-1{transition-delay:.1s;}.es-stagger-2{transition-delay:.2s;}.es-stagger-3{transition-delay:.3s;}.es-stagger-4{transition-delay:.4s;}.es-stagger-5{transition-delay:.5s;}.es-stagger-6{transition-delay:.6s;}
+
+/* ── FLOATING ── */
+.es-float{animation:es-floating 6s ease-in-out infinite;}
+.es-float-1{animation-delay:0s;}.es-float-2{animation-delay:-2s;}.es-float-3{animation-delay:-4s;}
+@keyframes es-floating{0%,100%{transform:translateY(0);}50%{transform:translateY(-16px);}}
+
+/* ── TYPEWRITER ── */
+.es-typewriter{border-right:2px solid #6c63ff;animation:es-blink .7s step-end infinite;}
+@keyframes es-blink{0%,100%{border-color:#6c63ff;}50%{border-color:transparent;}}
+
+/* ── GLOW BUTTON ── */
+.es-glow-btn{position:relative;background:linear-gradient(135deg,#6c63ff,#8b7fff);color:#fff;border:none;padding:14px 28px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 0 20px rgba(108,99,255,.5),0 4px 24px rgba(108,99,255,.4);transition:all .3s;overflow:hidden;}
+.es-glow-btn::before{content:'';position:absolute;top:50%;left:50%;width:0;height:0;background:rgba(255,255,255,.2);border-radius:50%;transform:translate(-50%,-50%);transition:width .6s,height .6s,opacity .6s;opacity:1;}
+.es-glow-btn:hover::before{width:400px;height:400px;opacity:0;}
+.es-glow-btn:hover{transform:translateY(-3px);box-shadow:0 0 40px rgba(108,99,255,.7),0 12px 36px rgba(108,99,255,.55);}
+
+/* ── FEATURE CARD (enhanced) ── */
+.feature-card{border:1px solid #2a2a3e;border-radius:20px;padding:1.75rem;transition:transform .3s cubic-bezier(.22,1,.36,1),border-color .3s,box-shadow .3s;position:relative;overflow:hidden;cursor:pointer;}
+.feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(108,99,255,.8),transparent);transform:scaleX(0);transition:transform .4s ease;}
+.feature-card:hover::before{transform:scaleX(1);}
+.feature-card:hover{transform:translateY(-6px);border-color:rgba(108,99,255,.4);box-shadow:0 20px 60px rgba(108,99,255,.12);}
+.feature-card .f-icon{transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
+.feature-card:hover .f-icon{transform:scale(1.2) rotate(-5deg);}
+
+/* ── HUB CARD (enhanced) ── */
+.hub-card{transition:all .3s cubic-bezier(.22,1,.36,1);}
+.hub-card:hover{transform:translateY(-5px) scale(1.02);box-shadow:0 20px 50px rgba(0,0,0,0.4);}
+
+/* ── COUNTER ── */
+.es-counter{font-family:'Space Grotesk',sans-serif;font-weight:800;}
+
+/* ── SPOTLIGHT CARD ── */
+.es-spotlight-card{background:#12121a;border:1px solid #2a2a3e;border-radius:24px;padding:2.5rem;position:relative;overflow:hidden;}
+.es-spotlight-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at var(--sx,50%) var(--sy,50%),rgba(108,99,255,.15) 0%,transparent 50%);opacity:0;transition:opacity .3s;pointer-events:none;}
+.es-spotlight-card:hover::before{opacity:1;}
+
+/* ── MAGNETIC ── */
+.es-magnetic{display:inline-block;transition:transform .3s cubic-bezier(.22,1,.36,1);}
+
+/* ── NAV SCROLL EFFECT is applied via JS ── */
+
 .section-label{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#6c63ff;margin-bottom:8px;}
 .section-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;line-height:1.1;letter-spacing:-1px;margin-bottom:12px;}
-.feature-card{border:1px solid #2a2a3e;border-radius:20px;padding:1.75rem;transition:transform .25s,border-color .25s,box-shadow .25s;}
-.feature-card:hover{transform:translateY(-4px);border-color:#6c63ff;box-shadow:0 12px 40px rgba(108,99,255,.15);}
-.hub-card:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,0.3);}
-.btn-primary{background:linear-gradient(135deg,#6c63ff,#8b7fff);color:white;border:none;padding:11px 24px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(108,99,255,.4);font-family:'DM Sans',sans-serif;}
+.btn-primary{background:linear-gradient(135deg,#6c63ff,#8b7fff);color:white;border:none;padding:11px 24px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(108,99,255,.4);font-family:'DM Sans',sans-serif;position:relative;overflow:hidden;}
+.btn-primary::after{content:'';position:absolute;top:50%;left:50%;width:0;height:0;background:rgba(255,255,255,.15);border-radius:50%;transform:translate(-50%,-50%);transition:width .6s,height .6s,opacity .6s;}
+.btn-primary:hover::after{width:300px;height:300px;opacity:0;}
 .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(108,99,255,.5);}
 .btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none;}
 .btn-primary-sm{background:linear-gradient(135deg,#6c63ff,#8b7fff);color:white;border:none;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
-.btn-secondary{background:transparent;color:#e8e8f0;border:1px solid #2a2a3e;padding:11px 24px;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;transition:border-color .2s,background .2s;font-family:'DM Sans',sans-serif;}
-.btn-secondary:hover{border-color:#6c63ff;background:rgba(108,99,255,.08);}
+.btn-secondary{background:transparent;color:#e8e8f0;border:1px solid #2a2a3e;padding:11px 24px;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;transition:border-color .2s,background .2s,transform .2s;font-family:'DM Sans',sans-serif;}
+.btn-secondary:hover{border-color:#6c63ff;background:rgba(108,99,255,.08);transform:translateY(-2px);}
 .btn-ghost{background:transparent;color:#7878a0;border:1px solid #2a2a3e;padding:6px 12px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .btn-ghost:hover{color:#e8e8f0;}
 .form-label{display:block;font-size:11px;font-weight:700;color:#7878a0;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
-.form-input{width:100%;background:#1a1a26;border:1px solid #2a2a3e;border-radius:10px;padding:10px 14px;color:#e8e8f0;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;}
+.form-input{width:100%;background:#1a1a26;border:1px solid #2a2a3e;border-radius:10px;padding:10px 14px;color:#e8e8f0;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;cursor:text;}
 .form-input:focus{border-color:#6c63ff;}
 textarea.form-input{display:block;}
 .fade-in{animation:fadeIn 0.3s ease;}
@@ -587,7 +699,10 @@ textarea.form-input{display:block;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .spin{animation:spin .8s linear infinite;}
 @keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+@keyframes es-toast-in{from{opacity:0;transform:translateY(20px) scale(.9);}to{opacity:1;transform:translateY(0) scale(1);}}
 @media (max-width:768px){
+  body{cursor:auto;}
+  #es-cursor,#es-cursor-ring{display:none;}
   nav{padding:0 4% !important;height:58px !important;}
   nav>div:last-child{gap:4px !important;}
   [style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr !important;}
@@ -602,6 +717,248 @@ textarea.form-input{display:block;}
   .section-title{font-size:clamp(1.4rem,6vw,2rem) !important;}
 }
 `;
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// ANIMATION UTILITIES
+
+// Custom cursor hook
+function useCursor() {
+  useEffect(() => {
+    const cursor = document.getElementById("es-cursor");
+    const ring = document.getElementById("es-cursor-ring");
+    if (!cursor || !ring) return;
+    const move = (e) => {
+      cursor.style.left = e.clientX + "px";
+      cursor.style.top = e.clientY + "px";
+      ring.style.left = e.clientX + "px";
+      ring.style.top = e.clientY + "px";
+    };
+    const onOver = (e) => {
+      if (e.target.closest("a,button")) {
+        cursor.classList.add("hovered");
+        ring.classList.add("hovered");
+      } else {
+        cursor.classList.remove("hovered");
+        ring.classList.remove("hovered");
+      }
+    };
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseover", onOver);
+    return () => {
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseover", onOver);
+    };
+  }, []);
+}
+
+// Particles canvas hook
+function useParticles() {
+  useEffect(() => {
+    const canvas = document.getElementById("es-particles");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const COLORS = ["#6c63ff","#ff6584","#43e97b","#4facfe","#f7971e","#38f9d7"];
+    let W = canvas.width = window.innerWidth;
+    let H = canvas.height = window.innerHeight;
+    let particles = [];
+    const NUM = 60;
+
+    for (let i = 0; i < NUM; i++) {
+      particles.push({
+        x: Math.random() * W, y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
+        r: Math.random() * 2 + 0.5,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        opacity: Math.random() * 0.5 + 0.1,
+        pulse: Math.random() * Math.PI * 2,
+      });
+    }
+
+    const onResize = () => {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    };
+    window.addEventListener("resize", onResize);
+
+    let raf;
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+      particles.forEach((p) => {
+        p.x += p.vx; p.y += p.vy; p.pulse += 0.02;
+        if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+        if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+        const op = p.opacity * (0.7 + 0.3 * Math.sin(p.pulse));
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = op;
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      // Connection lines
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 100) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = "#6c63ff";
+            ctx.globalAlpha = (1 - dist / 100) * 0.08;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+          }
+        }
+      }
+      raf = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
+}
+
+// Scroll reveal hook — observes .es-reveal* elements
+function useScrollReveal() {
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add("in-view"); }),
+      { threshold: 0.12 }
+    );
+    const targets = document.querySelectorAll(".es-reveal,.es-reveal-left,.es-reveal-right,.es-reveal-scale");
+    targets.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  });
+}
+
+// Counter animation — runs once when counter scrolls into view
+function useCounters() {
+  useEffect(() => {
+    function animateCounter(el) {
+      const target = +el.dataset.target;
+      const start = performance.now();
+      const dur = 2000;
+      function step(now) {
+        const p = Math.min((now - start) / dur, 1);
+        const ease = 1 - Math.pow(1 - p, 3);
+        const val = Math.floor(ease * target);
+        el.textContent = val >= 1000 ? Math.floor(val / 1000) + "K+" : val + "+";
+        if (p < 1) requestAnimationFrame(step);
+        else el.textContent = target >= 1000 ? Math.floor(target / 1000) + "K+" : target + "+";
+      }
+      requestAnimationFrame(step);
+    }
+    const obs = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (e.isIntersecting) {
+          document.querySelectorAll(".es-counter[data-target]").forEach(animateCounter);
+          obs.disconnect();
+        }
+      }),
+      { threshold: 0.3 }
+    );
+    const first = document.querySelector(".es-counter[data-target]");
+    if (first) obs.observe(first.closest("section") || first);
+    return () => obs.disconnect();
+  });
+}
+
+// Magnetic button effect
+function useMagnetic() {
+  useEffect(() => {
+    const els = document.querySelectorAll(".es-magnetic");
+    const handlers = [];
+    els.forEach((el) => {
+      const mm = (e) => {
+        const r = el.getBoundingClientRect();
+        const x = e.clientX - r.left - r.width / 2;
+        const y = e.clientY - r.top - r.height / 2;
+        el.style.transform = `translate(${x * 0.25}px, ${y * 0.25}px)`;
+      };
+      const ml = () => { el.style.transform = ""; };
+      el.addEventListener("mousemove", mm);
+      el.addEventListener("mouseleave", ml);
+      handlers.push({ el, mm, ml });
+    });
+    return () => handlers.forEach(({ el, mm, ml }) => {
+      el.removeEventListener("mousemove", mm);
+      el.removeEventListener("mouseleave", ml);
+    });
+  });
+}
+
+// Spotlight card effect
+function useSpotlight() {
+  useEffect(() => {
+    const cards = document.querySelectorAll(".es-spotlight-card");
+    const handlers = [];
+    cards.forEach((card) => {
+      const mm = (e) => {
+        const r = card.getBoundingClientRect();
+        card.style.setProperty("--sx", ((e.clientX - r.left) / r.width * 100) + "%");
+        card.style.setProperty("--sy", ((e.clientY - r.top) / r.height * 100) + "%");
+      };
+      card.addEventListener("mousemove", mm);
+      handlers.push({ card, mm });
+    });
+    return () => handlers.forEach(({ card, mm }) => card.removeEventListener("mousemove", mm));
+  });
+}
+
+// Typewriter effect hook
+const TYPEWRITER_PHRASES = ["Crack JEE 2025","Top the Boards","Master NEET","Clear UPSC","Score 100%"];
+function useTypewriter() {
+  const [text, setText] = useState("");
+  useEffect(() => {
+    let pi = 0, ci = 0, typing = true;
+    const id = setInterval(() => {
+      if (typing) {
+        ci++;
+        setText(TYPEWRITER_PHRASES[pi].slice(0, ci));
+        if (ci === TYPEWRITER_PHRASES[pi].length) { typing = false; }
+      } else {
+        ci--;
+        setText(TYPEWRITER_PHRASES[pi].slice(0, ci));
+        if (ci === 0) { typing = true; pi = (pi + 1) % TYPEWRITER_PHRASES.length; }
+      }
+    }, 80);
+    return () => clearInterval(id);
+  }, []);
+  return text;
+}
+
+// Global animation layer — renders aurora, grain, particles, cursor
+function AnimationLayer() {
+  useCursor();
+  useParticles();
+  return (
+    <>
+      <div id="es-cursor"/>
+      <div id="es-cursor-ring"/>
+      <canvas id="es-particles"/>
+      <div className="es-aurora">
+        <div className="es-aurora-orb"/>
+        <div className="es-aurora-orb"/>
+        <div className="es-aurora-orb"/>
+        <div className="es-aurora-orb"/>
+      </div>
+      <div className="es-grain"/>
+    </>
+  );
+}
+
+// Marquee data
+const MARQUEE_ITEMS = [
+  ["⚡","JEE Main 2024"],["🧬","NEET UG 2024"],["🏛️","UPSC CSE 2024"],["📚","CBSE Class 10"],
+  ["🔬","JEE Advanced 2024"],["🎯","AI Questions"],["📊","Real-time Rankings"],["🤖","Groq AI Powered"],
+  ["📐","Mathematics"],["⚛️","Physics"],["🧪","Chemistry"],["🌍","Social Science"],
+];
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -743,6 +1100,8 @@ export default function App() {
   return (
     <div style={{minHeight:"100vh",background:"#0a0a0f",color:"#e8e8f0",fontFamily:"'DM Sans',sans-serif",overflowX:"hidden"}}>
       <style>{GLOBAL_CSS}</style>
+      <AnimationLayer/>
+      <div style={{position:"relative",zIndex:2}}>
       {toast&&<Toast msg={toast.msg} type={toast.type}/>}
       {page==="home"&&<HomePage {...props}/>}
       {page==="login"&&<LoginPage {...props}/>}
@@ -760,6 +1119,7 @@ export default function App() {
       <StudyChatBot userProfile={userProfile}/>
       {page==="examhub"&&<ExamHubPage {...props}/>}
       {page==="books"&&<BooksPage {...props}/>}
+      </div>
     </div>
   );
 }
@@ -780,8 +1140,25 @@ function Toast({msg,type}) {
 // NAV
 function Nav({userProfile,navigate,handleLogout}) {
   const [menuOpen,setMenuOpen] = useState(false);
+  const navRef = useRef(null);
+  useEffect(() => {
+    const onScroll = () => {
+      if (!navRef.current) return;
+      if (window.scrollY > 60) {
+        navRef.current.style.background = "rgba(10,10,15,.95)";
+        navRef.current.style.borderBottomColor = "rgba(42,42,62,.9)";
+        navRef.current.style.boxShadow = "0 4px 24px rgba(0,0,0,.3)";
+      } else {
+        navRef.current.style.background = "rgba(10,10,15,.7)";
+        navRef.current.style.borderBottomColor = "rgba(42,42,62,.6)";
+        navRef.current.style.boxShadow = "none";
+      }
+    };
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   return (
-    <nav style={{position:"fixed",top:0,left:0,right:0,zIndex:100,padding:"0 5%",height:68,display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(10,10,15,0.95)",backdropFilter:"blur(20px)",borderBottom:"1px solid #2a2a3e"}}>
+    <nav ref={navRef} style={{position:"fixed",top:0,left:0,right:0,zIndex:100,padding:"0 5%",height:68,display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(10,10,15,0.7)",backdropFilter:"blur(24px)",borderBottom:"1px solid rgba(42,42,62,.6)",transition:"background .3s,border-color .3s,box-shadow .3s"}}>
       <div onClick={()=>navigate("home")} style={{cursor:"pointer",fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.4rem",letterSpacing:"-0.5px"}}>
         <span style={{background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>EduSolve</span><span style={{color:"#43e97b"}}>4U</span>
       </div>
@@ -810,47 +1187,75 @@ const NavBtn = ({onClick,label}) => <button onClick={onClick} style={{background
 
 // HOME
 function HomePage({navigate,userProfile,handleLogout}) {
+  const twText = useTypewriter();
+  useScrollReveal();
+  useCounters();
+  useMagnetic();
+  useSpotlight();
   return (
     <div>
       <Nav userProfile={userProfile} navigate={navigate} handleLogout={handleLogout}/>
-      <section style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",textAlign:"center",padding:"6rem 4% 3rem",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 70% 60% at 50% 0%,rgba(108,99,255,0.25) 0%,transparent 70%),radial-gradient(ellipse 40% 40% at 80% 70%,rgba(255,101,132,0.12) 0%,transparent 60%),radial-gradient(ellipse 30% 30% at 20% 80%,rgba(67,233,123,0.08) 0%,transparent 60%)"}}/>
+      {/* ── HERO ── */}
+      <section style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",textAlign:"center",padding:"8rem 4% 3rem",position:"relative",overflow:"hidden"}}>
         <div style={{position:"relative",zIndex:1,maxWidth:860}}>
-          <div className="badge-pill">✦ India's Smartest Exam Platform</div>
+          <div className="badge-pill"><span className="es-badge-dot"/>&nbsp;✦ India's Smartest Exam Platform</div>
+
           <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(2.8rem,6vw,5rem)",fontWeight:800,lineHeight:1.0,letterSpacing:"-3px",margin:"1.5rem 0"}}>
-            Crack JEE, NEET,<br/>UPSC &amp; Boards with<br/><span style={{background:"linear-gradient(135deg,#6c63ff,#ff6584,#f7971e)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>EduSolve4U</span>
+            <span className="es-hero-line es-line-1"><span className="es-word">Crack JEE, NEET,</span></span>
+            <span className="es-hero-line es-line-2"><span className="es-word">UPSC &amp; Boards with</span></span>
+            <span className="es-hero-line es-line-3">
+              <span className="es-word es-grad-text es-glitch" data-text="EduSolve4U">EduSolve4U</span>
+            </span>
           </h1>
-          <p style={{fontSize:"1.15rem",color:"#7878a0",maxWidth:560,margin:"0 auto 2.5rem",lineHeight:1.7}}>Smart practice tests, AI-generated questions, real-time leaderboards and curated books — all in one place.</p>
-          <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",marginBottom:"3.5rem"}}>
-            <button onClick={()=>navigate(userProfile?"dashboard":"register")} className="btn-primary" style={{fontSize:"1rem",padding:"13px 28px"}}>🎯 Start Practising Free</button>
-            <button onClick={()=>navigate("examhub")} className="btn-secondary" style={{fontSize:"1rem",padding:"13px 28px"}}>🏛️ Explore Exam Hubs</button>
+
+          <p className="es-fade-up-1" style={{fontSize:"1.15rem",color:"#7878a0",maxWidth:560,margin:"0 auto 2.5rem",lineHeight:1.7}}>
+            Smart practice tests, AI-generated questions, real-time leaderboards and curated books — all in one place.
+          </p>
+          <p style={{fontSize:"1rem",color:"#a89cff",marginBottom:"2rem",minHeight:"1.6rem"}}>
+            <span className="es-typewriter">{twText}</span>
+          </p>
+
+          <div className="es-fade-up-2" style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",marginBottom:"3.5rem"}}>
+            <button onClick={()=>navigate(userProfile?"dashboard":"register")} className="es-glow-btn es-magnetic">🎯 Start Practising Free</button>
+            <button onClick={()=>navigate("examhub")} className="btn-secondary es-magnetic" style={{fontSize:"1rem",padding:"13px 28px"}}>🏛️ Explore Exam Hubs</button>
           </div>
-          <div style={{display:"flex",gap:40,justifyContent:"center",flexWrap:"wrap"}}>
-            {[["50K+","Questions"],["4","Exam Hubs"],["Real-time","Leaderboard"],["100%","Free"]].map(([n,l])=>(
-              <div key={l} style={{textAlign:"center"}}>
-                <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"2rem",fontWeight:800,background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{n}</div>
-                <div style={{fontSize:13,color:"#7878a0"}}>{l}</div>
+
+          <div className="es-fade-up-3" style={{display:"flex",gap:40,justifyContent:"center",flexWrap:"wrap"}}>
+            {[["50000","Questions","50K+"],["4","Exam Hubs","4"],["12000","Students","12K+"],["100","Free","100%"]].map(([target,label,fallback])=>(
+              <div key={label} style={{textAlign:"center"}}>
+                {target==="100"
+                  ? <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"2rem",fontWeight:800,background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{fallback}</div>
+                  : <div className="es-counter" data-target={target} style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"2rem",fontWeight:800,background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{fallback}</div>
+                }
+                <div style={{fontSize:13,color:"#7878a0"}}>{label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-
+      {/* ── MARQUEE ── */}
+      <div className="es-marquee-wrap">
+        <div className="es-marquee-track">
+          {[...MARQUEE_ITEMS,...MARQUEE_ITEMS].map(([icon,label],i)=>(
+            <div key={i} className="es-marquee-item"><span>{icon}</span>{label}</div>
+          ))}
+        </div>
+      </div>
 
       <HomeChatSection userProfile={userProfile}/>
 
       {/* Exam Hubs Preview */}
       <section style={{padding:"5rem 5%",background:"#0d0d14"}}>
-        <div style={{textAlign:"center",marginBottom:"2.5rem"}}>
+        <div style={{textAlign:"center",marginBottom:"2.5rem"}} className="es-reveal">
           <div className="section-label">Exam Hubs</div>
           <h2 className="section-title">Prepare for <span style={{color:"#6c63ff"}}>Your Target Exam</span></h2>
           <p style={{color:"#7878a0",marginTop:8}}>Dedicated practice zones, books and questions for each exam</p>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(min(240px,100%),1fr))",gap:16,maxWidth:1100,margin:"0 auto"}}>
-          {EXAM_HUBS.map(hub=>(
-            <div key={hub.id} onClick={()=>navigate("examhub",{hub})} style={{background:"#12121a",border:`1px solid ${hub.color}33`,borderRadius:20,padding:"1.75rem",cursor:"pointer",transition:"all 0.25s"}} className="hub-card">
-              <div style={{fontSize:"2.5rem",marginBottom:12}}>{hub.icon}</div>
+          {EXAM_HUBS.map((hub,i)=>(
+            <div key={hub.id} onClick={()=>navigate("examhub",{hub})} style={{background:"#12121a",border:`1px solid ${hub.color}33`,borderRadius:20,padding:"1.75rem",cursor:"pointer"}} className={`hub-card es-reveal es-stagger-${i+1}`}>
+              <div style={{fontSize:"2.5rem",marginBottom:12}} className={`es-float es-float-${(i%3)+1}`}>{hub.icon}</div>
               <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.4rem",color:hub.color,marginBottom:4}}>{hub.name}</div>
               <div style={{fontWeight:600,fontSize:13,marginBottom:8,color:"#e8e8f0"}}>{hub.full}</div>
               <p style={{color:"#7878a0",fontSize:13,lineHeight:1.6}}>{hub.desc}</p>
@@ -864,14 +1269,14 @@ function HomePage({navigate,userProfile,handleLogout}) {
 
       {/* Features */}
       <section style={{padding:"5rem 5%"}}>
-        <div style={{textAlign:"center",marginBottom:"2.5rem"}}>
+        <div style={{textAlign:"center",marginBottom:"2.5rem"}} className="es-reveal">
           <div className="section-label">Features</div>
           <h2 className="section-title">Everything You Need to <span style={{color:"#43e97b"}}>Top Your Exam</span></h2>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(min(260px,100%),1fr))",gap:16,maxWidth:1100,margin:"0 auto"}}>
-          {[["🎯","Smart Test Builder","Card-based subject & chapter picker with difficulty control","rgba(108,99,255,0.1)"],["🔍","Question Search","Search by subject, chapter, exam, difficulty and year","rgba(67,233,123,0.1)"],["🏆","Live Leaderboard","Ranked by score + speed. Compete with real students nationwide","rgba(255,215,0,0.1)"],["🤖","AI Questions","Gemini AI generates fresh curriculum-aligned MCQs instantly","rgba(79,172,254,0.1)"],["📚","Curated Books","Free PDFs and study materials for JEE, NEET, UPSC and Boards","rgba(247,151,30,0.1)"],["📊","Performance Analytics","Track your weak areas and improve chapter by chapter","rgba(255,101,132,0.1)"]].map(([icon,title,desc,bg])=>(
-            <div key={title} className="feature-card" style={{background:bg}}>
-              <div style={{fontSize:"2rem",marginBottom:12}}>{icon}</div>
+          {[["🎯","Smart Test Builder","Card-based subject & chapter picker with difficulty control","rgba(108,99,255,0.1)"],["🔍","Question Search","Search by subject, chapter, exam, difficulty and year","rgba(67,233,123,0.1)"],["🏆","Live Leaderboard","Ranked by score + speed. Compete with real students nationwide","rgba(255,215,0,0.1)"],["🤖","AI Questions","Gemini AI generates fresh curriculum-aligned MCQs instantly","rgba(79,172,254,0.1)"],["📚","Curated Books","Free PDFs and study materials for JEE, NEET, UPSC and Boards","rgba(247,151,30,0.1)"],["📊","Performance Analytics","Track your weak areas and improve chapter by chapter","rgba(255,101,132,0.1)"]].map(([icon,title,desc,bg],i)=>(
+            <div key={title} className={`feature-card es-reveal es-stagger-${i+1}`} style={{background:bg}}>
+              <div className="f-icon" style={{fontSize:"2rem",marginBottom:12}}>{icon}</div>
               <h3 style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:8}}>{title}</h3>
               <p style={{color:"#7878a0",fontSize:14,lineHeight:1.6}}>{desc}</p>
             </div>
