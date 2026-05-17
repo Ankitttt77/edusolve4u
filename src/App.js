@@ -869,9 +869,7 @@ function useCounters() {
     if (first) obs.observe(first.closest("section") || first);
     return () => obs.disconnect();
   });
-}
-      }
-      requestAnimationFrame(step);
+
     }
     const obs = new IntersectionObserver(
       (entries) => entries.forEach((e) => {
