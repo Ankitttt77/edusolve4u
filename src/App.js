@@ -839,8 +839,6 @@ function useScrollReveal() {
 
 // Counter animation — runs once when counter scrolls into view
 function useCounters() {
-  // Counter animation — runs once when counter scrolls into view
-function useCounters() {
   useEffect(() => {
     function animateCounter(el) {
       const target = +el.dataset.target;
@@ -856,21 +854,7 @@ function useCounters() {
       }
       requestAnimationFrame(step);
     }
-    const obs = new IntersectionObserver(
-      (entries) => entries.forEach((e) => {
-        if (e.isIntersecting) {
-          document.querySelectorAll(".es-counter[data-target]").forEach(animateCounter);
-          obs.disconnect();
-        }
-      }),
-      { threshold: 0.3 }
-    );
-    const first = document.querySelector(".es-counter[data-target]");
-    if (first) obs.observe(first.closest("section") || first);
-    return () => obs.disconnect();
-  });
 
-    }
     const obs = new IntersectionObserver(
       (entries) => entries.forEach((e) => {
         if (e.isIntersecting) {
@@ -882,8 +866,19 @@ function useCounters() {
     );
     const first = document.querySelector(".es-counter[data-target]");
     if (first) obs.observe(first.closest("section") || first);
-    return () => obs.disconnect();
-  });
+
+    const counters = document.querySelectorAll(".es-counter[data-target]");
+    counters.forEach((el) => {
+      el.addEventListener("mouseenter", () => animateCounter(el));
+    });
+
+    return () => {
+      obs.disconnect();
+      counters.forEach((el) => {
+        el.removeEventListener("mouseenter", () => animateCounter(el));
+      });
+    };
+  }, []);
 }
 
 // Magnetic button effect
