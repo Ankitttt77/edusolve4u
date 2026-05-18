@@ -1268,15 +1268,17 @@ function Toast({msg,type}) {
 
 // NAV
 function Nav({userProfile,navigate,handleLogout}) {
-  const [menuOpen,setMenuOpen] = useState(false);
   const navRef = useRef(null);
+  const [openMenu, setOpenMenu] = useState(null);
+  const closeTimer = useRef(null);
+
   useEffect(() => {
     const onScroll = () => {
       if (!navRef.current) return;
       if (window.scrollY > 60) {
-        navRef.current.style.background = "rgba(10,10,15,.95)";
+        navRef.current.style.background = "rgba(10,10,15,.97)";
         navRef.current.style.borderBottomColor = "rgba(42,42,62,.9)";
-        navRef.current.style.boxShadow = "0 4px 24px rgba(0,0,0,.3)";
+        navRef.current.style.boxShadow = "0 4px 32px rgba(0,0,0,.4)";
       } else {
         navRef.current.style.background = "rgba(10,10,15,.7)";
         navRef.current.style.borderBottomColor = "rgba(42,42,62,.6)";
@@ -1286,30 +1288,301 @@ function Nav({userProfile,navigate,handleLogout}) {
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const open = (id) => { clearTimeout(closeTimer.current); setOpenMenu(id); };
+  const close = () => { closeTimer.current = setTimeout(() => setOpenMenu(null), 120); };
+
+  const NAV_ITEMS = [
+    {
+      id:"examhub", icon:"🏛️", label:"Exam Hubs", color:"#4facfe", desc:"4 Exam Zones",
+      dropdown: {
+        title:"Choose Your Exam",
+        items:[
+          {icon:"⚡",label:"JEE",full:"Joint Entrance Exam",desc:"IITs, NITs & top engineering colleges",color:"#4facfe",bg:"rgba(79,172,254,.12)"},
+          {icon:"🧬",label:"NEET",full:"National Eligibility Exam",desc:"MBBS, BDS & medical courses",color:"#43e97b",bg:"rgba(67,233,123,.12)"},
+          {icon:"🏛️",label:"UPSC",full:"Civil Services Exam",desc:"IAS, IPS, IFS & central services",color:"#f7971e",bg:"rgba(247,151,30,.12)"},
+          {icon:"📚",label:"Boards",full:"CBSE / ICSE / State",desc:"Class 10 & 12 board preparation",color:"#c471f5",bg:"rgba(196,113,245,.12)"},
+        ]
+      }
+    },
+    {
+      id:"leaderboard", icon:"🏆", label:"Leaderboard", color:"#ffd700", desc:"Live Rankings",
+      dropdown: {
+        title:"Live Rankings",
+        items:[
+          {icon:"🥇",label:"All India Rank",full:"Top Students",desc:"See who's #1 across India",color:"#ffd700",bg:"rgba(255,215,0,.12)"},
+          {icon:"📊",label:"Class Filter",full:"Class 6–12",desc:"Compare within your class",color:"#f7971e",bg:"rgba(247,151,30,.12)"},
+          {icon:"⚡",label:"Speed Rank",full:"Score + Speed",desc:"Faster answers earn more points",color:"#4facfe",bg:"rgba(79,172,254,.12)"},
+          {icon:"🎯",label:"My Rank",full:"Personal Stats",desc:"Track your position over time",color:"#6c63ff",bg:"rgba(108,99,255,.12)"},
+        ]
+      }
+    },
+    { id:"search", icon:"🔍", label:"Search", color:"#43e97b", desc:"50K+ Questions" },
+    { id:"buildtest", icon:"⚡", label:"Build Test", color:"#6c63ff", desc:"Custom Practice" },
+  ];
+
   return (
-    <nav ref={navRef} style={{position:"fixed",top:0,left:0,right:0,zIndex:100,padding:"0 5%",height:68,display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(10,10,15,0.7)",backdropFilter:"blur(24px)",borderBottom:"1px solid rgba(42,42,62,.6)",transition:"background .3s,border-color .3s,box-shadow .3s"}}>
-      <div onClick={()=>navigate("home")} style={{cursor:"pointer",fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.4rem",letterSpacing:"-0.5px"}}>
-        <span style={{background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>EduSolve</span><span style={{color:"#43e97b"}}>4U</span>
-      </div>
-      <div style={{display:"flex",gap:6,alignItems:"center"}}>
-        <NavBtn onClick={()=>navigate("examhub")} label="🎯 Hubs"/>
-        <NavBtn onClick={()=>navigate("search")} label="🔍"/>
-        <NavBtn onClick={()=>navigate("leaderboard")} label="🏆"/>
-        {userProfile?(
-          <>
-            <NavBtn onClick={()=>navigate("dashboard")} label="Dashboard"/>
-            {(userProfile.role==="admin"||userProfile.role==="teacher")&&<NavBtn onClick={()=>navigate("admin")} label="⚙️ Admin"/>}
-            <div style={{width:34,height:34,borderRadius:"50%",background:avatarColor(userProfile.uid||"x"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#fff"}}>{userProfile.avatar}</div>
-            <button onClick={handleLogout} className="btn-ghost">Logout</button>
-          </>
-        ):(
-          <>
-            <NavBtn onClick={()=>navigate("login")} label="Login"/>
-            <button onClick={()=>navigate("register")} className="btn-primary-sm">Sign Up Free</button>
-          </>
-        )}
-      </div>
-    </nav>
+    <>
+      <style>{`
+        .nav-pill{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:8px 14px;border-radius:14px;transition:background .2s;font-family:'DM Sans',sans-serif;outline:none;}
+        .nav-pill:hover,.nav-pill.nav-open{background:rgba(255,255,255,.06);}
+        .nav-pill-icon{font-size:1.55rem;line-height:1;transition:transform .35s cubic-bezier(.34,1.56,.64,1),filter .3s;}
+        .nav-pill:hover .nav-pill-icon,.nav-pill.nav-open .nav-pill-icon{transform:translateY(-3px) scale(1.22);filter:drop-shadow(0 6px 12px rgba(108,99,255,.6));}
+        .nav-pill-label{font-size:10px;font-weight:700;color:#7878a0;letter-spacing:.04em;transition:color .2s;white-space:nowrap;text-transform:uppercase;}
+        .nav-pill:hover .nav-pill-label,.nav-pill.nav-open .nav-pill-label{color:#e8e8f0;}
+        .nav-pill-bar{position:absolute;bottom:4px;left:50%;transform:translateX(-50%) scaleX(0);width:20px;height:2px;background:linear-gradient(90deg,#6c63ff,#ff6584);border-radius:2px;transition:transform .25s cubic-bezier(.34,1.56,.64,1);}
+        .nav-pill:hover .nav-pill-bar,.nav-pill.nav-open .nav-pill-bar{transform:translateX(-50%) scaleX(1);}
+        .nav-pill-desc{font-size:9px;color:#555570;font-weight:500;white-space:nowrap;transition:color .2s;}
+        .nav-pill:hover .nav-pill-desc{color:#7878a0;}
+
+        .nav-mega{position:absolute;top:calc(100% + 14px);left:50%;transform:translateX(-50%) translateY(-6px) scale(.97);background:rgba(10,10,18,.98);border:1px solid rgba(60,60,90,.7);border-radius:22px;padding:16px;min-width:380px;box-shadow:0 24px 80px rgba(0,0,0,.7),0 0 0 1px rgba(108,99,255,.07),inset 0 1px 0 rgba(255,255,255,.05);opacity:0;pointer-events:none;transition:all .25s cubic-bezier(.22,1,.36,1);z-index:300;backdrop-filter:blur(28px);}
+        .nav-mega.mega-open{opacity:1;transform:translateX(-50%) translateY(0) scale(1);pointer-events:all;}
+        .nav-mega::after{content:'';position:absolute;top:-7px;left:50%;transform:translateX(-50%) rotate(45deg);width:13px;height:13px;background:rgba(10,10,18,.98);border-left:1px solid rgba(60,60,90,.7);border-top:1px solid rgba(60,60,90,.7);}
+
+        .mega-item{display:flex;align-items:center;gap:14px;padding:11px 14px;border-radius:14px;cursor:pointer;transition:all .2s;border:1px solid transparent;margin-bottom:4px;}
+        .mega-item:last-child{margin-bottom:0;}
+        .mega-item:hover{border-color:rgba(108,99,255,.2);transform:translateX(4px);}
+        .mega-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
+        .mega-item:hover .mega-icon{transform:scale(1.12) rotate(-5deg);}
+        .mega-item-full{font-size:10px;color:#555570;font-weight:500;margin-top:1px;}
+        .mega-item-desc{font-size:11px;color:#7878a0;margin-top:2px;}
+        .mega-title{font-size:10px;font-weight:700;color:#555570;letter-spacing:.12em;text-transform:uppercase;padding:2px 14px 10px;border-bottom:1px solid rgba(42,42,62,.5);margin-bottom:8px;}
+        .mega-arrow{margin-left:auto;color:#555570;font-size:14px;transition:transform .2s,color .2s;}
+        .mega-item:hover .mega-arrow{transform:translateX(3px);color:#a89cff;}
+
+        @media(max-width:680px){
+          .nav-pill-label,.nav-pill-desc{display:none;}
+          .nav-pill{padding:8px 9px;}
+          .nav-pill-icon{font-size:1.3rem;}
+          .nav-mega{min-width:calc(100vw - 32px);left:16px;transform:none!important;}
+          .nav-mega.mega-open{transform:none!important;}
+        }
+      `}</style>
+
+      <nav ref={navRef} style={{position:"fixed",top:0,left:0,right:0,zIndex:100,padding:"0 4%",height:72,display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(10,10,15,0.7)",backdropFilter:"blur(28px)",borderBottom:"1px solid rgba(42,42,62,.6)",transition:"background .3s,border-color .3s,box-shadow .3s"}}>
+
+        {/* LOGO */}
+        <div onClick={()=>navigate("home")} style={{cursor:"pointer",fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.45rem",letterSpacing:"-0.5px",flexShrink:0,userSelect:"none"}}>
+          <span style={{background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>EduSolve</span><span style={{color:"#43e97b"}}>4U</span>
+        </div>
+
+        {/* CENTER NAV */}
+        <div style={{display:"flex",gap:2,alignItems:"center",position:"relative"}}>
+          {NAV_ITEMS.map(item=>(
+            <div key={item.id} style={{position:"relative"}}
+              onMouseEnter={()=>item.dropdown&&open(item.id)}
+              onMouseLeave={()=>item.dropdown&&close()}
+            >
+              <button
+                className={`nav-pill${openMenu===item.id?" nav-open":""}`}
+                onClick={()=>{ navigate(item.id); setOpenMenu(null); }}
+              >
+                <span className="nav-pill-icon">{item.icon}</span>
+                <span className="nav-pill-label">{item.label}</span>
+                <span className="nav-pill-desc">{item.desc}</span>
+                <span className="nav-pill-bar"/>
+              </button>
+
+              {item.dropdown&&(
+                <div
+                  className={`nav-mega${openMenu===item.id?" mega-open":""}`}
+                  onMouseEnter={()=>open(item.id)}
+                  onMouseLeave={()=>close()}
+                >
+                  <div className="mega-title">{item.dropdown.title}</div>
+                  {item.dropdown.items.map(s=>(
+                    <div key={s.label} className="mega-item" style={{background:openMenu===item.id?"transparent":undefined}}
+                      onClick={()=>{ navigate(item.id); setOpenMenu(null); }}
+                      onMouseEnter={e=>e.currentTarget.style.background=s.bg}
+                      onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+                    >
+                      <div className="mega-icon" style={{background:s.bg,border:`1px solid ${s.color}33`}}>{s.icon}</div>
+                      <div style={{flex:1}}>
+                        <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:13,color:s.color}}>{s.label}</div>
+                        <div className="mega-item-full">{s.full}</div>
+                        <div className="mega-item-desc">{s.desc}</div>
+                      </div>
+                      <span className="mega-arrow">›</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* RIGHT SIDE */}
+        <div style={{display:"flex",gap:8,alignItems:"center",flexShrink:0}}>
+          {userProfile?(
+            <>
+              {(userProfile.role==="admin"||userProfile.role==="teacher")&&(
+                <button onClick={()=>navigate("admin")} style={{display:"flex",alignItems:"center",gap:6,background:"rgba(247,151,30,.1)",border:"1px solid rgba(247,151,30,.25)",borderRadius:10,padding:"6px 12px",cursor:"pointer",transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}
+                  onMouseEnter={e=>{e.currentTarget.style.background="rgba(247,151,30,.2)";e.currentTarget.style.borderColor="rgba(247,151,30,.5)";}}
+                  onMouseLeave={e=>{e.currentTarget.style.background="rgba(247,151,30,.1)";e.currentTarget.style.borderColor="rgba(247,151,30,.25)";}}>
+                  <span style={{fontSize:"1rem"}}>⚙️</span>
+                  <span style={{fontSize:12,fontWeight:600,color:"#f7971e"}}>Admin</span>
+                </button>
+              )}
+              <button onClick={()=>navigate("dashboard")} style={{display:"flex",alignItems:"center",gap:8,background:"rgba(108,99,255,.12)",border:"1px solid rgba(108,99,255,.25)",borderRadius:12,padding:"7px 14px",cursor:"pointer",transition:"all .2s"}}
+                onMouseEnter={e=>{e.currentTarget.style.background="rgba(108,99,255,.22)";e.currentTarget.style.borderColor="rgba(108,99,255,.5)";}}
+                onMouseLeave={e=>{e.currentTarget.style.background="rgba(108,99,255,.12)";e.currentTarget.style.borderColor="rgba(108,99,255,.25)";}}>
+                <div style={{width:28,height:28,borderRadius:"50%",background:avatarColor(userProfile.uid||"x"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff"}}>{userProfile.avatar}</div>
+                <span style={{fontSize:13,fontWeight:600,color:"#e8e8f0",fontFamily:"'DM Sans',sans-serif"}}>{userProfile.name?.split(" ")[0]}</span>
+              </button>
+              <button onClick={handleLogout} style={{background:"none",border:"1px solid #2a2a3e",borderRadius:10,padding:"7px 13px",color:"#7878a0",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor="#ff6584";e.currentTarget.style.color="#ff6584";e.currentTarget.style.background="rgba(255,101,132,.08)";}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor="#2a2a3e";e.currentTarget.style.color="#7878a0";e.currentTarget.style.background="none";}}>
+                Logout
+              </button>
+            </>
+          ):(
+            <>
+              <button onClick={()=>navigate("login")} style={{background:"none",border:"none",color:"#7878a0",cursor:"pointer",fontSize:13,fontWeight:500,padding:"7px 12px",borderRadius:8,transition:"color .2s",fontFamily:"'DM Sans',sans-serif"}}
+                onMouseEnter={e=>e.currentTarget.style.color="#e8e8f0"}
+                onMouseLeave={e=>e.currentTarget.style.color="#7878a0"}>
+                Login
+              </button>
+              <button onClick={()=>navigate("register")} style={{background:"linear-gradient(135deg,#6c63ff,#8b7fff)",color:"#fff",border:"none",padding:"9px 20px",borderRadius:11,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",boxShadow:"0 4px 16px rgba(108,99,255,.4)",transition:"all .2s"}}
+                onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 28px rgba(108,99,255,.6)";}}
+                onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="0 4px 16px rgba(108,99,255,.4)";}}>
+                Sign Up Free ✨
+              </button>
+            </>
+          )}
+        </div>
+      </nav>
+    </>
+  );
+}
+const NavBtn = ({onClick,label}) => <button onClick={onClick} style={{background:"none",border:"none",color:"#7878a0",cursor:"pointer",fontSize:13,fontWeight:500,padding:"6px 10px",borderRadius:8,transition:"color 0.2s",fontFamily:"'DM Sans',sans-serif"}} onMouseEnter={e=>e.target.style.color="#e8e8f0"} onMouseLeave={e=>e.target.style.color="#7878a0"}>{label}</button>;
+
+  useEffect(() => {
+    const onScroll = () => {
+      if (!navRef.current) return;
+      if (window.scrollY > 60) {
+        navRef.current.style.background = "rgba(10,10,15,.97)";
+        navRef.current.style.borderBottomColor = "rgba(42,42,62,.9)";
+        navRef.current.style.boxShadow = "0 4px 32px rgba(0,0,0,.4)";
+      } else {
+        navRef.current.style.background = "rgba(10,10,15,.7)";
+        navRef.current.style.borderBottomColor = "rgba(42,42,62,.6)";
+        navRef.current.style.boxShadow = "none";
+      }
+    };
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const NAV_ITEMS = [
+    {
+      id:"examhub", icon:"🏛️", label:"Exam Hubs", color:"#4facfe",
+      desc:"JEE · NEET · UPSC · Boards",
+      sub:[
+        {icon:"⚡",label:"JEE",desc:"Engineering entrance",color:"#4facfe"},
+        {icon:"🧬",label:"NEET",desc:"Medical entrance",color:"#43e97b"},
+        {icon:"🏛️",label:"UPSC",desc:"Civil services",color:"#f7971e"},
+        {icon:"📚",label:"Boards",desc:"CBSE / ICSE",color:"#c471f5"},
+      ]
+    },
+    { id:"search", icon:"🔍", label:"Search", color:"#43e97b", desc:"50K+ Questions" },
+    { id:"leaderboard", icon:"🏆", label:"Leaderboard", color:"#ffd700", desc:"Live Rankings" },
+    { id:"buildtest", icon:"⚡", label:"Build Test", color:"#6c63ff", desc:"Custom Practice" },
+  ];
+
+  return (
+    <>
+      <style>{`
+        .nav-item-btn{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:6px 10px;border-radius:12px;transition:background .2s;font-family:'DM Sans',sans-serif;}
+        .nav-item-btn:hover{background:rgba(255,255,255,.06);}
+        .nav-item-icon{font-size:1.3rem;transition:transform .3s cubic-bezier(.34,1.56,.64,1),filter .3s;}
+        .nav-item-btn:hover .nav-item-icon{transform:translateY(-2px) scale(1.18);filter:drop-shadow(0 4px 8px rgba(108,99,255,.5));}
+        .nav-item-label{font-size:11px;font-weight:600;color:#7878a0;transition:color .2s;white-space:nowrap;}
+        .nav-item-btn:hover .nav-item-label{color:#e8e8f0;}
+        .nav-item-btn.active-nav .nav-item-label{color:#6c63ff;}
+        .nav-item-btn.active-nav .nav-item-icon{transform:translateY(-2px) scale(1.15);}
+        .nav-dropdown{position:absolute;top:calc(100% + 12px);left:50%;transform:translateX(-50%) translateY(-8px) scale(.96);background:rgba(12,12,20,.97);border:1px solid rgba(42,42,62,.9);border-radius:18px;padding:10px;min-width:240px;box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 1px rgba(108,99,255,.08);opacity:0;pointer-events:none;transition:all .22s cubic-bezier(.22,1,.36,1);z-index:200;backdrop-filter:blur(20px);}
+        .nav-item-wrap:hover .nav-dropdown{opacity:1;transform:translateX(-50%) translateY(0) scale(1);pointer-events:all;}
+        .nav-dropdown::before{content:'';position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:12px;height:12px;background:rgba(12,12,20,.97);border-left:1px solid rgba(42,42,62,.9);border-top:1px solid rgba(42,42,62,.9);transform:translateX(-50%) rotate(45deg);}
+        .nav-drop-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;cursor:pointer;transition:background .18s,transform .18s;border:1px solid transparent;}
+        .nav-drop-item:hover{background:rgba(108,99,255,.1);border-color:rgba(108,99,255,.2);transform:translateX(3px);}
+        .nav-drop-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
+        .nav-indicator{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:#6c63ff;opacity:0;transition:opacity .2s;}
+        .nav-item-btn.active-nav .nav-indicator{opacity:1;}
+        @media(max-width:680px){.nav-item-label{display:none;}.nav-item-btn{padding:6px 7px;}.nav-item-icon{font-size:1.2rem;}}
+      `}</style>
+      <nav ref={navRef} style={{position:"fixed",top:0,left:0,right:0,zIndex:100,padding:"0 4%",height:68,display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(10,10,15,0.7)",backdropFilter:"blur(24px)",borderBottom:"1px solid rgba(42,42,62,.6)",transition:"background .3s,border-color .3s,box-shadow .3s"}}>
+
+        {/* LOGO */}
+        <div onClick={()=>navigate("home")} style={{cursor:"pointer",fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.4rem",letterSpacing:"-0.5px",flexShrink:0}}>
+          <span style={{background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>EduSolve</span><span style={{color:"#43e97b"}}>4U</span>
+        </div>
+
+        {/* CENTER NAV */}
+        <div style={{display:"flex",gap:2,alignItems:"center"}}>
+          {NAV_ITEMS.map(item=>(
+            <div key={item.id} className="nav-item-wrap" style={{position:"relative"}}>
+              <button className="nav-item-btn" onClick={()=>navigate(item.id)}>
+                <span className="nav-item-icon">{item.icon}</span>
+                <span className="nav-item-label">{item.label}</span>
+                <span className="nav-indicator"/>
+              </button>
+              {item.sub&&(
+                <div className="nav-dropdown">
+                  <div style={{padding:"4px 12px 8px",fontSize:10,fontWeight:700,color:"#7878a0",letterSpacing:".1em",textTransform:"uppercase"}}>Exam Hubs</div>
+                  {item.sub.map(s=>(
+                    <div key={s.label} className="nav-drop-item" onClick={()=>navigate("examhub")}>
+                      <div className="nav-drop-icon" style={{background:`${s.color}18`,border:`1px solid ${s.color}33`}}>{s.icon}</div>
+                      <div>
+                        <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:13,color:s.color}}>{s.label}</div>
+                        <div style={{fontSize:11,color:"#7878a0"}}>{s.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* RIGHT SIDE */}
+        <div style={{display:"flex",gap:8,alignItems:"center",flexShrink:0}}>
+          {userProfile?(
+            <>
+              {(userProfile.role==="admin"||userProfile.role==="teacher")&&(
+                <button onClick={()=>navigate("admin")} className="nav-item-btn" style={{flexDirection:"row",gap:6,padding:"7px 12px"}}>
+                  <span style={{fontSize:"1rem"}}>⚙️</span>
+                  <span style={{fontSize:12,fontWeight:600,color:"#7878a0"}}>Admin</span>
+                </button>
+              )}
+              <button onClick={()=>navigate("dashboard")} style={{display:"flex",alignItems:"center",gap:8,background:"rgba(108,99,255,.12)",border:"1px solid rgba(108,99,255,.25)",borderRadius:12,padding:"6px 12px",cursor:"pointer",transition:"all .2s"}}
+                onMouseEnter={e=>{e.currentTarget.style.background="rgba(108,99,255,.22)";e.currentTarget.style.borderColor="rgba(108,99,255,.5)";}}
+                onMouseLeave={e=>{e.currentTarget.style.background="rgba(108,99,255,.12)";e.currentTarget.style.borderColor="rgba(108,99,255,.25)";}}>
+                <div style={{width:28,height:28,borderRadius:"50%",background:avatarColor(userProfile.uid||"x"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff"}}>{userProfile.avatar}</div>
+                <span style={{fontSize:13,fontWeight:600,color:"#e8e8f0",fontFamily:"'DM Sans',sans-serif"}}>{userProfile.name?.split(" ")[0]}</span>
+              </button>
+              <button onClick={handleLogout} style={{background:"none",border:"1px solid #2a2a3e",borderRadius:10,padding:"7px 12px",color:"#7878a0",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor="#ff6584";e.currentTarget.style.color="#ff6584";}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor="#2a2a3e";e.currentTarget.style.color="#7878a0";}}>
+                Logout
+              </button>
+            </>
+          ):(
+            <>
+              <button onClick={()=>navigate("login")} style={{background:"none",border:"none",color:"#7878a0",cursor:"pointer",fontSize:13,fontWeight:500,padding:"7px 12px",borderRadius:8,transition:"color .2s",fontFamily:"'DM Sans',sans-serif"}}
+                onMouseEnter={e=>e.currentTarget.style.color="#e8e8f0"}
+                onMouseLeave={e=>e.currentTarget.style.color="#7878a0"}>
+                Login
+              </button>
+              <button onClick={()=>navigate("register")} style={{background:"linear-gradient(135deg,#6c63ff,#8b7fff)",color:"#fff",border:"none",padding:"8px 18px",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",boxShadow:"0 4px 16px rgba(108,99,255,.4)",transition:"all .2s"}}
+                onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 24px rgba(108,99,255,.55)";}}
+                onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="0 4px 16px rgba(108,99,255,.4)";}}>
+                Sign Up Free
+              </button>
+            </>
+          )}
+        </div>
+      </nav>
+    </>
   );
 }
 const NavBtn = ({onClick,label}) => <button onClick={onClick} style={{background:"none",border:"none",color:"#7878a0",cursor:"pointer",fontSize:13,fontWeight:500,padding:"6px 10px",borderRadius:8,transition:"color 0.2s",fontFamily:"'DM Sans',sans-serif"}} onMouseEnter={e=>e.target.style.color="#e8e8f0"} onMouseLeave={e=>e.target.style.color="#7878a0"}>{label}</button>;
