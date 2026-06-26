@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc, getDocs, addDoc, deleteDoc, collection, serverTimestamp } from "firebase/firestore";
@@ -223,7 +223,7 @@ function HomeChatSection({ userProfile }) {
   };
 
   return (
-    <section style={{padding:"5rem 5%"}}>
+    <section style={{padding:"5rem 5%",background:"#0a0a0f"}}>
       <div style={{maxWidth:800,margin:"0 auto",textAlign:"center"}}>
         <div className="section-label">AI Study Assistant</div>
         <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"clamp(2rem,4vw,3rem)",letterSpacing:"-1.5px",marginBottom:8}}>
@@ -563,183 +563,23 @@ const PAPER_CSS = `
 const GLOBAL_CSS=`
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html{scroll-behavior:smooth;}
-body{font-family:'DM Sans',sans-serif;cursor:none;overflow-x:hidden;}
-
-/* ── CUSTOM CURSOR (lagged ring) ── */
-#es-cursor{position:fixed;width:10px;height:10px;background:#6c63ff;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:transform .08s,background .2s;mix-blend-mode:screen;}
-#es-cursor-ring{position:fixed;width:34px;height:34px;border:1.5px solid rgba(108,99,255,.55);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);}
-#es-cursor.hovered{transform:translate(-50%,-50%) scale(2.8);background:#ff6584;}
-#es-cursor-ring.hovered{border-color:rgba(255,101,132,.6);width:44px;height:44px;}
-
-/* ── AURORA BG ── */
-.es-aurora{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden;}
-.es-aurora-orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.18;animation:es-drift 20s ease-in-out infinite;}
-.es-aurora-orb:nth-child(1){width:700px;height:700px;background:#6c63ff;top:-15%;left:-10%;animation-duration:25s;}
-.es-aurora-orb:nth-child(2){width:500px;height:500px;background:#ff6584;top:40%;right:-10%;animation-duration:20s;animation-delay:-8s;}
-.es-aurora-orb:nth-child(3){width:400px;height:400px;background:#43e97b;bottom:-15%;left:30%;animation-duration:30s;animation-delay:-15s;}
-.es-aurora-orb:nth-child(4){width:300px;height:300px;background:#4facfe;top:20%;left:50%;animation-duration:18s;animation-delay:-5s;}
-@keyframes es-drift{0%,100%{transform:translate(0,0) scale(1);}25%{transform:translate(60px,-40px) scale(1.05);}50%{transform:translate(-40px,60px) scale(.95);}75%{transform:translate(80px,30px) scale(1.02);}}
-
-/* ── GRAIN OVERLAY ── */
-.es-grain{position:fixed;top:-50%;left:-50%;width:200%;height:200%;pointer-events:none;z-index:1;opacity:.04;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");animation:es-grain-shift 8s steps(10) infinite;}
-@keyframes es-grain-shift{0%,100%{transform:translate(0,0);}10%{transform:translate(-2%,-3%);}20%{transform:translate(3%,2%);}30%{transform:translate(-4%,1%);}40%{transform:translate(1%,-4%);}50%{transform:translate(-3%,3%);}60%{transform:translate(4%,-2%);}70%{transform:translate(-1%,4%);}80%{transform:translate(2%,-1%);}90%{transform:translate(-3%,-2%);}}
-
-/* ── PARTICLES CANVAS ── */
-#es-particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
-
-/* ── HERO BADGE ── */
-.badge-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(108,99,255,.12);border:1px solid rgba(108,99,255,.3);color:#a89cff;padding:8px 20px;border-radius:50px;font-size:12px;font-weight:600;letter-spacing:.05em;animation:es-badge-pop .6s cubic-bezier(.34,1.56,.64,1) .2s both;}
-@keyframes es-badge-pop{from{opacity:0;transform:scale(.7) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}
-.es-badge-dot{width:6px;height:6px;border-radius:50%;background:#43e97b;animation:es-pulse-dot 2s ease-in-out infinite;display:inline-block;}
-@keyframes es-pulse-dot{0%,100%{box-shadow:0 0 0 0 rgba(67,233,123,.4);}50%{box-shadow:0 0 0 6px rgba(67,233,123,0);}}
-
-/* ── GLITCH TEXT ── */
-.es-glitch{position:relative;display:inline-block;}
-.es-glitch::before,.es-glitch::after{content:attr(data-text);position:absolute;top:0;left:0;width:100%;pointer-events:none;}
-.es-glitch::before{color:#ff6584;animation:es-glitch-1 4s infinite;clip-path:polygon(0 0,100% 0,100% 33%,0 33%);}
-.es-glitch::after{color:#4facfe;animation:es-glitch-2 4s infinite;clip-path:polygon(0 66%,100% 66%,100% 100%,0 100%);}
-@keyframes es-glitch-1{0%,90%,100%{transform:translate(0);}92%{transform:translate(-3px,1px);}94%{transform:translate(3px,-1px);}96%{transform:translate(-1px,2px);}}
-@keyframes es-glitch-2{0%,90%,100%{transform:translate(0);}93%{transform:translate(3px,-2px);}95%{transform:translate(-3px,1px);}97%{transform:translate(2px,2px);}}
-
-/* ── GRADIENT TEXT ── */
-.es-grad-text{background:linear-gradient(135deg,#6c63ff,#ff6584,#f7971e,#6c63ff);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:es-grad-shift 4s ease-in-out infinite;}
-@keyframes es-grad-shift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
-
-/* ── WORD RISE ── */
-.es-hero-line{overflow:hidden;display:block;}
-.es-word{display:inline-block;animation:es-word-rise 1s cubic-bezier(.22,1,.36,1) both;}
-.es-line-1 .es-word{animation-delay:.3s;}
-.es-line-2 .es-word{animation-delay:.45s;}
-.es-line-3 .es-word{animation-delay:.6s;}
-@keyframes es-word-rise{from{opacity:0;transform:translateY(110%) skewY(8deg);}to{opacity:1;transform:translateY(0) skewY(0);}}
-
-/* ── FADE UP ── */
-.es-fade-up-1{animation:es-fade-up .8s ease .8s both;}
-.es-fade-up-2{animation:es-fade-up .8s ease 1s both;}
-.es-fade-up-3{animation:es-fade-up .8s ease 1.2s both;}
-@keyframes es-fade-up{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
-
-/* ── MARQUEE ── */
-.es-marquee-wrap{overflow:hidden;padding:1.5rem 0;border-top:1px solid #2a2a3e;border-bottom:1px solid #2a2a3e;background:linear-gradient(90deg,#0a0a0f,transparent 5%,transparent 95%,#0a0a0f);position:relative;z-index:2;}
-.es-marquee-track{display:flex;gap:0;animation:es-marquee 25s linear infinite;width:max-content;}
-.es-marquee-track:hover{animation-play-state:paused;}
-.es-marquee-item{display:flex;align-items:center;gap:12px;padding:0 32px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;white-space:nowrap;color:#7878a0;}
-.es-marquee-item span{color:#6c63ff;font-size:1.2rem;}
-@keyframes es-marquee{from{transform:translateX(0);}to{transform:translateX(-50%);}}
-
-/* ── SCROLL REVEAL ── */
-.es-reveal{opacity:0;transform:translateY(40px);transition:opacity .7s ease,transform .7s cubic-bezier(.22,1,.36,1);}
-.es-reveal.in-view{opacity:1;transform:translateY(0);}
-.es-reveal-left{opacity:0;transform:translateX(-40px);transition:opacity .7s ease,transform .7s cubic-bezier(.22,1,.36,1);}
-.es-reveal-left.in-view{opacity:1;transform:translateX(0);}
-.es-reveal-right{opacity:0;transform:translateX(40px);transition:opacity .7s ease,transform .7s cubic-bezier(.22,1,.36,1);}
-.es-reveal-right.in-view{opacity:1;transform:translateX(0);}
-.es-reveal-scale{opacity:0;transform:scale(.85);transition:opacity .7s ease,transform .7s cubic-bezier(.34,1.56,.64,1);}
-.es-reveal-scale.in-view{opacity:1;transform:scale(1);}
-.es-stagger-1{transition-delay:.1s;}.es-stagger-2{transition-delay:.2s;}.es-stagger-3{transition-delay:.3s;}.es-stagger-4{transition-delay:.4s;}.es-stagger-5{transition-delay:.5s;}.es-stagger-6{transition-delay:.6s;}
-
-/* ── FLOATING ── */
-.es-float{animation:es-floating 6s ease-in-out infinite;}
-.es-float-1{animation-delay:0s;}.es-float-2{animation-delay:-2s;}.es-float-3{animation-delay:-4s;}
-@keyframes es-floating{0%,100%{transform:translateY(0);}50%{transform:translateY(-16px);}}
-
-/* ── TYPEWRITER ── */
-.es-typewriter{border-right:2px solid #6c63ff;animation:es-blink .7s step-end infinite;}
-@keyframes es-blink{0%,100%{border-color:#6c63ff;}50%{border-color:transparent;}}
-
-/* ── GLOW BUTTON ── */
-.es-glow-btn{position:relative;background:linear-gradient(135deg,#6c63ff,#ff6584);color:#fff;border:none;padding:15px 36px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;letter-spacing:.3px;transition:all .3s;overflow:hidden;}
-.es-glow-btn::before{content:'';position:absolute;inset:-2px;background:linear-gradient(135deg,#6c63ff,#ff6584,#f7971e);border-radius:16px;z-index:-1;opacity:0;filter:blur(12px);transition:opacity .3s;}
-.es-glow-btn:hover::before{opacity:.8;}
-.es-glow-btn:hover{transform:translateY(-3px);box-shadow:0 20px 40px rgba(108,99,255,.4);}
-.es-glow-btn:active{transform:translateY(-1px);}
-
-/* ── FEATURE CARD (mouse-glow + shimmer top border) ── */
-.feature-card{border:1px solid #2a2a3e;border-radius:20px;padding:1.75rem;transition:all .3s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden;cursor:pointer;}
-.feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(108,99,255,.8),transparent);transform:scaleX(0);transition:transform .4s ease;}
-.feature-card:hover::before{transform:scaleX(1);}
-.feature-card::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(108,99,255,.08) 0%,transparent 60%);opacity:0;transition:opacity .3s;pointer-events:none;}
-.feature-card:hover::after{opacity:1;}
-.feature-card:hover{transform:translateY(-6px);border-color:rgba(108,99,255,.4);box-shadow:0 20px 60px rgba(108,99,255,.12);}
-.feature-card .f-icon{transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
-.feature-card:hover .f-icon{transform:scale(1.2) rotate(-5deg);}
-.feature-card:hover .f-title{color:#a89cff;}
-.f-glow{position:absolute;width:180px;height:180px;border-radius:50%;filter:blur(60px);opacity:0;transition:opacity .4s;top:-40px;right:-40px;pointer-events:none;}
-.feature-card:hover .f-glow{opacity:.18;}
-
-/* ── HUB CARD ── */
-.hub-card{transition:all .3s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden;}
-.hub-card:hover{transform:translateY(-5px) scale(1.02);}
-.hub-bg{position:absolute;inset:0;opacity:.06;transition:opacity .3s;pointer-events:none;}
-.hub-card:hover .hub-bg{opacity:.14;}
-.hub-inner{position:relative;z-index:1;}
-
-/* ── GRID SECTION BG ── */
-.es-section-grid{background-image:linear-gradient(rgba(42,42,62,.25) 1px,transparent 1px),linear-gradient(90deg,rgba(42,42,62,.25) 1px,transparent 1px);background-size:60px 60px;}
-
-/* ── PROGRESS BAR ── */
-.es-progress-item{margin-bottom:18px;}
-.es-progress-label{display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:6px;}
-.es-progress-track{height:6px;background:#2a2a3e;border-radius:6px;overflow:hidden;position:relative;}
-.es-progress-fill{height:100%;border-radius:6px;width:0;transition:width 1.4s cubic-bezier(.22,1,.36,1);position:relative;}
-.es-progress-fill::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:es-shimmer 2s ease-in-out infinite;}
-@keyframes es-shimmer{from{transform:translateX(-100%);}to{transform:translateX(200%);}}
-
-/* ── ORBITING DOTS ── */
-.es-orbit-wrapper{position:relative;width:180px;height:180px;margin:0 auto;}
-.es-orbit-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60px;height:60px;background:linear-gradient(135deg,#6c63ff,#ff6584);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.7rem;box-shadow:0 0 40px rgba(108,99,255,.55);}
-.es-orbit-ring{position:absolute;top:50%;left:50%;border:1px dashed rgba(108,99,255,.3);border-radius:50%;transform:translate(-50%,-50%);animation:es-spin-orbit 10s linear infinite;}
-.es-orbit-ring:nth-child(2){width:120px;height:120px;}
-.es-orbit-ring:nth-child(3){width:170px;height:170px;animation-duration:14s;animation-direction:reverse;}
-.es-orbit-dot{position:absolute;width:10px;height:10px;border-radius:50%;top:50%;left:100%;transform:translate(-50%,-50%);}
-@keyframes es-spin-orbit{to{transform:translate(-50%,-50%) rotate(360deg);}}
-
-/* ── HUB SPOTLIGHT SECTION ── */
-.es-hub-spotlight{background:linear-gradient(135deg,rgba(108,99,255,.14),rgba(255,101,132,.07));border:1px solid rgba(108,99,255,.2);border-radius:28px;padding:3rem;position:relative;overflow:hidden;text-align:center;}
-.es-hub-spotlight::before{content:'';position:absolute;top:-80px;right:-80px;width:300px;height:300px;background:radial-gradient(circle,rgba(108,99,255,.2),transparent 70%);pointer-events:none;animation:es-pulse-bg 4s ease-in-out infinite;}
-@keyframes es-pulse-bg{0%,100%{transform:scale(1);opacity:.8;}50%{transform:scale(1.1);opacity:.5;}}
-
-/* ── SPOTLIGHT CARD ── */
-.es-spotlight-card{background:#12121a;border:1px solid #2a2a3e;border-radius:24px;padding:2.5rem;position:relative;overflow:hidden;}
-.es-spotlight-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at var(--sx,50%) var(--sy,50%),rgba(108,99,255,.15) 0%,transparent 50%);opacity:0;transition:opacity .3s;pointer-events:none;}
-.es-spotlight-card:hover::before{opacity:1;}
-
-/* ── LEADERBOARD ROW HOVER ── */
-.es-lb-row{transition:all .25s;}
-.es-lb-row:hover{border-color:#6c63ff!important;transform:translateX(4px);background:rgba(108,99,255,.06)!important;}
-
-/* ── Q CARD LEFT ACCENT ── */
-.es-q-card{position:relative;overflow:hidden;}
-.es-q-card::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(to bottom,#6c63ff,#ff6584);transform:scaleY(0);transform-origin:top;transition:transform .3s;}
-.es-q-card:hover::after{transform:scaleY(1);}
-
-/* ── MAGNETIC ── */
-.es-magnetic{display:inline-block;transition:transform .3s cubic-bezier(.22,1,.36,1);}
-
-/* ── COUNTER ── */
-.es-counter{font-family:'Space Grotesk',sans-serif;font-weight:800;}
-
-/* ── STAT CARD ── */
-.es-stat-card{background:#12121a;border:1px solid #2a2a3e;border-radius:20px;padding:2rem;text-align:center;position:relative;overflow:hidden;transition:all .3s;cursor:pointer;}
-.es-stat-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(108,99,255,.14),transparent 60%);opacity:0;transition:opacity .3s;}
-.es-stat-card:hover::before{opacity:1;}
-.es-stat-card:hover{transform:translateY(-4px);border-color:rgba(108,99,255,.3);box-shadow:0 16px 48px rgba(108,99,255,.12);}
-
+body{font-family:'DM Sans',sans-serif;}
+.badge-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(108,99,255,0.15);border:1px solid rgba(108,99,255,0.3);color:#a89cff;padding:6px 16px;border-radius:50px;font-size:12px;font-weight:600;letter-spacing:.05em;}
 .section-label{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#6c63ff;margin-bottom:8px;}
 .section-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;line-height:1.1;letter-spacing:-1px;margin-bottom:12px;}
-.btn-primary{background:linear-gradient(135deg,#6c63ff,#8b7fff);color:white;border:none;padding:11px 24px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(108,99,255,.4);font-family:'DM Sans',sans-serif;position:relative;overflow:hidden;}
-.btn-primary::after{content:'';position:absolute;top:50%;left:50%;width:0;height:0;background:rgba(255,255,255,.15);border-radius:50%;transform:translate(-50%,-50%);transition:width .6s,height .6s,opacity .6s;}
-.btn-primary:hover::after{width:300px;height:300px;opacity:0;}
+.feature-card{border:1px solid #2a2a3e;border-radius:20px;padding:1.75rem;transition:transform .25s,border-color .25s,box-shadow .25s;}
+.feature-card:hover{transform:translateY(-4px);border-color:#6c63ff;box-shadow:0 12px 40px rgba(108,99,255,.15);}
+.hub-card:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,0.3);}
+.btn-primary{background:linear-gradient(135deg,#6c63ff,#8b7fff);color:white;border:none;padding:11px 24px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(108,99,255,.4);font-family:'DM Sans',sans-serif;}
 .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(108,99,255,.5);}
 .btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none;}
 .btn-primary-sm{background:linear-gradient(135deg,#6c63ff,#8b7fff);color:white;border:none;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
-.btn-secondary{background:transparent;color:#e8e8f0;border:1px solid #2a2a3e;padding:11px 24px;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;transition:border-color .2s,background .2s,transform .2s;font-family:'DM Sans',sans-serif;backdrop-filter:blur(10px);}
-.btn-secondary:hover{border-color:#6c63ff;background:rgba(108,99,255,.08);transform:translateY(-2px);}
+.btn-secondary{background:transparent;color:#e8e8f0;border:1px solid #2a2a3e;padding:11px 24px;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;transition:border-color .2s,background .2s;font-family:'DM Sans',sans-serif;}
+.btn-secondary:hover{border-color:#6c63ff;background:rgba(108,99,255,.08);}
 .btn-ghost{background:transparent;color:#7878a0;border:1px solid #2a2a3e;padding:6px 12px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .btn-ghost:hover{color:#e8e8f0;}
 .form-label{display:block;font-size:11px;font-weight:700;color:#7878a0;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
-.form-input{width:100%;background:#1a1a26;border:1px solid #2a2a3e;border-radius:10px;padding:10px 14px;color:#e8e8f0;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;cursor:text;}
+.form-input{width:100%;background:#1a1a26;border:1px solid #2a2a3e;border-radius:10px;padding:10px 14px;color:#e8e8f0;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;}
 .form-input:focus{border-color:#6c63ff;}
 textarea.form-input{display:block;}
 .fade-in{animation:fadeIn 0.3s ease;}
@@ -748,8 +588,6 @@ textarea.form-input{display:block;}
 .spin{animation:spin .8s linear infinite;}
 @keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 @media (max-width:768px){
-  body{cursor:auto;}
-  #es-cursor,#es-cursor-ring{display:none;}
   nav{padding:0 4% !important;height:58px !important;}
   nav>div:last-child{gap:4px !important;}
   [style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr !important;}
@@ -764,330 +602,6 @@ textarea.form-input{display:block;}
   .section-title{font-size:clamp(1.4rem,6vw,2rem) !important;}
 }
 `;
-
-
-// ═══════════════════════════════════════════════════════════════════════
-// ANIMATION UTILITIES
-
-// Custom cursor hook — lagged ring
-function useCursor() {
-  useEffect(() => {
-    const cursor = document.getElementById("es-cursor");
-    const ring = document.getElementById("es-cursor-ring");
-    if (!cursor || !ring) return;
-    let mx = 0, my = 0, rx = 0, ry = 0, raf;
-    const move = (e) => {
-      mx = e.clientX; my = e.clientY;
-      cursor.style.left = mx + "px";
-      cursor.style.top = my + "px";
-    };
-    const animRing = () => {
-      rx += (mx - rx) * 0.12;
-      ry += (my - ry) * 0.12;
-      ring.style.left = rx + "px";
-      ring.style.top = ry + "px";
-      raf = requestAnimationFrame(animRing);
-    };
-    animRing();
-    const onOver = (e) => {
-      if (e.target.closest("a,button")) {
-        cursor.classList.add("hovered");
-        ring.classList.add("hovered");
-      } else {
-        cursor.classList.remove("hovered");
-        ring.classList.remove("hovered");
-      }
-    };
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseover", onOver);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseover", onOver);
-    };
-  }, []);
-}
-
-// Particles canvas hook with page-load burst
-function useParticles() {
-  useEffect(() => {
-    const canvas = document.getElementById("es-particles");
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    const COLORS = ["#6c63ff","#ff6584","#43e97b","#4facfe","#f7971e","#38f9d7"];
-    let W = canvas.width = window.innerWidth;
-    let H = canvas.height = window.innerHeight;
-    const particles = Array.from({length: 90}, () => ({
-      x: Math.random() * W, y: Math.random() * H,
-      vx: (Math.random() - 0.5) * 0.35, vy: (Math.random() - 0.5) * 0.35,
-      r: Math.random() * 1.8 + 0.5,
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
-      opacity: Math.random() * 0.5 + 0.15,
-      pulse: Math.random() * Math.PI * 2,
-    }));
-
-    // Page-load burst
-    setTimeout(() => {
-      for (let i = 0; i < 20; i++) {
-        const p = {
-          x: W / 2 + (Math.random() - 0.5) * 200,
-          y: H / 2 + (Math.random() - 0.5) * 200,
-          vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3,
-          r: Math.random() * 3 + 1,
-          color: COLORS[Math.floor(Math.random() * COLORS.length)],
-          opacity: 0.8, pulse: 0,
-        };
-        particles.push(p);
-        setTimeout(() => { const idx = particles.indexOf(p); if (idx > -1) particles.splice(idx, 1); }, 3000);
-      }
-    }, 500);
-
-    const onResize = () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; };
-    window.addEventListener("resize", onResize);
-
-    let raf;
-    const draw = () => {
-      ctx.clearRect(0, 0, W, H);
-      particles.forEach((p) => {
-        p.pulse += 0.018;
-        p.x += p.vx; p.y += p.vy;
-        if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
-        if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
-        const op = p.opacity * (0.7 + 0.3 * Math.sin(p.pulse));
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = op;
-        ctx.fill();
-      });
-      ctx.globalAlpha = 1;
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 110) {
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = `rgba(108,99,255,${0.12 * (1 - dist / 110)})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        }
-      }
-      raf = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); };
-  }, []);
-}
-
-// Scroll reveal hook — observes .es-reveal* elements
-function useScrollReveal() {
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add("in-view"); }),
-      { threshold: 0.12 }
-    );
-    const targets = document.querySelectorAll(".es-reveal,.es-reveal-left,.es-reveal-right,.es-reveal-scale");
-    targets.forEach((el) => obs.observe(el));
-    return () => obs.disconnect();
-  });
-}
-
-// Counter animation — runs once on scroll into view, re-runs on hover
-function useCounters() {
-  useEffect(() => {
-    function animateCounter(el) {
-      const target = +el.dataset.target;
-      const start = performance.now();
-      const dur = 2000;
-      function step(now) {
-        const p = Math.min((now - start) / dur, 1);
-        const ease = 1 - Math.pow(1 - p, 3);
-        const val = Math.floor(ease * target);
-        el.textContent = val >= 1000 ? Math.floor(val / 1000) + "K+" : val + "+";
-        if (p < 1) requestAnimationFrame(step);
-        else el.textContent = target >= 1000 ? Math.floor(target / 1000) + "K+" : target + "+";
-      }
-      requestAnimationFrame(step);
-    }
-
-    const obs = new IntersectionObserver(
-      (entries) => entries.forEach((e) => {
-        if (e.isIntersecting) {
-          document.querySelectorAll(".es-counter[data-target]").forEach(animateCounter);
-          obs.disconnect();
-        }
-      }),
-      { threshold: 0.3 }
-    );
-    const first = document.querySelector(".es-counter[data-target]");
-    if (first) obs.observe(first.closest("section") || first);
-
-    const counters = document.querySelectorAll(".es-counter[data-target]");
-    const handlers = [];
-    counters.forEach((el) => {
-      const fn = () => animateCounter(el);
-      el.addEventListener("mouseenter", fn);
-      handlers.push({ el, fn });
-    });
-
-    return () => {
-      obs.disconnect();
-      handlers.forEach(({ el, fn }) => el.removeEventListener("mouseenter", fn));
-    };
-  }, []);
-}
-
-// Magnetic button effect
-function useMagnetic() {
-  useEffect(() => {
-    const els = document.querySelectorAll(".es-magnetic");
-    const handlers = [];
-    els.forEach((el) => {
-      const mm = (e) => {
-        const r = el.getBoundingClientRect();
-        const x = e.clientX - r.left - r.width / 2;
-        const y = e.clientY - r.top - r.height / 2;
-        el.style.transform = `translate(${x * 0.25}px, ${y * 0.25}px)`;
-      };
-      const ml = () => { el.style.transform = ""; };
-      el.addEventListener("mousemove", mm);
-      el.addEventListener("mouseleave", ml);
-      handlers.push({ el, mm, ml });
-    });
-    return () => handlers.forEach(({ el, mm, ml }) => {
-      el.removeEventListener("mousemove", mm);
-      el.removeEventListener("mouseleave", ml);
-    });
-  });
-}
-
-// Spotlight card effect
-function useSpotlight() {
-  useEffect(() => {
-    const cards = document.querySelectorAll(".es-spotlight-card");
-    const handlers = [];
-    cards.forEach((card) => {
-      const mm = (e) => {
-        const r = card.getBoundingClientRect();
-        card.style.setProperty("--sx", ((e.clientX - r.left) / r.width * 100) + "%");
-        card.style.setProperty("--sy", ((e.clientY - r.top) / r.height * 100) + "%");
-      };
-      card.addEventListener("mousemove", mm);
-      handlers.push({ card, mm });
-    });
-    return () => handlers.forEach(({ card, mm }) => card.removeEventListener("mousemove", mm));
-  });
-}
-
-// Card mouse-glow (for .feature-card --mx --my)
-function useCardGlow() {
-  useEffect(() => {
-    const cards = document.querySelectorAll(".feature-card");
-    const handlers = [];
-    cards.forEach((card) => {
-      const mm = (e) => {
-        const r = card.getBoundingClientRect();
-        card.style.setProperty("--mx", ((e.clientX - r.left) / r.width * 100) + "%");
-        card.style.setProperty("--my", ((e.clientY - r.top) / r.height * 100) + "%");
-      };
-      card.addEventListener("mousemove", mm);
-      handlers.push({ card, mm });
-    });
-    return () => handlers.forEach(({ card, mm }) => card.removeEventListener("mousemove", mm));
-  });
-}
-
-// Progress bar animation — fills on scroll into view
-function useProgressBars() {
-  useEffect(() => {
-    const bars = document.querySelectorAll(".es-progress-fill[data-width]");
-    if (!bars.length) return;
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          bars.forEach((bar) => { setTimeout(() => { bar.style.width = bar.dataset.width + "%"; }, 200); });
-          obs.disconnect();
-        }
-      });
-    }, { threshold: 0.3 });
-    obs.observe(bars[0].closest("section") || bars[0]);
-    return () => obs.disconnect();
-  });
-}
-
-// Leaderboard row stagger-in on scroll
-function useLeaderboardStagger() {
-  useEffect(() => {
-    const rows = document.querySelectorAll(".es-lb-stagger");
-    if (!rows.length) return;
-    rows.forEach((row, i) => {
-      row.style.opacity = "0";
-      row.style.transform = "translateX(-20px)";
-      row.style.transition = `opacity .5s ease ${i * 0.07}s, transform .5s cubic-bezier(.22,1,.36,1) ${i * 0.07}s`;
-    });
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          rows.forEach((row) => { row.style.opacity = "1"; row.style.transform = "translateX(0)"; });
-          obs.disconnect();
-        }
-      });
-    }, { threshold: 0.15 });
-    if (rows[0]) obs.observe(rows[0].closest("section") || rows[0]);
-    return () => obs.disconnect();
-  });
-}
-const TYPEWRITER_PHRASES = ["Crack JEE 2025","Top the Boards","Master NEET","Clear UPSC","Score 100%"];
-function useTypewriter() {
-  const [text, setText] = useState("");
-  useEffect(() => {
-    let pi = 0, ci = 0, typing = true;
-    const id = setInterval(() => {
-      if (typing) {
-        ci++;
-        setText(TYPEWRITER_PHRASES[pi].slice(0, ci));
-        if (ci === TYPEWRITER_PHRASES[pi].length) { typing = false; }
-      } else {
-        ci--;
-        setText(TYPEWRITER_PHRASES[pi].slice(0, ci));
-        if (ci === 0) { typing = true; pi = (pi + 1) % TYPEWRITER_PHRASES.length; }
-      }
-    }, 80);
-    return () => clearInterval(id);
-  }, []);
-  return text;
-}
-
-// Global animation layer — renders aurora, grain, particles, cursor
-function AnimationLayer() {
-  useCursor();
-  useParticles();
-  return (
-    <>
-      <div id="es-cursor"/>
-      <div id="es-cursor-ring"/>
-      <canvas id="es-particles"/>
-      <div className="es-aurora">
-        <div className="es-aurora-orb"/>
-        <div className="es-aurora-orb"/>
-        <div className="es-aurora-orb"/>
-        <div className="es-aurora-orb"/>
-      </div>
-      <div className="es-grain"/>
-    </>
-  );
-}
-
-// Marquee data
-const MARQUEE_ITEMS = [
-  ["⚡","JEE Main 2024"],["🧬","NEET UG 2024"],["🏛️","UPSC CSE 2024"],["📚","CBSE Class 10"],
-  ["🔬","JEE Advanced 2024"],["🎯","AI Questions"],["📊","Real-time Rankings"],["🤖","Groq AI Powered"],
-  ["📐","Mathematics"],["⚛️","Physics"],["🧪","Chemistry"],["🌍","Social Science"],
-];
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -1229,8 +743,6 @@ export default function App() {
   return (
     <div style={{minHeight:"100vh",background:"#0a0a0f",color:"#e8e8f0",fontFamily:"'DM Sans',sans-serif",overflowX:"hidden"}}>
       <style>{GLOBAL_CSS}</style>
-      <AnimationLayer/>
-      <div style={{position:"relative",zIndex:2}}>
       {toast&&<Toast msg={toast.msg} type={toast.type}/>}
       {page==="home"&&<HomePage {...props}/>}
       {page==="login"&&<LoginPage {...props}/>}
@@ -1248,7 +760,6 @@ export default function App() {
       <StudyChatBot userProfile={userProfile}/>
       {page==="examhub"&&<ExamHubPage {...props}/>}
       {page==="books"&&<BooksPage {...props}/>}
-      </div>
     </div>
   );
 }
@@ -1268,480 +779,247 @@ function Toast({msg,type}) {
 
 // NAV
 function Nav({userProfile,navigate,handleLogout}) {
-  const navRef = useRef(null);
-  const [openMenu, setOpenMenu] = useState(null);
-  const closeTimer = useRef(null);
-
-  useEffect(() => {
-    const onScroll = () => {
-      if (!navRef.current) return;
-      if (window.scrollY > 60) {
-        navRef.current.style.background = "rgba(10,10,15,.97)";
-        navRef.current.style.borderBottomColor = "rgba(42,42,62,.9)";
-        navRef.current.style.boxShadow = "0 4px 32px rgba(0,0,0,.4)";
-      } else {
-        navRef.current.style.background = "rgba(10,10,15,.7)";
-        navRef.current.style.borderBottomColor = "rgba(42,42,62,.6)";
-        navRef.current.style.boxShadow = "none";
-      }
-    };
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const open = (id) => { clearTimeout(closeTimer.current); setOpenMenu(id); };
-  const close = () => { closeTimer.current = setTimeout(() => setOpenMenu(null), 120); };
-
-  const NAV_ITEMS = [
-    {
-      id:"examhub", icon:"🏛️", label:"Exam Hubs", color:"#4facfe", desc:"4 Exam Zones",
-      dropdown: {
-        title:"Choose Your Exam",
-        items:[
-          {icon:"⚡",label:"JEE",full:"Joint Entrance Exam",desc:"IITs, NITs & top engineering colleges",color:"#4facfe",bg:"rgba(79,172,254,.12)"},
-          {icon:"🧬",label:"NEET",full:"National Eligibility Exam",desc:"MBBS, BDS & medical courses",color:"#43e97b",bg:"rgba(67,233,123,.12)"},
-          {icon:"🏛️",label:"UPSC",full:"Civil Services Exam",desc:"IAS, IPS, IFS & central services",color:"#f7971e",bg:"rgba(247,151,30,.12)"},
-          {icon:"📚",label:"Boards",full:"CBSE / ICSE / State",desc:"Class 10 & 12 board preparation",color:"#c471f5",bg:"rgba(196,113,245,.12)"},
-        ]
-      }
-    },
-    {
-      id:"leaderboard", icon:"🏆", label:"Leaderboard", color:"#ffd700", desc:"Live Rankings",
-      dropdown: {
-        title:"Live Rankings",
-        items:[
-          {icon:"🥇",label:"All India Rank",full:"Top Students",desc:"See who's #1 across India",color:"#ffd700",bg:"rgba(255,215,0,.12)"},
-          {icon:"📊",label:"Class Filter",full:"Class 6–12",desc:"Compare within your class",color:"#f7971e",bg:"rgba(247,151,30,.12)"},
-          {icon:"⚡",label:"Speed Rank",full:"Score + Speed",desc:"Faster answers earn more points",color:"#4facfe",bg:"rgba(79,172,254,.12)"},
-          {icon:"🎯",label:"My Rank",full:"Personal Stats",desc:"Track your position over time",color:"#6c63ff",bg:"rgba(108,99,255,.12)"},
-        ]
-      }
-    },
-    { id:"search", icon:"🔍", label:"Search", color:"#43e97b", desc:"50K+ Questions" },
-    { id:"buildtest", icon:"⚡", label:"Build Test", color:"#6c63ff", desc:"Custom Practice" },
-  ];
-
+  const [menuOpen,setMenuOpen] = useState(false);
   return (
-    <>
-      <style>{`
-        .nav-pill{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:8px 14px;border-radius:14px;transition:background .2s;font-family:'DM Sans',sans-serif;outline:none;}
-        .nav-pill:hover,.nav-pill.nav-open{background:rgba(255,255,255,.06);}
-        .nav-pill-icon{font-size:1.55rem;line-height:1;transition:transform .35s cubic-bezier(.34,1.56,.64,1),filter .3s;}
-        .nav-pill:hover .nav-pill-icon,.nav-pill.nav-open .nav-pill-icon{transform:translateY(-3px) scale(1.22);filter:drop-shadow(0 6px 12px rgba(108,99,255,.6));}
-        .nav-pill-label{font-size:10px;font-weight:700;color:#7878a0;letter-spacing:.04em;transition:color .2s;white-space:nowrap;text-transform:uppercase;}
-        .nav-pill:hover .nav-pill-label,.nav-pill.nav-open .nav-pill-label{color:#e8e8f0;}
-        .nav-pill-bar{position:absolute;bottom:4px;left:50%;transform:translateX(-50%) scaleX(0);width:20px;height:2px;background:linear-gradient(90deg,#6c63ff,#ff6584);border-radius:2px;transition:transform .25s cubic-bezier(.34,1.56,.64,1);}
-        .nav-pill:hover .nav-pill-bar,.nav-pill.nav-open .nav-pill-bar{transform:translateX(-50%) scaleX(1);}
-        .nav-pill-desc{font-size:9px;color:#555570;font-weight:500;white-space:nowrap;transition:color .2s;}
-        .nav-pill:hover .nav-pill-desc{color:#7878a0;}
-
-        .nav-mega{position:absolute;top:calc(100% + 14px);left:50%;transform:translateX(-50%) translateY(-6px) scale(.97);background:rgba(10,10,18,.98);border:1px solid rgba(60,60,90,.7);border-radius:22px;padding:16px;min-width:380px;box-shadow:0 24px 80px rgba(0,0,0,.7),0 0 0 1px rgba(108,99,255,.07),inset 0 1px 0 rgba(255,255,255,.05);opacity:0;pointer-events:none;transition:all .25s cubic-bezier(.22,1,.36,1);z-index:300;backdrop-filter:blur(28px);}
-        .nav-mega.mega-open{opacity:1;transform:translateX(-50%) translateY(0) scale(1);pointer-events:all;}
-        .nav-mega::after{content:'';position:absolute;top:-7px;left:50%;transform:translateX(-50%) rotate(45deg);width:13px;height:13px;background:rgba(10,10,18,.98);border-left:1px solid rgba(60,60,90,.7);border-top:1px solid rgba(60,60,90,.7);}
-
-        .mega-item{display:flex;align-items:center;gap:14px;padding:11px 14px;border-radius:14px;cursor:pointer;transition:all .2s;border:1px solid transparent;margin-bottom:4px;}
-        .mega-item:last-child{margin-bottom:0;}
-        .mega-item:hover{border-color:rgba(108,99,255,.2);transform:translateX(4px);}
-        .mega-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
-        .mega-item:hover .mega-icon{transform:scale(1.12) rotate(-5deg);}
-        .mega-item-full{font-size:10px;color:#555570;font-weight:500;margin-top:1px;}
-        .mega-item-desc{font-size:11px;color:#7878a0;margin-top:2px;}
-        .mega-title{font-size:10px;font-weight:700;color:#555570;letter-spacing:.12em;text-transform:uppercase;padding:2px 14px 10px;border-bottom:1px solid rgba(42,42,62,.5);margin-bottom:8px;}
-        .mega-arrow{margin-left:auto;color:#555570;font-size:14px;transition:transform .2s,color .2s;}
-        .mega-item:hover .mega-arrow{transform:translateX(3px);color:#a89cff;}
-
-        @media(max-width:680px){
-          .nav-pill-label,.nav-pill-desc{display:none;}
-          .nav-pill{padding:8px 9px;}
-          .nav-pill-icon{font-size:1.3rem;}
-          .nav-mega{min-width:calc(100vw - 32px);left:16px;transform:none!important;}
-          .nav-mega.mega-open{transform:none!important;}
-        }
-      `}</style>
-
-      <nav ref={navRef} style={{position:"fixed",top:0,left:0,right:0,zIndex:100,padding:"0 4%",height:72,display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(10,10,15,0.7)",backdropFilter:"blur(28px)",borderBottom:"1px solid rgba(42,42,62,.6)",transition:"background .3s,border-color .3s,box-shadow .3s"}}>
-
-        {/* LOGO */}
-        <div onClick={()=>navigate("home")} style={{cursor:"pointer",fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.45rem",letterSpacing:"-0.5px",flexShrink:0,userSelect:"none"}}>
-          <span style={{background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>EduSolve</span><span style={{color:"#43e97b"}}>4U</span>
-        </div>
-
-        {/* CENTER NAV */}
-        <div style={{display:"flex",gap:2,alignItems:"center",position:"relative"}}>
-          {NAV_ITEMS.map(item=>(
-            <div key={item.id} style={{position:"relative"}}
-              onMouseEnter={()=>item.dropdown&&open(item.id)}
-              onMouseLeave={()=>item.dropdown&&close()}
-            >
-              <button
-                className={`nav-pill${openMenu===item.id?" nav-open":""}`}
-                onClick={()=>{ navigate(item.id); setOpenMenu(null); }}
-              >
-                <span className="nav-pill-icon">{item.icon}</span>
-                <span className="nav-pill-label">{item.label}</span>
-                <span className="nav-pill-desc">{item.desc}</span>
-                <span className="nav-pill-bar"/>
-              </button>
-
-              {item.dropdown&&(
-                <div
-                  className={`nav-mega${openMenu===item.id?" mega-open":""}`}
-                  onMouseEnter={()=>open(item.id)}
-                  onMouseLeave={()=>close()}
-                >
-                  <div className="mega-title">{item.dropdown.title}</div>
-                  {item.dropdown.items.map(s=>(
-                    <div key={s.label} className="mega-item" style={{background:openMenu===item.id?"transparent":undefined}}
-                      onClick={()=>{ navigate(item.id); setOpenMenu(null); }}
-                      onMouseEnter={e=>e.currentTarget.style.background=s.bg}
-                      onMouseLeave={e=>e.currentTarget.style.background="transparent"}
-                    >
-                      <div className="mega-icon" style={{background:s.bg,border:`1px solid ${s.color}33`}}>{s.icon}</div>
-                      <div style={{flex:1}}>
-                        <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:13,color:s.color}}>{s.label}</div>
-                        <div className="mega-item-full">{s.full}</div>
-                        <div className="mega-item-desc">{s.desc}</div>
-                      </div>
-                      <span className="mega-arrow">›</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* RIGHT SIDE */}
-        <div style={{display:"flex",gap:8,alignItems:"center",flexShrink:0}}>
-          {userProfile?(
-            <>
-              {(userProfile.role==="admin"||userProfile.role==="teacher")&&(
-                <button onClick={()=>navigate("admin")} style={{display:"flex",alignItems:"center",gap:6,background:"rgba(247,151,30,.1)",border:"1px solid rgba(247,151,30,.25)",borderRadius:10,padding:"6px 12px",cursor:"pointer",transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}
-                  onMouseEnter={e=>{e.currentTarget.style.background="rgba(247,151,30,.2)";e.currentTarget.style.borderColor="rgba(247,151,30,.5)";}}
-                  onMouseLeave={e=>{e.currentTarget.style.background="rgba(247,151,30,.1)";e.currentTarget.style.borderColor="rgba(247,151,30,.25)";}}>
-                  <span style={{fontSize:"1rem"}}>⚙️</span>
-                  <span style={{fontSize:12,fontWeight:600,color:"#f7971e"}}>Admin</span>
-                </button>
-              )}
-              <button onClick={()=>navigate("dashboard")} style={{display:"flex",alignItems:"center",gap:8,background:"rgba(108,99,255,.12)",border:"1px solid rgba(108,99,255,.25)",borderRadius:12,padding:"7px 14px",cursor:"pointer",transition:"all .2s"}}
-                onMouseEnter={e=>{e.currentTarget.style.background="rgba(108,99,255,.22)";e.currentTarget.style.borderColor="rgba(108,99,255,.5)";}}
-                onMouseLeave={e=>{e.currentTarget.style.background="rgba(108,99,255,.12)";e.currentTarget.style.borderColor="rgba(108,99,255,.25)";}}>
-                <div style={{width:28,height:28,borderRadius:"50%",background:avatarColor(userProfile.uid||"x"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff"}}>{userProfile.avatar}</div>
-                <span style={{fontSize:13,fontWeight:600,color:"#e8e8f0",fontFamily:"'DM Sans',sans-serif"}}>{userProfile.name?.split(" ")[0]}</span>
-              </button>
-              <button onClick={handleLogout} style={{background:"none",border:"1px solid #2a2a3e",borderRadius:10,padding:"7px 13px",color:"#7878a0",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}
-                onMouseEnter={e=>{e.currentTarget.style.borderColor="#ff6584";e.currentTarget.style.color="#ff6584";e.currentTarget.style.background="rgba(255,101,132,.08)";}}
-                onMouseLeave={e=>{e.currentTarget.style.borderColor="#2a2a3e";e.currentTarget.style.color="#7878a0";e.currentTarget.style.background="none";}}>
-                Logout
-              </button>
-            </>
-          ):(
-            <>
-              <button onClick={()=>navigate("login")} style={{background:"none",border:"none",color:"#7878a0",cursor:"pointer",fontSize:13,fontWeight:500,padding:"7px 12px",borderRadius:8,transition:"color .2s",fontFamily:"'DM Sans',sans-serif"}}
-                onMouseEnter={e=>e.currentTarget.style.color="#e8e8f0"}
-                onMouseLeave={e=>e.currentTarget.style.color="#7878a0"}>
-                Login
-              </button>
-              <button onClick={()=>navigate("register")} style={{background:"linear-gradient(135deg,#6c63ff,#8b7fff)",color:"#fff",border:"none",padding:"9px 20px",borderRadius:11,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",boxShadow:"0 4px 16px rgba(108,99,255,.4)",transition:"all .2s"}}
-                onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 28px rgba(108,99,255,.6)";}}
-                onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="0 4px 16px rgba(108,99,255,.4)";}}>
-                Sign Up Free ✨
-              </button>
-            </>
-          )}
-        </div>
-      </nav>
-    </>
+    <nav style={{position:"fixed",top:0,left:0,right:0,zIndex:100,padding:"0 5%",height:68,display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(10,10,15,0.95)",backdropFilter:"blur(20px)",borderBottom:"1px solid #2a2a3e"}}>
+      <div onClick={()=>navigate("home")} style={{cursor:"pointer",fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.4rem",letterSpacing:"-0.5px"}}>
+        <span style={{background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>EduSolve</span><span style={{color:"#43e97b"}}>4U</span>
+      </div>
+      <div style={{display:"flex",gap:6,alignItems:"center"}}>
+        <NavBtn onClick={()=>navigate("examhub")} label="🎯 Hubs"/>
+        <NavBtn onClick={()=>navigate("search")} label="🔍"/>
+        <NavBtn onClick={()=>navigate("leaderboard")} label="🏆"/>
+        {userProfile?(
+          <>
+            <NavBtn onClick={()=>navigate("dashboard")} label="Dashboard"/>
+            {(userProfile.role==="admin"||userProfile.role==="teacher")&&<NavBtn onClick={()=>navigate("admin")} label="⚙️ Admin"/>}
+            <div style={{width:34,height:34,borderRadius:"50%",background:avatarColor(userProfile.uid||"x"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#fff"}}>{userProfile.avatar}</div>
+            <button onClick={handleLogout} className="btn-ghost">Logout</button>
+          </>
+        ):(
+          <>
+            <NavBtn onClick={()=>navigate("login")} label="Login"/>
+            <button onClick={()=>navigate("register")} className="btn-primary-sm">Sign Up Free</button>
+          </>
+        )}
+      </div>
+    </nav>
   );
 }
 const NavBtn = ({onClick,label}) => <button onClick={onClick} style={{background:"none",border:"none",color:"#7878a0",cursor:"pointer",fontSize:13,fontWeight:500,padding:"6px 10px",borderRadius:8,transition:"color 0.2s",fontFamily:"'DM Sans',sans-serif"}} onMouseEnter={e=>e.target.style.color="#e8e8f0"} onMouseLeave={e=>e.target.style.color="#7878a0"}>{label}</button>;
 
-
 // HOME
-function HomePage({navigate,userProfile,handleLogout}) {
-  const twText = useTypewriter();
-  useScrollReveal();
-  useCounters();
-  useMagnetic();
-  useSpotlight();
-  useCardGlow();
-  useProgressBars();
+function HomePage({navigate, userProfile, handleLogout}) {
+  const [typewriterText, setTypewriterText] = React.useState("Crack JEE 2025");
+  const [counting, setCounting] = React.useState(false);
+  const statsRef = React.useRef(null);
+
+  const PHRASES = ["Crack JEE 2025","Top the Boards","Master NEET","Clear UPSC","Score 100%"];
+
+  useEffect(() => {
+    let pi = 0, ci = 0, isTyping = true;
+    const interval = setInterval(() => {
+      if(isTyping) {
+        ci++;
+        setTypewriterText(PHRASES[pi].slice(0, ci));
+        if(ci === PHRASES[pi].length) { isTyping = false; setTimeout(() => {}, 1500); }
+      } else {
+        ci--;
+        setTypewriterText(PHRASES[pi].slice(0, ci));
+        if(ci === 0) { isTyping = true; pi = (pi + 1) % PHRASES.length; }
+      }
+    }, 80);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if(e.isIntersecting) e.target.style.opacity = "1"; });
+    }, { threshold: 0.1 });
+    document.querySelectorAll(".reveal-el").forEach(el => {
+      el.style.transition = "opacity 0.7s ease, transform 0.7s ease";
+      obs.observe(el);
+    });
+    return () => obs.disconnect();
+  }, []);
+
   return (
-    <div>
+    <div style={{position:"relative",overflow:"hidden"}}>
+      <style>{`
+        @keyframes drift{0%,100%{transform:translate(0,0) scale(1)}25%{transform:translate(60px,-40px) scale(1.05)}50%{transform:translate(-40px,60px) scale(.95)}75%{transform:translate(80px,30px) scale(1.02)}}
+        @keyframes badge-pop{from{opacity:0;transform:scale(.7) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+        @keyframes pulse-dot{0%,100%{box-shadow:0 0 0 0 rgba(67,233,123,.4)}50%{box-shadow:0 0 0 6px rgba(67,233,123,0)}}
+        @keyframes word-rise{from{opacity:0;transform:translateY(110%) skewY(8deg)}to{opacity:1;transform:translateY(0) skewY(0)}}
+        @keyframes grad-shift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+        @keyframes fade-up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+        @keyframes floating{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+        @keyframes pulse-bg{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.1);opacity:.5}}
+        @keyframes shimmer-bar{from{transform:translateX(-100%)}to{transform:translateX(200%)}}
+        @keyframes glitch-1{0%,90%,100%{transform:translate(0)}92%{transform:translate(-3px,1px)}94%{transform:translate(3px,-1px)}}
+        @keyframes glitch-2{0%,90%,100%{transform:translate(0)}93%{transform:translate(3px,-2px)}95%{transform:translate(-3px,1px)}}
+        .hub-card-anim:hover{transform:translateY(-5px) scale(1.02) !important;}
+        .feat-card-anim:hover{transform:translateY(-6px) !important;border-color:rgba(108,99,255,.4) !important;box-shadow:0 20px 60px rgba(108,99,255,.12) !important;}
+        .feat-card-anim:hover .feat-icon{transform:scale(1.2) rotate(-5deg);}
+        .feat-icon{transition:transform 0.3s cubic-bezier(.34,1.56,.64,1);display:inline-block;}
+        .lb-row-anim:hover{border-color:#6c63ff !important;transform:translateX(4px) !important;background:rgba(108,99,255,.06) !important;}
+        .glow-btn{background:linear-gradient(135deg,#6c63ff,#8b7fff);color:#fff;border:none;padding:14px 28px;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .25s;box-shadow:0 4px 24px rgba(108,99,255,.4);position:relative;overflow:hidden;}
+        .glow-btn:hover{transform:translateY(-3px);box-shadow:0 12px 36px rgba(108,99,255,.55);}
+        .marquee-track:hover{animation-play-state:paused;}
+        .blink-cursor{border-right:2px solid #6c63ff;animation:blink .7s step-end infinite;}
+        @keyframes blink{0%,100%{border-color:#6c63ff}50%{border-color:transparent}}
+      `}</style>
+
       <Nav userProfile={userProfile} navigate={navigate} handleLogout={handleLogout}/>
 
-      {/* ── HERO ── */}
-      <section style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",textAlign:"center",padding:"8rem 4% 3rem",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"relative",zIndex:1,maxWidth:860}}>
-          <div className="badge-pill"><span className="es-badge-dot"/>&nbsp;✦ India's Smartest Exam Platform</div>
-
-          <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(2.8rem,6vw,5rem)",fontWeight:800,lineHeight:1.0,letterSpacing:"-3px",margin:"1.5rem 0"}}>
-            <span className="es-hero-line es-line-1"><span className="es-word">Crack JEE, NEET,</span></span>
-            <span className="es-hero-line es-line-2"><span className="es-word">UPSC &amp; Boards with</span></span>
-            <span className="es-hero-line es-line-3">
-              <span className="es-word es-grad-text es-glitch" data-text="EduSolve4U">EduSolve4U</span>
-            </span>
-          </h1>
-
-          <p className="es-fade-up-1" style={{fontSize:"1.1rem",color:"#7878a0",maxWidth:540,margin:"0 auto 1.5rem",lineHeight:1.7}}>
-            Smart practice tests, AI-generated questions, real-time leaderboards and curated books — all in one place.
-          </p>
-          <p style={{fontSize:"1rem",color:"#a89cff",marginBottom:"2rem",minHeight:"1.6rem"}}>
-            <span className="es-typewriter">{twText}</span>
-          </p>
-
-          <div className="es-fade-up-2" style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",marginBottom:"3.5rem"}}>
-            <button onClick={()=>navigate(userProfile?"dashboard":"register")} className="es-glow-btn es-magnetic">🎯 Start Practising Free</button>
-            <button onClick={()=>navigate("examhub")} className="btn-secondary es-magnetic" style={{fontSize:"1rem",padding:"14px 28px"}}>🏛️ Explore Exam Hubs</button>
-          </div>
-
-          <div className="es-fade-up-3" style={{display:"flex",gap:32,justifyContent:"center",flexWrap:"wrap"}}>
-            {[["50000","Questions","50K+"],["4","Exam Hubs","4"],["12000","Students","12K+"],["100","Free","100%"]].map(([target,label,fallback])=>(
-              <div key={label} className="es-stat-card" style={{minWidth:110}}>
-                {target==="100"
-                  ? <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"2rem",fontWeight:800,background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{fallback}</div>
-                  : <div className="es-counter" data-target={target} style={{fontSize:"2rem",background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{fallback}</div>
-                }
-                <div style={{fontSize:12,color:"#7878a0",marginTop:4}}>{label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── MARQUEE ── */}
-      <div className="es-marquee-wrap">
-        <div className="es-marquee-track">
-          {[...MARQUEE_ITEMS,...MARQUEE_ITEMS].map(([icon,label],i)=>(
-            <div key={i} className="es-marquee-item"><span>{icon}</span>{label}</div>
-          ))}
-        </div>
+      {/* Aurora Background */}
+      <div style={{position:"fixed",top:0,left:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
+        {[["#6c63ff","-15%","-10%","25s"],["#ff6584","40%","-10%","20s"],["#43e97b","-15%","30%","30s"],["#4facfe","20%","50%","18s"]].map(([color,top,left,dur],i)=>(
+          <div key={i} style={{position:"absolute",borderRadius:"50%",filter:"blur(80px)",opacity:.18,animation:`drift ${dur} ease-in-out infinite`,width:i===0?"700px":i===1?"500px":i===2?"400px":"300px",height:i===0?"700px":i===1?"500px":i===2?"400px":"300px",background:color,top,left,animationDelay:`${[-0,-8,-15,-5][i]}s`}}/>
+        ))}
       </div>
 
-      <HomeChatSection userProfile={userProfile}/>
+      <main style={{position:"relative",zIndex:2}}>
 
-      {/* ── EXAM HUBS (grid bg + hub-bg radial) ── */}
-      <section className="es-section-grid" style={{padding:"5rem 5%"}}>
-        <div style={{textAlign:"center",marginBottom:"2.5rem"}} className="es-reveal">
-          <div className="section-label">Exam Hubs</div>
-          <h2 className="section-title">Prepare for <span style={{color:"#6c63ff"}}>Your Target Exam</span></h2>
-          <p style={{color:"#7878a0",marginTop:8}}>Dedicated practice zones, books and PYQs for each exam</p>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(min(240px,100%),1fr))",gap:16,maxWidth:1100,margin:"0 auto"}}>
-          {EXAM_HUBS.map((hub,i)=>(
-            <div key={hub.id} onClick={()=>navigate("examhub",{hub})} style={{background:"#12121a",border:`1px solid ${hub.color}33`,borderRadius:20,padding:"1.75rem",cursor:"pointer"}} className={`hub-card es-reveal es-stagger-${i+1}`}>
-              <div className="hub-bg" style={{background:`radial-gradient(circle at top right, ${hub.color}, transparent)`}}/>
-              <div className="hub-inner">
-                <div style={{fontSize:"2.5rem",marginBottom:12}} className={`es-float es-float-${(i%3)+1}`}>{hub.icon}</div>
-                <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.4rem",color:hub.color,marginBottom:4}}>{hub.name}</div>
-                <div style={{fontWeight:600,fontSize:13,marginBottom:8,color:"#e8e8f0"}}>{hub.full}</div>
-                <p style={{color:"#7878a0",fontSize:13,lineHeight:1.6}}>{hub.desc}</p>
-                <div style={{marginTop:14,display:"flex",gap:6,flexWrap:"wrap"}}>
-                  {hub.subjects.slice(0,3).map(s=><span key={s} style={{background:`${hub.color}22`,color:hub.color,border:`1px solid ${hub.color}44`,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{s}</span>)}
-                </div>
-              </div>
+        {/* ── HERO ── */}
+        <section style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",textAlign:"center",padding:"8rem 5% 4rem",position:"relative"}}>
+          <div style={{position:"relative",zIndex:1,maxWidth:900}}>
+            {/* Badge */}
+            <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"rgba(108,99,255,.12)",border:"1px solid rgba(108,99,255,.3)",color:"#a89cff",padding:"8px 20px",borderRadius:50,fontSize:12,fontWeight:600,letterSpacing:".05em",marginBottom:"2rem",animation:"badge-pop .6s cubic-bezier(.34,1.56,.64,1) .2s both"}}>
+              <div style={{width:6,height:6,borderRadius:"50%",background:"#43e97b",animation:"pulse-dot 2s ease-in-out infinite"}}/>
+              ✦ India's Smartest Exam Platform
             </div>
-          ))}
-        </div>
-      </section>
 
-      {/* ── DIVIDER ── */}
-      <div style={{height:1,background:"linear-gradient(90deg,transparent,#2a2a3e,transparent)",margin:"0 5%"}}/>
+            {/* Title */}
+            <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(3rem,7vw,5.5rem)",fontWeight:800,lineHeight:1,letterSpacing:"-3px",marginBottom:"1.5rem"}}>
+              {[["Crack JEE, NEET,",".3s"],["UPSC & Boards with",".45s"]].map(([line,delay])=>(
+                <span key={line} style={{overflow:"hidden",display:"block"}}>
+                  <span style={{display:"inline-block",animation:`word-rise 1s cubic-bezier(.22,1,.36,1) ${delay} both`,color:"#e8e8f0"}}>{line}</span>
+                </span>
+              ))}
+              <span style={{overflow:"hidden",display:"block"}}>
+                <span style={{display:"inline-block",animation:"word-rise 1s cubic-bezier(.22,1,.36,1) .6s both",background:"linear-gradient(135deg,#6c63ff,#ff6584,#f7971e,#6c63ff)",backgroundSize:"300% 300%",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",animation:"word-rise 1s cubic-bezier(.22,1,.36,1) .6s both, grad-shift 4s ease-in-out infinite"}}>EduSolve4U</span>
+              </span>
+            </h1>
 
-      {/* ── FEATURES (with per-card glow orb) ── */}
-      <section style={{padding:"5rem 5%"}}>
-        <div style={{textAlign:"center",marginBottom:"2.5rem"}} className="es-reveal">
-          <div className="section-label">Features</div>
-          <h2 className="section-title">Everything You Need to <span style={{color:"#43e97b"}}>Top Your Exam</span></h2>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(min(260px,100%),1fr))",gap:16,maxWidth:1100,margin:"0 auto"}}>
-          {[
-            ["🎯","Smart Test Builder","Card-based subject & chapter picker with difficulty control.","rgba(108,99,255,0.08)","#6c63ff"],
-            ["🔍","Question Search","Search 50K+ questions by subject, chapter, exam and year.","rgba(67,233,123,0.08)","#43e97b"],
-            ["🏆","Live Leaderboard","Ranked by score + speed. Compete with students nationwide.","rgba(255,215,0,0.08)","#ffd700"],
-            ["🤖","AI Questions","Groq AI generates fresh MCQs, short answers and case studies.","rgba(79,172,254,0.08)","#4facfe"],
-            ["📚","Curated Books","Free PDFs for JEE, NEET, UPSC and Boards — all in one place.","rgba(247,151,30,0.08)","#f7971e"],
-            ["📊","Analytics","Track weak areas and improve chapter by chapter.","rgba(255,101,132,0.08)","#ff6584"],
-          ].map(([icon,title,desc,bg,glowColor],i)=>(
-            <div key={title} className={`feature-card es-reveal es-stagger-${i+1}`} style={{background:bg}}>
-              <div className="f-glow" style={{background:glowColor}}/>
-              <div className="f-icon" style={{fontSize:"2rem",marginBottom:12}}>{icon}</div>
-              <h3 className="f-title" style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:8,transition:"color .2s"}}>{title}</h3>
-              <p style={{color:"#7878a0",fontSize:14,lineHeight:1.6}}>{desc}</p>
+            {/* Typewriter */}
+            <div style={{fontSize:"1.1rem",color:"#7878a0",maxWidth:520,margin:"0 auto 1rem",lineHeight:1.7,animation:"fade-up .8s ease .8s both"}}>
+              <span className="blink-cursor" style={{color:"#a89cff",fontWeight:600}}>{typewriterText}</span>
             </div>
-          ))}
-        </div>
-      </section>
+            <p style={{fontSize:"1rem",color:"#7878a0",maxWidth:520,margin:"0 auto 2.5rem",lineHeight:1.7,animation:"fade-up .8s ease .9s both"}}>Smart practice tests, AI questions, real-time leaderboards and curated books — all in one place.</p>
 
-      {/* ── DIVIDER ── */}
-      <div style={{height:1,background:"linear-gradient(90deg,transparent,#2a2a3e,transparent)",margin:"0 5%"}}/>
+            {/* CTA */}
+            <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",animation:"fade-up .8s ease 1s both"}}>
+              <button onClick={()=>navigate(userProfile?"dashboard":"register")} className="glow-btn">🎯 Start Practising Free</button>
+              <button onClick={()=>navigate("examhub")} style={{background:"transparent",color:"#e8e8f0",border:"1px solid #2a2a3e",padding:"14px 28px",borderRadius:14,fontSize:15,fontWeight:500,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",transition:"all .25s",backdropFilter:"blur(10px)"}} onMouseEnter={e=>{e.currentTarget.style.borderColor="#6c63ff";e.currentTarget.style.transform="translateY(-2px)";}} onMouseLeave={e=>{e.currentTarget.style.borderColor="#2a2a3e";e.currentTarget.style.transform="translateY(0)";}}>🏛️ Explore Exam Hubs</button>
+            </div>
 
-      {/* ── SUBJECT PROGRESS SECTION ── */}
-      <section id="progress-section" style={{padding:"5rem 5%"}}>
-        <div style={{maxWidth:1100,margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(400px,100%),1fr))",gap:40,alignItems:"center"}}>
-          <div className="es-reveal-left">
-            <div className="section-label">Subject Coverage</div>
-            <h2 className="section-title">50,000+ Questions Across <span className="es-grad-text">Every Subject</span></h2>
-            <p style={{color:"#7878a0",lineHeight:1.7,marginBottom:"2rem"}}>From Class 6 to JEE Advanced — every topic, every difficulty, every year.</p>
-            {[
-              ["Physics","#4facfe",88],["Mathematics","#6c63ff",95],["Chemistry","#43e97b",82],
-              ["Biology","#f7971e",76],["History","#ffd700",70],["English","#c471f5",90],
-            ].map(([subj,color,pct])=>(
-              <div key={subj} className="es-progress-item">
-                <div className="es-progress-label">
-                  <span>{subj}</span>
-                  <span style={{color}}>{pct}%</span>
+            {/* Stats */}
+            <div ref={statsRef} style={{display:"flex",gap:48,justifyContent:"center",flexWrap:"wrap",marginTop:"4rem",animation:"fade-up .8s ease 1.2s both"}}>
+              {[["50,000+","Questions"],["4","Exam Hubs"],["12,000+","Students"],["100%","Free"]].map(([num,label])=>(
+                <div key={label} style={{textAlign:"center"}}>
+                  <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"2.2rem",fontWeight:800,background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{num}</div>
+                  <div style={{fontSize:13,color:"#7878a0",marginTop:2}}>{label}</div>
                 </div>
-                <div className="es-progress-track">
-                  <div className="es-progress-fill" data-width={pct} style={{background:`linear-gradient(90deg,${color}99,${color})`}}/>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-          <div className="es-reveal-right" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-            {[["50K+","Questions","#6c63ff"],["4","Exam Hubs","#43e97b"],["12K+","Students","#ff6584"],["100%","Free Forever","#f7971e"]].map(([num,label,color])=>(
-              <div key={label} className="es-stat-card">
-                <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"2.2rem",fontWeight:800,color,marginBottom:4}}>{num}</div>
-                <div style={{fontSize:13,color:"#7878a0"}}>{label}</div>
-              </div>
+        </section>
+
+        {/* ── MARQUEE ── */}
+        <div style={{position:"relative",zIndex:2,overflow:"hidden",padding:"1.5rem 0",borderTop:"1px solid #2a2a3e",borderBottom:"1px solid #2a2a3e",background:"linear-gradient(90deg,#0a0a0f,transparent 5%,transparent 95%,#0a0a0f)"}}>
+          <div className="marquee-track" style={{display:"flex",gap:0,animation:"marquee 30s linear infinite",width:"max-content"}}>
+            {["⚡ JEE Main","🧬 NEET UG","🏛️ UPSC CSE","📚 CBSE Class 10","🔬 JEE Advanced","🎯 AI Questions","📊 Live Rankings","🤖 Groq Powered","📐 Mathematics","⚛️ Physics","🧪 Chemistry","🌍 Social Science"].map((item,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"0 32px",fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:"1rem",whiteSpace:"nowrap",color:"#7878a0"}}>{item}</div>
+            ))}
+            {["⚡ JEE Main","🧬 NEET UG","🏛️ UPSC CSE","📚 CBSE Class 10","🔬 JEE Advanced","🎯 AI Questions","📊 Live Rankings","🤖 Groq Powered","📐 Mathematics","⚛️ Physics","🧪 Chemistry","🌍 Social Science"].map((item,i)=>(
+              <div key={"b"+i} style={{display:"flex",alignItems:"center",gap:12,padding:"0 32px",fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:"1rem",whiteSpace:"nowrap",color:"#7878a0"}}>{item}</div>
             ))}
           </div>
         </div>
-      </section>
 
-      {/* ── CTA SECTION WITH ORBIT ── */}
-      <section style={{padding:"5rem 5%"}}>
-        <div style={{maxWidth:700,margin:"0 auto"}} className="es-reveal">
-          <div className="es-hub-spotlight">
-            <div className="es-orbit-wrapper" style={{marginBottom:"2rem"}}>
-              <div className="es-orbit-ring">
-                <div className="es-orbit-dot" style={{background:"#6c63ff"}}/>
-              </div>
-              <div className="es-orbit-ring">
-                <div className="es-orbit-dot" style={{background:"#ff6584"}}/>
-              </div>
-              <div className="es-orbit-center">🎓</div>
+        {/* ── EXAM HUBS ── */}
+        <section style={{padding:"6rem 5%",background:"#0d0d14",backgroundImage:"linear-gradient(rgba(42,42,62,.3) 1px,transparent 1px),linear-gradient(90deg,rgba(42,42,62,.3) 1px,transparent 1px)",backgroundSize:"60px 60px"}}>
+          <div style={{maxWidth:1100,margin:"0 auto"}}>
+            <div style={{textAlign:"center",marginBottom:"2.5rem"}}>
+              <div className="section-label">Exam Hubs</div>
+              <h2 className="section-title">Prepare for <span style={{color:"#6c63ff"}}>Your Target Exam</span></h2>
+              <p style={{color:"#7878a0"}}>Dedicated practice zones, books and PYQs for each exam</p>
             </div>
-            <div className="section-label">Get Started Today</div>
-            <h2 className="section-title" style={{marginBottom:12}}>Ready to <span className="es-grad-text">Ace Your Exam?</span></h2>
-            <p style={{color:"#7878a0",maxWidth:440,margin:"0 auto 2rem",lineHeight:1.7}}>Join 12,000+ students already practising on EduSolve4U. Free forever. No credit card needed.</p>
-            <button onClick={()=>navigate(userProfile?"dashboard":"register")} className="es-glow-btn es-magnetic" style={{fontSize:"1rem",padding:"16px 40px"}}>🚀 Start For Free</button>
-          </div>
-        </div>
-      </section>
-
-      <footer style={{borderTop:"1px solid #2a2a3e",padding:"2rem 5%",textAlign:"center",color:"#7878a0",fontSize:13}}>
-        <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.3rem",marginBottom:8,display:"inline-block"}}>
-          <span style={{background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>EduSolve</span><span style={{color:"#43e97b"}}>4U</span>
-        </div>
-        <p>Made with ❤️ for every student in India · JEE · NEET · UPSC · Boards</p>
-      </footer>
-    </div>
-  );
-}
-  return (
-    <div>
-      <Nav userProfile={userProfile} navigate={navigate} handleLogout={handleLogout}/>
-      {/* ── HERO ── */}
-      <section style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",textAlign:"center",padding:"8rem 4% 3rem",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"relative",zIndex:1,maxWidth:860}}>
-          <div className="badge-pill"><span className="es-badge-dot"/>&nbsp;✦ India's Smartest Exam Platform</div>
-
-          <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(2.8rem,6vw,5rem)",fontWeight:800,lineHeight:1.0,letterSpacing:"-3px",margin:"1.5rem 0"}}>
-            <span className="es-hero-line es-line-1"><span className="es-word">Crack JEE, NEET,</span></span>
-            <span className="es-hero-line es-line-2"><span className="es-word">UPSC &amp; Boards with</span></span>
-            <span className="es-hero-line es-line-3">
-              <span className="es-word es-grad-text es-glitch" data-text="EduSolve4U">EduSolve4U</span>
-            </span>
-          </h1>
-
-          <p className="es-fade-up-1" style={{fontSize:"1.15rem",color:"#7878a0",maxWidth:560,margin:"0 auto 2.5rem",lineHeight:1.7}}>
-            Smart practice tests, AI-generated questions, real-time leaderboards and curated books — all in one place.
-          </p>
-          <p style={{fontSize:"1rem",color:"#a89cff",marginBottom:"2rem",minHeight:"1.6rem"}}>
-            <span className="es-typewriter">{twText}</span>
-          </p>
-
-          <div className="es-fade-up-2" style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",marginBottom:"3.5rem"}}>
-            <button onClick={()=>navigate(userProfile?"dashboard":"register")} className="es-glow-btn es-magnetic">🎯 Start Practising Free</button>
-            <button onClick={()=>navigate("examhub")} className="btn-secondary es-magnetic" style={{fontSize:"1rem",padding:"13px 28px"}}>🏛️ Explore Exam Hubs</button>
-          </div>
-
-          <div className="es-fade-up-3" style={{display:"flex",gap:40,justifyContent:"center",flexWrap:"wrap"}}>
-            {[["50000","Questions","50K+"],["4","Exam Hubs","4"],["12000","Students","12K+"],["100","Free","100%"]].map(([target,label,fallback])=>(
-              <div key={label} style={{textAlign:"center"}}>
-                {target==="100"
-                  ? <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"2rem",fontWeight:800,background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{fallback}</div>
-                  : <div className="es-counter" data-target={target} style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"2rem",fontWeight:800,background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{fallback}</div>
-                }
-                <div style={{fontSize:13,color:"#7878a0"}}>{label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── MARQUEE ── */}
-      <div className="es-marquee-wrap">
-        <div className="es-marquee-track">
-          {[...MARQUEE_ITEMS,...MARQUEE_ITEMS].map(([icon,label],i)=>(
-            <div key={i} className="es-marquee-item"><span>{icon}</span>{label}</div>
-          ))}
-        </div>
-      </div>
-
-      <HomeChatSection userProfile={userProfile}/>
-
-      {/* Exam Hubs Preview */}
-      <section style={{padding:"5rem 5%"}}>
-        <div style={{textAlign:"center",marginBottom:"2.5rem"}} className="es-reveal">
-          <div className="section-label">Exam Hubs</div>
-          <h2 className="section-title">Prepare for <span style={{color:"#6c63ff"}}>Your Target Exam</span></h2>
-          <p style={{color:"#7878a0",marginTop:8}}>Dedicated practice zones, books and questions for each exam</p>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(min(240px,100%),1fr))",gap:16,maxWidth:1100,margin:"0 auto"}}>
-          {EXAM_HUBS.map((hub,i)=>(
-            <div key={hub.id} onClick={()=>navigate("examhub",{hub})} style={{background:"#12121a",border:`1px solid ${hub.color}33`,borderRadius:20,padding:"1.75rem",cursor:"pointer"}} className={`hub-card es-reveal es-stagger-${i+1}`}>
-              <div style={{fontSize:"2.5rem",marginBottom:12}} className={`es-float es-float-${(i%3)+1}`}>{hub.icon}</div>
-              <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.4rem",color:hub.color,marginBottom:4}}>{hub.name}</div>
-              <div style={{fontWeight:600,fontSize:13,marginBottom:8,color:"#e8e8f0"}}>{hub.full}</div>
-              <p style={{color:"#7878a0",fontSize:13,lineHeight:1.6}}>{hub.desc}</p>
-              <div style={{marginTop:14,display:"flex",gap:6,flexWrap:"wrap"}}>
-                {hub.subjects.slice(0,3).map(s=><span key={s} style={{background:`${hub.color}22`,color:hub.color,border:`1px solid ${hub.color}44`,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{s}</span>)}
-              </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(min(220px,100%),1fr))",gap:14}}>
+              {[
+                {id:"jee",name:"JEE",full:"Joint Entrance Exam",icon:"⚡",color:"#4facfe",desc:"Engineering entrance for IITs, NITs and top engineering colleges",tags:["Physics","Chemistry","Maths"]},
+                {id:"neet",name:"NEET",full:"National Eligibility cum Entrance Test",icon:"🧬",color:"#43e97b",desc:"Medical entrance for MBBS, BDS and medical courses",tags:["Biology","Chemistry","Physics"]},
+                {id:"upsc",name:"UPSC",full:"Union Public Service Commission",icon:"🏛️",color:"#f7971e",desc:"Civil services for IAS, IPS, IFS and central services",tags:["History","Geography","Economics"]},
+                {id:"boards",name:"Boards",full:"CBSE / ICSE / State",icon:"📚",color:"#c471f5",desc:"Class 10 and 12 board exam preparation all boards",tags:["All Subjects"]},
+              ].map((hub,i)=>(
+                <div key={hub.id} onClick={()=>navigate("examhub",{hub})} className="hub-card-anim" style={{background:"#12121a",border:`1px solid ${hub.color}44`,borderRadius:20,padding:"1.75rem",cursor:"pointer",transition:"all .3s cubic-bezier(.22,1,.36,1)",position:"relative",overflow:"hidden"}}>
+                  <div style={{position:"absolute",inset:0,background:`radial-gradient(circle at top right,${hub.color},transparent)`,opacity:.06}}/>
+                  <div style={{position:"relative",zIndex:1}}>
+                    <div style={{fontSize:"2.8rem",marginBottom:".75rem",animation:`floating 6s ease-in-out ${[-0,-2,-4,-1][i]}s infinite`}}>{hub.icon}</div>
+                    <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.4rem",color:hub.color,marginBottom:4}}>{hub.name}</div>
+                    <div style={{fontWeight:600,fontSize:13,marginBottom:8,color:"#e8e8f0"}}>{hub.full}</div>
+                    <p style={{fontSize:13,color:"#7878a0",lineHeight:1.6,marginBottom:12}}>{hub.desc}</p>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                      {hub.tags.map(t=><span key={t} style={{background:`${hub.color}22`,color:hub.color,border:`1px solid ${hub.color}44`,borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:600}}>{t}</span>)}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
+          </div>
+        </section>
 
-      {/* Features */}
-      <section style={{padding:"5rem 5%"}}>
-        <div style={{textAlign:"center",marginBottom:"2.5rem"}} className="es-reveal">
-          <div className="section-label">Features</div>
-          <h2 className="section-title">Everything You Need to <span style={{color:"#43e97b"}}>Top Your Exam</span></h2>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(min(260px,100%),1fr))",gap:16,maxWidth:1100,margin:"0 auto"}}>
-          {[["🎯","Smart Test Builder","Card-based subject & chapter picker with difficulty control","rgba(108,99,255,0.1)"],["🔍","Question Search","Search by subject, chapter, exam, difficulty and year","rgba(67,233,123,0.1)"],["🏆","Live Leaderboard","Ranked by score + speed. Compete with real students nationwide","rgba(255,215,0,0.1)"],["🤖","AI Questions","Gemini AI generates fresh curriculum-aligned MCQs instantly","rgba(79,172,254,0.1)"],["📚","Curated Books","Free PDFs and study materials for JEE, NEET, UPSC and Boards","rgba(247,151,30,0.1)"],["📊","Performance Analytics","Track your weak areas and improve chapter by chapter","rgba(255,101,132,0.1)"]].map(([icon,title,desc,bg],i)=>(
-            <div key={title} className={`feature-card es-reveal es-stagger-${i+1}`} style={{background:bg}}>
-              <div className="f-icon" style={{fontSize:"2rem",marginBottom:12}}>{icon}</div>
-              <h3 style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,marginBottom:8}}>{title}</h3>
-              <p style={{color:"#7878a0",fontSize:14,lineHeight:1.6}}>{desc}</p>
+        {/* ── FEATURES ── */}
+        <section style={{padding:"6rem 5%"}}>
+          <div style={{maxWidth:1100,margin:"0 auto"}}>
+            <div style={{textAlign:"center",marginBottom:"2.5rem"}}>
+              <div className="section-label">Features</div>
+              <h2 className="section-title">Everything to <span style={{color:"#43e97b"}}>Top Your Exam</span></h2>
             </div>
-          ))}
-        </div>
-      </section>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(min(280px,100%),1fr))",gap:16}}>
+              {[
+                ["🎯","Smart Test Builder","Card-based subject & chapter picker with difficulty control","rgba(108,99,255,.08)"],
+                ["🤖","AI Questions","Groq AI generates fresh curriculum-aligned questions instantly","rgba(79,172,254,.08)"],
+                ["🏆","Live Leaderboard","Ranked by score + speed. Compete with students nationwide","rgba(255,215,0,.08)"],
+                ["📄","Paper Generator","Real CBSE, JEE, NEET format papers with PDF download","rgba(67,233,123,.08)"],
+                ["🔍","Question Search","Filter by subject, chapter, exam, difficulty and year","rgba(196,113,245,.08)"],
+                ["📚","Curated Books","Free PDFs and study materials for all exams","rgba(247,151,30,.08)"],
+              ].map(([icon,title,desc,bg])=>(
+                <div key={title} className="feat-card-anim" style={{background:bg,border:"1px solid #2a2a3e",borderRadius:20,padding:"1.75rem",cursor:"pointer",transition:"all .3s cubic-bezier(.22,1,.36,1)",position:"relative",overflow:"hidden"}}>
+                  <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,rgba(108,99,255,.8),transparent)",transform:"scaleX(0)",transition:"transform .4s ease"}} className="card-top-line"/>
+                  <span className="feat-icon" style={{fontSize:"2.2rem",marginBottom:"1rem",display:"block"}}>{icon}</span>
+                  <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:"1.05rem",marginBottom:8}}>{title}</div>
+                  <div style={{fontSize:14,color:"#7878a0",lineHeight:1.6}}>{desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-      <footer style={{borderTop:"1px solid #2a2a3e",padding:"2rem 5%",textAlign:"center",color:"#7878a0",fontSize:13}}>
-        <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.3rem",marginBottom:8,display:"inline-block"}}>
-          <span style={{background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>EduSolve</span><span style={{color:"#43e97b"}}>4U</span>
-        </div>
-        <p>Made with ❤️ for every student in India · JEE · NEET · UPSC · Boards</p>
-      </footer>
+        {/* ── HOME CHAT ── */}
+        <HomeChatSection userProfile={userProfile}/>
+
+        {/* ── CTA ── */}
+        <section style={{padding:"5rem 5%",textAlign:"center",background:"#0d0d14"}}>
+          <h2 className="section-title">Ready to <span style={{color:"#43e97b"}}>Crack Your Exams?</span></h2>
+          <p style={{color:"#7878a0",marginBottom:24}}>Join thousands of students already using EduSolve4U.</p>
+          <button onClick={()=>navigate(userProfile?"dashboard":"register")} className="glow-btn" style={{fontSize:"1.05rem",padding:"14px 32px"}}>Get Started — It's Free 🚀</button>
+        </section>
+
+        <footer style={{borderTop:"1px solid #2a2a3e",padding:"2.5rem 5%",textAlign:"center",color:"#7878a0",fontSize:13,position:"relative",zIndex:2}}>
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.3rem",marginBottom:8,display:"inline-block"}}>
+            <span style={{background:"linear-gradient(135deg,#6c63ff,#ff6584)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>EduSolve</span><span style={{color:"#43e97b"}}>4U</span>
+          </div>
+          <p>Made with ❤️ for every student in India · JEE · NEET · UPSC · Boards</p>
+        </footer>
+      </main>
+
+      <StudyChatBot userProfile={userProfile}/>
     </div>
   );
 }
 
-// EXAMHUBPAGE
 function ExamHubPage({userProfile,navigate,handleLogout,examHub,showToast}) {
   const [activeHub,setActiveHub] = useState(examHub||EXAM_HUBS[0]);
   const [tab,setTab] = useState("practice");
@@ -1955,7 +1233,7 @@ function SearchPage({userProfile,navigate,handleLogout}) {
             {results.length===0?<div style={{textAlign:"center",padding:"3rem",color:"#7878a0"}}>No questions found. Try different filters.</div>:(
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {results.map((q,i)=>(
-                  <div key={q.id} style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:16,padding:"1.25rem"}} className="es-q-card">
+                  <div key={q.id} style={{background:"#12121a",border:"1px solid #2a2a3e",borderRadius:16,padding:"1.25rem"}}>
                     <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap"}}>
                       <Tag label={q.subject} color="#6c63ff"/>
                       <Tag label={q.chapter} color="#7878a0"/>
@@ -2385,7 +1663,6 @@ function LeaderboardPage({userProfile,navigate,handleLogout}) {
   const [filter,setFilter]=useState("all");
   const [leaderboard,setLeaderboard]=useState([]);
   const [loading,setLoading]=useState(true);
-  useLeaderboardStagger();
 
   useEffect(()=>{
     (async()=>{
@@ -2457,7 +1734,7 @@ function LeaderboardPage({userProfile,navigate,handleLogout}) {
                 const rank=idx+1;const rankColors={1:"#ffd700",2:"#c0c0c0",3:"#cd7f32"};
                 const isMe=(userProfile?.uid)===entry.uid;
                 return(
-                  <div key={entry.uid} style={{display:"grid",gridTemplateColumns:"50px 1fr 70px 70px 60px 70px",padding:"12px 20px",borderBottom:"1px solid #2a2a3e",alignItems:"center",background:isMe?"rgba(108,99,255,0.08)":"transparent"}} className="es-lb-row es-lb-stagger">
+                  <div key={entry.uid} style={{display:"grid",gridTemplateColumns:"50px 1fr 70px 70px 60px 70px",padding:"12px 20px",borderBottom:"1px solid #2a2a3e",alignItems:"center",background:isMe?"rgba(108,99,255,0.08)":"transparent"}}>
                     <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:"1.1rem",color:rankColors[rank]||"#7878a0"}}>{rank<=3?["🥇","🥈","🥉"][rank-1]:`#${rank}`}</div>
                     <div style={{display:"flex",alignItems:"center",gap:10}}>
                       <div style={{width:36,height:36,borderRadius:"50%",background:avatarColor(entry.uid),display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:"#fff",fontSize:12,flexShrink:0}}>{entry.user?.avatar}</div>
